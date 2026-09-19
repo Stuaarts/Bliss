@@ -1,0 +1,16 @@
+name: Security hardening
+description: Planned defensive work (never include credentials or private user data)
+labels: ['type:security']
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Threat, component and desired protection
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria, negative tests and dependencies
+    validations:
+      required: true

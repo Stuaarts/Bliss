@@ -1,0 +1,20 @@
+name: Bug
+description: A reproducible defect
+labels: ['type:bug']
+body:
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps, expected behavior and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Component, version and sanitized evidence
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria, regression test and blockers
+    validations:
+      required: true
