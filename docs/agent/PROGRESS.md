@@ -2,7 +2,8 @@
 
 ## 2026-09-19 — initial session
 
-Current phase: Phases 1–2 foundation, validation in progress. Phase 0 baseline pushed.
+Current phase: Phases 1–2 foundation implemented; local-startup exit gate blocked
+by Docker Desktop (#17). Phase 0 bootstrap completed with the missing-ZIP adaptation.
 
 Completed: read master prompt; inspected legacy source and process diagram;
 verified private empty GitHub remote/auth; inspected local Flow branch/POM/docs;
@@ -16,7 +17,9 @@ Known blockers: source ZIP missing (extracted source available); Docker engine n
 responding; Maven/Flutter absent from PATH. Java 21 located and usable explicitly.
 
 Branch: codex/bliss-v2-foundation. Baseline pushed to main: `29de611`.
-GitHub issues: #1–#16 created after checking all existing issues (none).
+Synchronization checkpoint: implementation pushed through `05f5b1c`; follow-up
+documentation commits are visible in `git log` and origin on this same branch.
+GitHub issues: #1–#17 created after checking existing issues for duplicates.
 20 labels, 3 milestones, 4 issue templates and PR template created.
 
 Implemented: Java 21 / Quarkus 3.39.0 with released Flow 1.2.0.CR1; Maven wrapper
@@ -36,8 +39,26 @@ Validation:
 - Docker Desktop startup attempted using CLI and desktop executable. Host log
   reports `initializing Inference manager ... dockerInference ... The file cannot
   be accessed by the system`; backend exits. No factory reset or data deletion.
-- PostgreSQL tests also configured in CI using an ephemeral PostgreSQL service.
+- GitHub CI run [35453307987](https://github.com/Stuaarts/Bliss/actions/runs/35453307987)
+  at `b96ec63`: **PASS** for both jobs. Real PostgreSQL migrations applied; backend
+  `mvn verify`: 7 tests, zero failures/errors/skips. Flutter analysis/format and 5
+  tests pass on Linux. Java compilation and Flutter tests also pass on Windows.
+- `flutter build web`: PASS. Nonfatal SDK font tree-shaking warning about unused
+  CupertinoIcons family; no build failure. Browser/device demo remains unverified.
+- `docker compose config --quiet`: PASS with a placeholder environment value.
+- Converted local seed to idempotent repeatable migration so future V3+ schema
+  migrations are not blocked by an artificially high demo version. CI rerun pending.
+- Pinned Actions to verified commit SHAs; Java/checkout upgraded to v5 after CI
+  reported deprecation warnings for v4. CI rerun pending.
+- All required documentation files created, explicitly separating implemented
+  catalog functionality from planned auth/booking/workflow behavior.
 
-Next: push coherent API/mobile commits, inspect CI, fix failures, document the
-exact foundation exit-gate status. Do not claim booking/authentication/workflow
-persistence completion or advance past an unvalidated foundation gate.
+Backlog status: #1 remains open because local Compose/live-client startup is not
+proven. #17 captures the exact host blocker. #2–#16 remain open; nothing was closed
+merely because a schema or dependency exists.
+
+Next: inspect the final CI rerun and draft PR; restore local Docker without data
+loss, run Compose + API + Flutter against live data and close #17; satisfy #1's
+startup gate, then proceed to Keycloak/OIDC (#2) and owned provider mutations (#3).
+Do not claim booking/authentication/workflow persistence completion or advance past
+the unvalidated local foundation gate. No destructive Docker reset was authorized.

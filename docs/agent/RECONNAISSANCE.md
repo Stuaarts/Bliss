@@ -93,3 +93,9 @@ defaults to silently implement. Use manual confirmation and fake payments initia
 
 No legacy app was started with its embedded credentials. Backend and mobile
 validation results are recorded as execution proceeds in PROGRESS.md.
+
+Follow-up: provisioned ignored local Maven bootstrap (SHA-512 verified), generated
+Maven wrapper 3.9.11, and Flutter stable 3.47.5 / Dart 3.13.4 (SHA-256 verified).
+Docker Desktop's host log identifies a dockerInference socket-access failure;
+it exits before the Linux engine is usable. GitHub CI successfully runs PostgreSQL
+and the foundation tests independently of this host. See issue #17.
