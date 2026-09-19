@@ -1,0 +1,19 @@
+name: bliss
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_DB: bliss
+      POSTGRES_USER: ${BLISS_DB_USER:-bliss}
+      POSTGRES_PASSWORD: ${BLISS_DB_PASSWORD:?Set BLISS_DB_PASSWORD in .env}
+    ports:
+      - '127.0.0.1:${BLISS_DB_PORT:-5433}:5432'
+    volumes:
+      - bliss-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d bliss']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+volumes:
+  bliss-postgres:

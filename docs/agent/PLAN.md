@@ -21,3 +21,10 @@ backlog; this file records sequencing and exit gates.
 
 Do not advance past a failing foundation gate into unrelated features. Record
 external blockers precisely and continue independent, verifiable work.
+
+## Current checkpoint
+
+Phase 0 complete except archive unavailable (existing extraction preserved).
+Phases 1–2 verified: CI and local PostgreSQL/API checks passed, Docker repaired,
+Compose healthy, and Flutter category filtering/detail navigation verified against
+the live API. The active next phase is Keycloak/OIDC authentication (#2).
