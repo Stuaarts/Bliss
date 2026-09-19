@@ -8,12 +8,12 @@ From this directory, with the API running in the `local` profile:
 
 ```sh
 flutter pub get
-flutter run -d chrome --web-port 3000 --dart-define=API_BASE_URL=http://localhost:8080
+flutter run -d chrome --web-port 3000 --dart-define=API_BASE_URL=http://localhost:8088
 flutter analyze
 flutter test
 ```
 
-Android emulator: pass `--dart-define=API_BASE_URL=http://10.0.2.2:8080`.
+Android emulator: pass `--dart-define=API_BASE_URL=http://10.0.2.2:8088`.
 Local HTTP is allowed only in the Android debug manifest. Release builds require
 HTTPS. Physical devices require an explicitly reachable development API address;
 the default backend binds loopback. iOS device validation requires macOS and is

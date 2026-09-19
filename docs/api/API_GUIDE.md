@@ -1,6 +1,6 @@
 # API guide
 
-Base URL: `http://localhost:8080`. Version prefix: `/api/v1`.
+Base URL: `http://localhost:8088`. Version prefix: `/api/v1`.
 
 | Method | Path | Current behavior |
 |---|---|---|

@@ -25,6 +25,6 @@ external blockers precisely and continue independent, verifiable work.
 ## Current checkpoint
 
 Phase 0 complete except archive unavailable (existing extraction preserved).
-Phases 1–2 code is in place: CI PostgreSQL/API and Flutter checks passed. Local
-Compose/live-app exit gate remains blocked by Docker host issue #17; #1 stays open.
-The next implementation phase is #2, after the local foundation gate passes.
+Phases 1–2 verified: CI and local PostgreSQL/API checks passed, Docker repaired,
+Compose healthy, and Flutter category filtering/detail navigation verified against
+the live API. The active next phase is Keycloak/OIDC authentication (#2).

@@ -1,5 +1,32 @@
 # Progress
 
+## 2026-09-19 — Docker repair and authentication continuation
+
+User authorized Docker repair/reinstallation and continuation. Reinstallation was
+unnecessary: Docker Desktop was stopped; its exact runtime directory
+`C:\Users\Lucas\AppData\Local\Docker\run` was renamed to
+`run.before-bliss-repair-20260919-120503` in the same parent and a fresh `run` created.
+This preserved both stale sockets. Engine 28.3.3 started successfully; no Docker
+images, containers, volumes, VHDX or unrelated project data were deleted.
+Matching upstream report: https://github.com/docker/desktop-feedback/issues/460.
+
+Local foundation verification now passes:
+- Docker info responds; Bliss Compose PostgreSQL is healthy.
+- Another project's database owns 5432 and another Java process owns 8080.
+  Bliss now defaults to DB 5433 and local API 8088; unrelated services untouched.
+- Java 21 Maven verify: 7 tests, zero failures/errors/skips, BUILD SUCCESS.
+- Clean startup applies V1/V2 and repeatable seed; readiness UP; API returns 2 offerings.
+- Live Flutter web at localhost:3000 loads real API data, filters Cleaning to one
+  offering and opens its details with CAD 80.00. Browser interactions verified.
+- Detected stale removed V1000 SQL in target/classes from the previous incremental
+  build. Startup helper now uses Maven clean. The newly initialized demo schema
+  was preserved as bootstrap_before_clean; clean migrations created the replacement
+  public schema. No existing user/project database was reset.
+
+Phase 1–2 exit gate passed. Proceeding to #2: Keycloak, PKCE, validated tokens,
+subject/profile mapping and ownership tests. Original session details below are
+historical, including the now-resolved Docker blocker.
+
 ## 2026-09-19 — initial session
 
 Current phase: Phases 1–2 foundation implemented; local-startup exit gate blocked

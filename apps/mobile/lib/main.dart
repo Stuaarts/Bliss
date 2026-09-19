@@ -7,7 +7,7 @@ import 'features/discovery/catalog.dart';
 void main() {
   const baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost:8080',
+    defaultValue: 'http://localhost:8088',
   );
   runApp(BlissApp(catalog: CatalogRepository(ApiClient(baseUrl: baseUrl))));
 }
