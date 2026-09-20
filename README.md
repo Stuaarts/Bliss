@@ -8,8 +8,9 @@ monolith with PostgreSQL and a Flutter client.
 
 Implemented: public category/provider/offering discovery backed by Flyway and
 PostgreSQL, a Flutter HTTP catalog client, bounded pagination, health/metrics,
-OpenAPI, tests and GitHub Actions. Authentication, booking and durable workflows
-are upcoming slices tracked in GitHub. The Flow dependency is pinned; no booking
+OpenAPI, tests and GitHub Actions. Keycloak sign-in, authenticated profiles and
+provider ownership checks are implemented. Booking and durable workflows remain
+upcoming slices tracked in GitHub. The Flow dependency is pinned; no booking
 workflow is registered yet.
 
 ## Run locally
@@ -27,7 +28,8 @@ the release-candidate dependency will be reevaluated before product beta.
    ```
 
    On macOS/Linux, export the three `BLISS_DB_*` values from your local `.env`,
-   run `docker compose up -d --wait`, then:
+   run `pwsh infrastructure/scripts/prepare-local-auth.ps1` (PowerShell 7),
+   `docker compose up -d --wait`, then:
 
    ```sh
    cd services/api
@@ -54,6 +56,12 @@ For Android emulator networking, see [mobile setup](apps/mobile/README.md).
 Stop infrastructure with `docker compose stop`; data stays in the named volume.
 No destructive reset is required for normal development.
 
+Sign in through **Your account**. Local usernames are `customer`, `provider`,
+`outsider` and `admin`; generated passwords are in the ignored
+`.work/demo-accounts.json`. The provider also has customer capability. Credentials
+are generated once and realm import never overwrites an existing realm.
+Keycloak runs only on loopback port 8180. See [authentication setup](docs/architecture/ADR-003-authentication.md).
+
 ## Verify
 
 ```sh
@@ -72,9 +80,12 @@ existing **dedicated test database**, supply `QUARKUS_DATASOURCE_JDBC_URL`,
 migrations; do not point them at production or another application's database.
 CI provisions an ephemeral PostgreSQL service and runs the same checks.
 
-Docker Desktop startup was repaired by preserving its stale runtime socket folder
-and allowing Docker to recreate it. Local PostgreSQL, API readiness, seven backend
-tests and live Flutter catalog browsing have now been verified. Bliss defaults to
+On this workstation, Docker Desktop was upgraded to 4.91.0. A Windows stale-socket
+problem still affects normal Desktop restarts. The Windows startup helper detects
+a stopped engine and preserves its runtime socket folders before starting Desktop;
+it never deletes data volumes. If a Docker crash dialog is open, quit Desktop and
+rerun the helper. Local PostgreSQL, API readiness, backend integration tests and
+live Flutter catalog browsing have been verified. Bliss defaults to
 database port 5433 and API port 8088 to coexist with other local projects.
 See [progress](docs/agent/PROGRESS.md) for evidence.
 

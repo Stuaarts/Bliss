@@ -58,4 +58,12 @@ public class TestIdentityProvider implements QuarkusTestResourceLifecycleManager
     public void stop() {
         keys = null;
     }
+
+    public static String tokenWithoutSubject() {
+        return Jwt.issuer(ISSUER)
+                .audience("bliss-api")
+                .claim("realm_access", Map.of("roles", List.of("provider")))
+                .expiresAt(Instant.now().plusSeconds(300))
+                .sign(keys.getPrivate());
+    }
 }

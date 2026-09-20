@@ -11,9 +11,10 @@ foreach ($line in Get-Content -LiteralPath $envFile) {
 }
 Push-Location $root
 try {
+    & ./infrastructure/scripts/start-docker.ps1
     & ./infrastructure/scripts/prepare-local-auth.ps1
     docker compose up -d --wait
     if ($LASTEXITCODE -ne 0) { throw 'Local infrastructure did not become healthy. Check Docker Compose logs.' }
-    & ./services/api/mvnw.cmd -f services/api/pom.xml clean quarkus:dev '-Dquarkus.profile=local'
+    & ./services/api/mvnw.cmd -f services/api/pom.xml clean quarkus:dev '-Dquarkus.profile=local' '-Dquarkus.analytics.disabled=true'
     if ($LASTEXITCODE -ne 0) { throw 'API process failed.' }
 } finally { Pop-Location }

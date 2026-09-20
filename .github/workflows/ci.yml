@@ -58,3 +58,5 @@ jobs:
         working-directory: apps/mobile
       - run: flutter test
         working-directory: apps/mobile
+      - run: flutter build web
+        working-directory: apps/mobile

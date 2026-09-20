@@ -41,6 +41,7 @@ class IdentityResourceTest {
         long future = Instant.now().plusSeconds(300).getEpochSecond();
         for (String token :
                 new String[] {
+                    TestIdentityProvider.tokenWithoutSubject(),
                     TestIdentityProvider.token(
                             "invalid-user", "https://wrong.test", "bliss-api", future, "admin"),
                     TestIdentityProvider.token(

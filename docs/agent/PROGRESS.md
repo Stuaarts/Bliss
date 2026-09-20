@@ -105,8 +105,14 @@ Foundation PR #18 merged as `82f91d3` after local catalog verification and green
 The Docker runtime-folder repair restored the engine on September 19, but the same
 stale `dockerInference` socket error returned after the next computer session.
 Runtime folders remain preserved; no images, volumes or VHDX were deleted.
-An official winget in-place upgrade from Desktop 4.45.0 to 4.91.0 is in progress.
-Do not treat restart durability as proven until verified after installation.
+Official winget in-place upgrade from Desktop 4.45.0 to 4.91.0 completed, with
+installer SHA-256 verification. Engine is now 29.8.0. Ordinary Desktop restart
+still exposes inaccessible `sailor-ingest.sock` / `engine.sock` runtime files.
+Issue #17 is reopened as a host/upstream limitation. The guarded Windows
+`start-docker.ps1` helper preserves both runtime directories only while Desktop is
+stopped, refuses unexpected secrets-engine files, and uses bounded engine probes.
+The helper restored the engine in two later sessions; both Compose services became
+healthy with existing data intact. `dev-api.ps1` invokes it automatically.
 
 Branch: `codex/2-oidc-auth`. Implemented validated OIDC bearer authentication,
 subject-bound profile bootstrap/update, provider membership and ownership checks,
@@ -116,7 +122,27 @@ and persistent loopback-only infrastructure. No Bliss password storage.
 
 Validation already passed: Maven verify (14 integration tests, no failures or
 skips), Flutter analysis, 9 Flutter tests, release/debug web compilation, and live
-PostgreSQL migration to V3. Real browser login reaches Keycloak and returns an
-authorization code, but callback handling still fails: investigation in progress.
-Native AppAuth/secure-storage integration is implemented and analyzed; device
-validation is not yet performed. Do not close #2 or #7 at this checkpoint.
+PostgreSQL migration to V3. Browser verification caught a missing `basic` default
+client scope: Keycloak issued access tokens without `sub`, which the API correctly
+rejected. Added that scope to both client templates and to the existing realm via
+a temporary local repair admin (removed immediately afterward). Existing realm
+users and passwords were preserved. Added a missing-subject negative API case.
+
+Live browser verification now passed: provider login through S256 PKCE, profile
+bootstrap, coexisting customer/provider capabilities, editing the display name,
+database persistence and audit event, logout, private profile removal, and a fresh
+credential prompt proving the identity-server session ended. Browser HTTP caching
+initially served old preview JavaScript; temporary cache-busting was applied only
+to ignored build artifacts during verification. All temporary diagnostics removed.
+
+Backend checkpoint `d4d3010` CI: both runs 35494437455 and 35494425603 passed.
+PR #19 tracks the identity slice. Native AppAuth/secure-storage integration is
+implemented and analyzed; device validation remains unperformed and tracked in
+#7. Provider onboarding/offering management remains #3; booking/workflows remain
+#4–#6. No end-to-end booking completion is claimed.
+
+Final customer browser check: the separate customer account bootstrapped with only
+the customer capability. Refreshing after the identity session expired cleared the
+private profile and returned to sign-in. Final local checks passed: 14 backend
+tests, Flutter analysis, 9 Flutter tests and release web compilation. Docker and
+both Bliss containers remained healthy across the six-hour idle interval.
