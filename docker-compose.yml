@@ -15,5 +15,24 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.4
+    command: ['start-dev', '--import-realm']
+    environment:
+      KC_HEALTH_ENABLED: 'true'
+      KC_HOSTNAME: http://localhost:8180
+    ports:
+      - '127.0.0.1:8180:8080'
+    volumes:
+      - ./.work/keycloak:/opt/keycloak/data/import:ro
+      - bliss-keycloak:/opt/keycloak/data
+    mem_limit: 1g
+    healthcheck:
+      test: ['CMD-SHELL', 'bash -c "exec 3<>/dev/tcp/127.0.0.1/9000; printf ''GET /health/ready HTTP/1.0\r\n\r\n'' >&3; grep -q ''200 OK'' <&3"']
+      interval: 5s
+      timeout: 5s
+      start_period: 60s
+      retries: 30
 volumes:
   bliss-postgres:
+  bliss-keycloak:

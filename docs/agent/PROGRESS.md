@@ -97,5 +97,26 @@ merely because a schema or dependency exists.
 Next: restore local Docker without data
 loss, run Compose + API + Flutter against live data and close #17; satisfy #1's
 startup gate, then proceed to Keycloak/OIDC (#2) and owned provider mutations (#3).
-Do not claim booking/authentication/workflow persistence completion or advance past
-the unvalidated local foundation gate. No destructive Docker reset was authorized.
+Do not claim booking/authentication/workflow persistence completion without evidence.
+
+## 2026-09-20: resumed identity slice
+
+Foundation PR #18 merged as `82f91d3` after local catalog verification and green CI.
+The Docker runtime-folder repair restored the engine on September 19, but the same
+stale `dockerInference` socket error returned after the next computer session.
+Runtime folders remain preserved; no images, volumes or VHDX were deleted.
+An official winget in-place upgrade from Desktop 4.45.0 to 4.91.0 is in progress.
+Do not treat restart durability as proven until verified after installation.
+
+Branch: `codex/2-oidc-auth`. Implemented validated OIDC bearer authentication,
+subject-bound profile bootstrap/update, provider membership and ownership checks,
+optimistic version conflicts, and transactional mutation audit metadata. Local
+Keycloak realm uses exact redirect URLs, S256 PKCE, generated ignored credentials
+and persistent loopback-only infrastructure. No Bliss password storage.
+
+Validation already passed: Maven verify (14 integration tests, no failures or
+skips), Flutter analysis, 9 Flutter tests, release/debug web compilation, and live
+PostgreSQL migration to V3. Real browser login reaches Keycloak and returns an
+authorization code, but callback handling still fails: investigation in progress.
+Native AppAuth/secure-storage integration is implemented and analyzed; device
+validation is not yet performed. Do not close #2 or #7 at this checkpoint.
