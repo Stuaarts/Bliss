@@ -40,7 +40,10 @@ jobs:
         if: failure()
         with:
           name: api-test-reports
-          path: services/api/target/surefire-reports
+          path: |
+            services/api/target/surefire-reports
+            services/api/target/failsafe-reports
+            services/api/target/restart-check-server.log
   mobile:
     runs-on: ubuntu-latest
     steps:

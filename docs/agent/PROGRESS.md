@@ -212,3 +212,39 @@ Direct booking (#6), full Flutter lifecycle/native-device validation (#7), chat,
 reviews and disputes (#8–#10) remain open. Docker #17 stays open for the ordinary
 Desktop restart defect; the guarded Bliss helper restores startup without deleting
 container data. The local catalog preview remains available on port 3000.
+
+## 2026-09-21: durable booking lifecycle
+
+Phase 5 implementation is on `codex/5-booking-workflow`, based on pushed main
+`36e04c1`. Quote acceptance now commits a durable start request. Flow stores its
+canonical instance ID, authorizes a fake payment and waits for provider/customer
+actions through a PostgreSQL inbox and engine-managed two-second waits. Actions
+enforce ownership, scheduling/state policy and UUID idempotency. Transitions,
+history, audit, inbox acknowledgment and simulated ledger are atomic. Provider
+rejection/timeout and eligible cancellation void authorization; confirmation
+captures. REFUND is adapter-tested; public dispute/refund actions remain #10.
+Owned timeline/payment/execution reads expose progress without exception details.
+
+The real restart test found two Flow 1.2.0.CR1 JPA defects: duplicate loop task
+pointers on restoration, and startup scan transactions propagating into asynchronous
+worker threads. A Bliss-local CDI adapter compacts completed iteration checkpoints
+atomically and materializes/closes the scan before restoration starts. No upstream
+source was changed. Dependency follow-up #22 tracks adapter retirement; #15 now
+explicitly tracks multi-worker leases, retry-exhaustion operator recovery, retention
+and real-provider outbox/reconciliation. This portfolio runs one API worker.
+
+Final local `spotless:apply verify` passed at 11:55 Toronto: 31 PostgreSQL-backed
+tests and two packaged-process restart scenarios, with no skips. Three forced
+crashes cover provider and customer waits; the original workflow ID survives and
+only one authorization/capture or void is recorded. The test also asserts bounded
+checkpoint rows and absence of the reproduced restoration/transaction errors.
+Injected transient failures occur after fake ledger writes, proving transaction
+rollback before a successful retry. Formatting and packaged build pass. Evidence:
+ignored `.work/workflow-final-verify.log` and `.work/workflow-restart-server.log`.
+
+Docker was stopped on resumption; the guarded helper restored it while preserving
+runtime folders and all persistent data. PostgreSQL/Keycloak are healthy. Local
+V4→V5 migration passed with existing data preserved; API readiness is UP on 8088
+and the existing Flutter preview is restored on 3000. Final GitHub CI gates merge.
+Next slices: direct offering booking #6, Flutter lifecycle/native validation #7,
+then chat/reviews/disputes #8–#10. Full portfolio release is still incomplete.

@@ -153,6 +153,9 @@ public class QuoteService {
         b.status = Booking.Status.CREATED;
         b.createdAt = Instant.now();
         b.persistAndFlush();
+        em.createNativeQuery("INSERT INTO booking_workflow_start(booking_id) VALUES (?1)")
+                .setParameter(1, b.id)
+                .executeUpdate();
         em.createNativeQuery(
                         "INSERT INTO booking_status_history(id,booking_id,status,actor_user_id,occurred_at) VALUES (?1,?2,'CREATED',?3,?4)")
                 .setParameter(1, UUID.randomUUID())

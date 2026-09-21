@@ -14,18 +14,22 @@ Current Flyway schema:
 - quote: request/provider, immutable scope and exact price, UTC expiry and
   SUBMITTED/ACCEPTED/DECLINED status. Unique provider/request and accepted request.
 - booking: unique request/quote, customer/provider, price and title/city snapshot,
-  initial CREATED status, nullable future workflow instance ID and version.
-- booking_status_history: transactional history, beginning with CREATED.
-- audit_event: actor/resource/action metadata, no submitted text or tokens.
+  lifecycle status, durable workflow instance ID, schedule/decision deadline and version.
+- booking_status_history: transactional history from CREATED through terminal state.
+- audit_event: actor/resource/action metadata, nullable actor for system transitions.
+- booking_workflow_start: durable dispatch intent, canonical claim and started marker.
+- booking_event: persistent UUID-keyed action inbox with actor, payload and timestamps.
+- payment/payment_transaction: simulated amount/currency/status and unique operation ledger.
+- workflow_instance_entity/task_info_entity/cloud_event_entity: released Flow JPA schema.
 
 Public reads return DTOs with decimal strings so clients do not round money through
 binary floating point. Lists have deterministic title/id ordering and bounded pages.
 Reference categories are migrated globally; sample providers/offerings are local/test only.
 
 Future slices add customer profiles, addresses, service areas, availability/blackouts,
-request attachments, booking execution, payments/transactions, conversations/
+request attachments, conversations/
 participants/messages, notifications, reviews, verification, disputes/evidence and
 audit extensions. Booking acceptance is idempotent via its unique request/quote
-constraints and serialized parent-request transaction. Add an outbox with workflow
-dispatch so committing a booking never loses its later orchestration start.
+constraints and serialized parent-request transaction. The durable start queue
+is committed with booking creation so orchestration can recover after a crash.
 Do not precreate empty feature tables merely to match a diagram.
