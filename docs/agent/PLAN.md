@@ -33,7 +33,9 @@ against live Keycloak and PostgreSQL. Native device login still needs validation
 under #7. Provider onboarding and offering management (#3) now includes atomic
 OWNER membership creation, owned offering CRUD/archive, strict decimal/category
 validation, version conflicts and Flutter management screens. API and client tests
-pass; live browser creation/edit/archive and persistence checks passed. Final CI
-is the remaining merge gate. Next: requests and
-quotes (#4). Docker's ordinary restart limitation (#17) is mitigated by the
+pass; live browser creation/edit/archive and persistence checks passed. PR #20
+merged with green CI. Requests/quotes (#4) now have owned APIs and atomic booking
+creation with concurrent acceptance tests; final verify/CI is the gate. Next:
+durable booking orchestration (#5), then the full Flutter lifecycle (#7).
+Docker's ordinary restart limitation (#17) is mitigated by the
 guarded Windows startup helper; existing container data is preserved.

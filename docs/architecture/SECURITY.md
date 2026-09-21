@@ -1,7 +1,8 @@
 # Security assumptions
 
 This is a local portfolio foundation with public catalog reads and authenticated
-profile mutations. It is not approved for public deployment or private customer data.
+profile/provider/marketplace mutations. It is not approved for public deployment
+or private customer data.
 
 The API binds loopback; Compose publishes PostgreSQL on loopback. `.env` is ignored;
 configuration contains placeholders. Demo data has no real identities. Random
@@ -21,6 +22,13 @@ stay in logs. Android HTTP is debug-only; real deployments require HTTPS.
 OIDC provider warning messages that can include rejected token material are
 suppressed. Audit events retain actor/resource IDs and action names, not tokens
 or submitted profile text. No access/refresh token is stored in web localStorage.
+
+Opportunity reads expose only job scope, category, city and budget to providers;
+no customer identity/contact fields. Quote submission requires provider OWNER
+membership and excludes the request's customer identity. Acceptance/decline require
+the request customer; booking reads require its customer or assigned provider owner.
+Parent-request locks serialize competing actions. Database uniqueness and the
+transactional history/audit prevent duplicate booking creation on acceptance retry.
 
 OpenAPI/health/metrics are local development endpoints. Scope management access,
 rate limiting, retention, backup/recovery and abuse controls before product beta (#15).

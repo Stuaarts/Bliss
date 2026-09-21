@@ -3,6 +3,7 @@ package com.bliss.provider;
 import com.bliss.catalog.api.CatalogModels;
 import com.bliss.catalog.persistence.ServiceCategory;
 import com.bliss.catalog.persistence.ServiceOffering;
+import com.bliss.common.Money;
 import com.bliss.identity.AuditLog;
 import com.bliss.provider.persistence.ProviderProfile;
 import com.bliss.user.ProfileService;
@@ -14,10 +15,8 @@ import jakarta.validation.constraints.*;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Instant;
-import java.util.Currency;
 import java.util.UUID;
 
 @Path("/api/v1/providers/me/{providerId}/offerings")
@@ -143,17 +142,10 @@ public class OfferingManagementResource {
     private static void apply(ServiceOffering offering, OfferingInput input) {
         ServiceCategory category = ServiceCategory.findById(input.categoryId());
         if (category == null) throw new BadRequestException("Unknown category");
-        try {
-            // The current schema and clients support currencies with two minor-unit digits.
-            if (Currency.getInstance(input.currency()).getDefaultFractionDigits() != 2)
-                throw new IllegalArgumentException();
-        } catch (IllegalArgumentException e) {
-            throw new BadRequestException("Unsupported currency");
-        }
         offering.category = category;
         offering.title = input.title().strip();
         offering.description = input.description().strip();
-        offering.price = new BigDecimal(input.price()).setScale(2);
+        offering.price = Money.amount(input.price(), input.currency());
         offering.currency = input.currency();
     }
 

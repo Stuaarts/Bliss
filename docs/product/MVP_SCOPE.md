@@ -1,11 +1,14 @@
 # MVP scope
 
-Implemented foundation: public category and offering discovery, provider reads,
-Flutter catalog, schema constraints, operational endpoints and CI configuration.
+Implemented: public category/offering discovery, OIDC profiles and memberships,
+provider onboarding, owned offering management, Flutter catalog/account/business
+screens, request/quote APIs and atomic booking creation, schema constraints,
+operational endpoints and CI configuration.
 
-Required next: OIDC profiles/membership; owned offerings; request/quote acceptance;
-direct booking; durable BookingLifecycleFlow with fake payments; mobile lifecycle;
-persisted chat; eligible reviews; manual-admin DisputeFlow. See issues #2–#10.
+Required next: direct booking; durable BookingLifecycleFlow with fake payments;
+mobile request/quote/booking lifecycle; persisted chat; eligible reviews;
+manual-admin DisputeFlow. See issues #5–#10 and the direct-booking acceptance
+criteria under the booking work. A CREATED row alone is not workflow execution.
 
 Portfolio hardening: migration/concurrency tests, restart demo, screenshots and
 complete CI evidence (#11–#12). Completion means the full master-prompt release

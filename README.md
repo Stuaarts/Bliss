@@ -10,8 +10,10 @@ Implemented: public category/provider/offering discovery backed by Flyway and
 PostgreSQL, a Flutter HTTP catalog client, bounded pagination, health/metrics,
 OpenAPI, tests and GitHub Actions. Keycloak sign-in, authenticated profiles and
 provider onboarding, owned service publishing/editing/archiving, and Flutter
-business management are implemented with ownership/version checks. Booking and durable workflows remain
-upcoming slices tracked in GitHub. The Flow dependency is pinned; no booking
+business management are implemented with ownership/version checks. Request/quote
+APIs atomically create a booking on acceptance, with concurrency and ownership tests.
+Booking execution and durable workflows remain upcoming slices tracked in GitHub.
+The Flow dependency is pinned; no booking
 workflow is registered yet.
 
 ## Run locally
