@@ -32,6 +32,15 @@ Base URL: `http://localhost:8088`. Version prefix: `/api/v1`.
 | POST | /quotes/{id}/decline | Request owner; decline submitted quote |
 | GET | /bookings | Own customer/provider bookings, paged |
 | GET | /bookings/{id} | Booking customer or assigned provider OWNER |
+| GET | /bookings/{id}/history | Same ownership; ordered status timeline with bounded page/size |
+| GET | /bookings/{id}/payment | Same ownership; simulated status, amount, currency and operations |
+| GET | /bookings/{id}/execution | Same ownership; engine instance ID, status and checkpoint presence |
+| POST | /bookings/{id}/provider-accept | Assigned provider OWNER; future scheduledAt JSON body |
+| POST | /bookings/{id}/provider-reject | Assigned provider OWNER; reject before deadline |
+| POST | /bookings/{id}/start | Assigned provider OWNER; start after scheduled time |
+| POST | /bookings/{id}/mark-complete | Assigned provider OWNER; mark IN_PROGRESS work complete |
+| POST | /bookings/{id}/confirm-completion | Booking customer; confirm WAIT_CUSTOMER work and simulate capture |
+| POST | /bookings/{id}/cancel | Booking customer; cancel CREATED/WAIT_PROVIDER/SCHEDULED |
 
 Lists of offerings return `{items, page, size, total}`. UUID identifiers; exact
 decimal `price` strings; explicit currency. Inactive offerings are not discoverable.
@@ -43,7 +52,7 @@ pagination; malformed typed parameters are rejected by the REST layer.
 and operational information. Sign-in is hosted by Keycloak, not an API password
 endpoint. Protected calls need `Authorization: Bearer <access token>`. Unknown
 JSON properties are rejected. Provider version conflicts return 409; wrong role
-returns 403; non-owned providers return 404. Booking execution actions are not yet implemented.
+returns 403; non-owned providers return 404.
 
 Provider creation accepts `displayName`, `type` (`INDIVIDUAL` or `COMPANY`),
 `description` and `city`. It never grants an identity-server role. A single account
@@ -62,7 +71,7 @@ Requests accept `title`, `description`, `city`, `categoryId`, optional decimal-s
 `budget`, and `currency`. Updates wrap this input in `request` alongside `version`.
 Scope/currency become immutable once any quote exists; cancellation retains history
 and declines outstanding quotes. Accepted requests cannot be edited or cancelled
-through the request endpoint. Booking cancellation will have its own policy.
+through the request endpoint. Use the separate booking cancellation action.
 
 Quotes accept `providerId`, `description`, decimal-string `price`, matching request
 `currency`, and future UTC `expiresAt`. The default maximum validity is 30 days,
@@ -74,7 +83,21 @@ then accepts one quote, declines alternatives, creates the booking with an exact
 price snapshot and initial history, and records audit events in one transaction.
 Unique constraints enforce one booking and one accepted quote per request.
 Same-quote retries return the same booking; competing quote acceptance returns 409.
-The initial booking is `CREATED`; no payment or durable workflow has started yet.
+The initial booking is `CREATED`; a start request committed with it dispatches
+BookingLifecycleFlow asynchronously, simulating authorization and WAIT_PROVIDER.
 
-Future state transitions use explicit actions, never a generic client-selected
+State transitions use explicit actions, never a generic client-selected
 status PATCH. Authenticated resources derive identity from the validated token.
+
+Booking actions require a UUID `Idempotency-Key` header and return 202 with
+`{eventId, bookingId, type, processed}` after durable admission. Poll the booking
+for processing (normally within two seconds). Reuse the same key and payload when
+retrying an uncertain response. A different payload on the same key, a pending
+competing action, or an invalid transition returns 409; a missing key returns 400.
+Provider acceptance requires `{"scheduledAt":"2026-12-01T15:00:00Z"}` with a future
+UTC time and no finer than microsecond precision. Other actions need no body.
+
+Booking DTOs include `workflowInstanceId`, `scheduledAt` and `decisionDeadline`.
+Payment reads always declare `simulated: true`; NOT_AUTHORIZED means no ledger
+exists yet (including cancellation before dispatch). There is no public refund
+endpoint yet. See [workflow policy and recovery](../architecture/WORKFLOWS.md).

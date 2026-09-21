@@ -17,7 +17,27 @@ capabilities, edit the display name and sign out. Credentials are in ignored
 `.work/demo-accounts.json`. This flow has been verified against live Keycloak and
 PostgreSQL. Android/iOS device validation is still pending.
 
-## Target 5–10 minute release demo (not implemented yet)
+## Booking API and restart demo
+
+Run `services/api/mvnw verify` (Java 21 and Docker). The workflow tests cover
+accept/start/complete/confirm, provider rejection, timeout, customer cancellation,
+duplicates, transient payment retry, compensation and ownership rejection.
+Failsafe's `WorkflowRestartIT` starts a packaged API on a temporary loopback port
+and an isolated PostgreSQL container. It forcibly kills the API during provider
+and customer waits, restarts against the same database, checks the original
+workflow ID and confirms exactly one simulated capture or void. Read the test
+results in `target/failsafe-reports` and `target/restart-check-server.log`.
+
+For an interactive API demo, use customer/provider bearer tokens from the local
+Keycloak session with the [API guide](../api/API_GUIDE.md): create a request, quote
+and accept; poll the resulting booking until WAIT_PROVIDER. Show `/history`,
+`/payment` and `/execution`. Accept as the assigned provider with a future schedule
+and a fresh UUID Idempotency-Key. After that time, start, mark complete and confirm
+as the customer. Repeat confirmation with the same key; payment operations still
+contain exactly one AUTHORIZE and one CAPTURE. All payments are simulations.
+The full booking Flutter screens remain #7.
+
+## Target 5–10 minute full release demo (remaining UI/review/dispute work)
 
 1. Start PostgreSQL, Keycloak and Quarkus; show Swagger and registered workflow.
 2. Customer logs in and creates a request; provider submits a quote.

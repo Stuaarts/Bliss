@@ -30,5 +30,13 @@ the request customer; booking reads require its customer or assigned provider ow
 Parent-request locks serialize competing actions. Database uniqueness and the
 transactional history/audit prevent duplicate booking creation on acceptance retry.
 
+Booking actions independently require the customer or assigned provider OWNER
+and the appropriate signed capability. UUID action keys are bound to actor,
+booking, action and payload; exact retries return the same receipt. The durable
+inbox, transition history, audit and fake ledger share transaction boundaries.
+History/payment/execution reads enforce the same booking access checks. Engine
+status is visible without exposing raw exception details. Payment simulation is
+enforced in the schema; no real payment adapter or credentials are configured.
+
 OpenAPI/health/metrics are local development endpoints. Scope management access,
 rate limiting, retention, backup/recovery and abuse controls before product beta (#15).

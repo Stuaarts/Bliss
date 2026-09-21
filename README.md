@@ -12,9 +12,10 @@ OpenAPI, tests and GitHub Actions. Keycloak sign-in, authenticated profiles and
 provider onboarding, owned service publishing/editing/archiving, and Flutter
 business management are implemented with ownership/version checks. Request/quote
 APIs atomically create a booking on acceptance, with concurrency and ownership tests.
-Booking execution and durable workflows remain upcoming slices tracked in GitHub.
-The Flow dependency is pinned; no booking
-workflow is registered yet.
+BookingLifecycleFlow now coordinates persisted human actions, provider deadlines,
+retry/compensation and idempotent simulated settlement. Protected history/payment
+reads and forced-process restart tests cover recovery. Direct booking, the Flutter
+booking screens, chat, reviews and disputes remain upcoming GitHub slices.
 
 ## Run locally
 
@@ -81,7 +82,11 @@ Tests use a real PostgreSQL Dev Service when Docker is available. To use an
 existing **dedicated test database**, supply `QUARKUS_DATASOURCE_JDBC_URL`,
 `QUARKUS_DATASOURCE_USERNAME` and `QUARKUS_DATASOURCE_PASSWORD`. Tests apply demo
 migrations; do not point them at production or another application's database.
-CI provisions an ephemeral PostgreSQL service and runs the same checks.
+CI provisions an ephemeral PostgreSQL service and runs the same checks. Maven
+verify also requires Docker for an isolated restart test: it starts a packaged API,
+kills it while a booking waits, restarts against the same database and checks the
+original workflow ID and single simulated settlement. Logs are under
+`services/api/target/restart-check-server.log`.
 
 On this workstation, Docker Desktop was upgraded to 4.91.0. A Windows stale-socket
 problem still affects normal Desktop restarts. The Windows startup helper detects
@@ -102,6 +107,8 @@ The core process will be request → quote → booking → service → confirmat
 dispute → simulated settlement. Standard offerings will also support direct booking.
 Quarkus Flow coordinates the long waits, timeouts, retries and payment compensation;
 the relational domain remains authoritative for API reads.
+See [workflow design and the release-specific JPA compatibility fix](docs/architecture/WORKFLOWS.md).
+Run one local API worker; this slice does not support distributed workflow ownership.
 
 - [Reconnaissance](docs/agent/RECONNAISSANCE.md)
 - [Execution plan](docs/agent/PLAN.md)

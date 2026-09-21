@@ -10,7 +10,18 @@ import java.util.UUID;
 @Table(name = "booking")
 public class Booking extends PanacheEntityBase {
     public enum Status {
-        CREATED
+        CREATED,
+        WAIT_PROVIDER,
+        SCHEDULED,
+        IN_PROGRESS,
+        WAIT_CUSTOMER,
+        COMPLETED,
+        CANCELLED,
+        EXPIRED;
+
+        public boolean terminal() {
+            return this == COMPLETED || this == CANCELLED || this == EXPIRED;
+        }
     }
 
     @Id public UUID id;
@@ -45,6 +56,12 @@ public class Booking extends PanacheEntityBase {
 
     @Column(name = "workflow_instance_id")
     public String workflowInstanceId;
+
+    @Column(name = "scheduled_at")
+    public Instant scheduledAt;
+
+    @Column(name = "decision_deadline")
+    public Instant decisionDeadline;
 
     @Column(name = "created_at", nullable = false)
     public Instant createdAt;
