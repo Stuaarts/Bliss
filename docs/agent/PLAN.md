@@ -41,7 +41,10 @@ retries, compensation and protected history/payment/execution reads. Packaged AP
 restart tests preserve the same instance through provider and customer waits.
 Two release-specific Flow JPA defects have a tested Bliss-local compatibility
 adapter; #22 tracks its removal after an upstream fix. PR #23 merged after all
-API/mobile CI checks passed, closing #5. Next: direct offering booking (#6), then
-Flutter lifecycle (#7).
+API/mobile CI checks passed, closing #5. Direct offering booking (#6) is implemented
+with scope/price snapshots, expected offering revisions, customer-scoped idempotency,
+concurrency tests and the same lifecycle. V6 upgrades existing quote bookings and
+enforces one source. Final verification and CI gate its merge. Next: Flutter
+customer/provider lifecycle and native-device validation (#7).
 Docker's ordinary restart limitation (#17) is mitigated by the
 guarded Windows startup helper; existing container data is preserved.

@@ -14,8 +14,10 @@ business management are implemented with ownership/version checks. Request/quote
 APIs atomically create a booking on acceptance, with concurrency and ownership tests.
 BookingLifecycleFlow now coordinates persisted human actions, provider deadlines,
 retry/compensation and idempotent simulated settlement. Protected history/payment
-reads and forced-process restart tests cover recovery. Direct booking, the Flutter
-booking screens, chat, reviews and disputes remain upcoming GitHub slices.
+reads and forced-process restart tests cover recovery. Customers can also book a
+published offering directly through the API, with an immutable scope/price snapshot
+and protection against stale prices and duplicate submissions. Flutter booking
+screens, chat, reviews and disputes remain upcoming GitHub slices.
 
 ## Run locally
 
@@ -104,7 +106,7 @@ modular monolith organized by capability. `infrastructure` contains local startu
 scripts. `docs` records product scope, architecture decisions and execution state.
 
 The core process will be request → quote → booking → service → confirmation or
-dispute → simulated settlement. Standard offerings will also support direct booking.
+dispute → simulated settlement. Standard offerings also support direct booking.
 Quarkus Flow coordinates the long waits, timeouts, retries and payment compensation;
 the relational domain remains authoritative for API reads.
 See [workflow design and the release-specific JPA compatibility fix](docs/architecture/WORKFLOWS.md).

@@ -30,7 +30,7 @@ class CatalogResourceTest {
     }
 
     @Test
-    void offeringsFilterAndPaginateWithoutLeakingEntityFields() {
+    void offeringsFilterAndPaginateWithBookingVersion() {
         given().queryParam("categoryId", CLEANING)
                 .get("/api/v1/offerings")
                 .then()
@@ -39,7 +39,9 @@ class CatalogResourceTest {
                 .body("items[0].price", is("80.00"))
                 .body("items[0].currency", is("CAD"))
                 .body("items[0].provider.type", is("INDIVIDUAL"))
-                .body("items[0]", not(hasKey("version")));
+                .body("items[0].version", is(0))
+                .body("items[0]", not(hasKey("createdAt")))
+                .body("items[0]", not(hasKey("active")));
         given().queryParam("size", 1)
                 .queryParam("page", 1)
                 .get("/api/v1/offerings")

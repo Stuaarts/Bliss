@@ -7,6 +7,7 @@ Base URL: `http://localhost:8088`. Version prefix: `/api/v1`.
 | GET | /categories | Public reference categories |
 | GET | /offerings | Active offerings, optional categoryId UUID; page 0–100000, size 1–100 (default 20) |
 | GET | /offerings/{id} | Active offering or 404 |
+| POST | /offerings/{id}/bookings | Customer; direct booking with offeringVersion, city and UUID Idempotency-Key |
 | GET | /providers/{id} | Public profile or 404 |
 | POST | /me/bootstrap | Authenticated; idempotent profile creation from token subject |
 | GET | /me | Authenticated caller's profile and signed capabilities |
@@ -101,3 +102,32 @@ Booking DTOs include `workflowInstanceId`, `scheduledAt` and `decisionDeadline`.
 Payment reads always declare `simulated: true`; NOT_AUTHORIZED means no ledger
 exists yet (including cancellation before dispatch). There is no public refund
 endpoint yet. See [workflow policy and recovery](../architecture/WORKFLOWS.md).
+
+## Direct offering booking
+
+Read `/offerings/{id}` and retain its `version` alongside the displayed price/scope.
+Submit `POST /offerings/{id}/bookings` with `Idempotency-Key: <UUID>` and
+`{"offeringVersion":0,"city":"Toronto"}`. The customer role and initialized
+profile are required. The server supplies the provider, title, description, amount
+and currency from the active offering; client identity/price/status fields are rejected.
+Only the service city is collected here; coverage and appointment availability are
+not guaranteed. The provider subsequently accepts and supplies a future schedule.
+
+A new booking returns 201 with Location; an exact retry returns 200 and the original
+booking, even after the offering is changed/archived or the booking is cancelled.
+Keys are scoped to the authenticated customer. Reusing a key for a different offering,
+version or city returns 409. City whitespace is trimmed before comparison. Use a
+new key only for a new intentional booking. Different customers can use the same
+UUID without gaining access to each other's booking.
+
+Stale offering versions return 409: reload and review the new price/scope before
+submitting a new request. Inactive/missing offerings return 404 for new bookings.
+An account belonging to the offering's provider (OWNER or MEMBER) cannot book it;
+that returns 409 even when the account also has customer capability. Missing key,
+version, blank/overlong city or unknown fields return 400. Concurrent exact retries
+create one booking, initial history/audit event and durable workflow start intent.
+
+Direct booking DTOs have `offeringId` and `offeringVersion`, with null `requestId`
+and `quoteId`. Quote bookings have the inverse source fields. Both include the
+immutable `description` snapshot and use the same booking actions, authorization,
+payment simulation and restart recovery.

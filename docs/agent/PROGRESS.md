@@ -260,3 +260,37 @@ This documentation checkpoint follows that merge without changing application co
 The working tree is synchronized on push. #6 is the next implementation slice;
 #17 (ordinary Docker restart) and #22 (upstream Flow compatibility) remain open
 with working local mitigations. No real payment movement or public deployment.
+
+## 2026-09-21 evening: direct offering booking
+
+Issue #6 implementation is on `codex/6-direct-booking`, based on pushed main
+`09fe274` (its CI is green). Customers can POST an offering revision and city with
+a UUID Idempotency-Key to create a direct booking. Scope/price/currency/provider
+come from the locked active offering; stale versions and provider self-booking
+(OWNER or MEMBER) are rejected. Exact retries return the original booking even
+after archive/cancellation. Conflicting reuse returns 409; keys belong to the
+authenticated customer. Customer locks and a unique customer/key index serialize
+retries, including requests targeting different offerings.
+
+V6 enforces exactly one source (request/quote or offering/revision/key), backfills
+accepted quote descriptions, and retains immutable scope on both paths. Shared
+BookingCreation commits initial history, audit and workflow start intent together.
+Direct bookings use the same existing lifecycle and simulated payment adapter.
+Public offering DTOs now include the version needed for booking confirmation.
+Flutter booking screens remain #7; this slice is the API foundation for that UI.
+
+Final `spotless:apply verify` passed at 19:15 Toronto: 37 regular backend tests and
+three integration scenarios, no skips. New cases cover concurrent exact retries,
+conflicting keys across offerings, archive races, frozen price/scope, authorization,
+input validation, self-booking and one workflow dispatch/void. The populated V5→V6
+test preserves quote scope/price and checks database source constraints. Packaged
+restart tests cover quote rejection and direct-booking completion, including both
+provider/customer crash waits with the same instance and one settlement. Test
+fixtures are archived after each direct-booking case so catalog checks stay isolated.
+Evidence is in ignored `.work/direct-verify.log` and `.work/direct-restart-server.log`.
+
+Docker was stopped again between sessions; the guarded helper restored it without
+deleting volumes. Compose PostgreSQL/Keycloak are healthy. Local V5→V6 migration
+passed at 19:16 with API readiness UP on 8088; public discovery returns the expected
+offering revision and exact price. The existing Flutter preview is restored on
+3000. GitHub CI is the final merge gate. Next: Flutter lifecycle/native validation #7.

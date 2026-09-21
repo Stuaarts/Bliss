@@ -58,50 +58,90 @@ class WorkflowRestartIT {
                                     201)
                             .path("id")
                             .asText();
-            String request =
-                    call(
-                                    "POST",
-                                    "/api/v1/service-requests",
-                                    customer,
-                                    Map.of(
-                                            "title",
-                                            "Restart job",
-                                            "description",
-                                            "Durability check",
-                                            "city",
-                                            "Toronto",
-                                            "categoryId",
-                                            "10000000-0000-0000-0000-000000000004",
-                                            "currency",
-                                            "CAD"),
-                                    null,
-                                    201)
-                            .path("id")
-                            .asText();
-            String quote =
-                    call(
-                                    "POST",
-                                    "/api/v1/service-requests/" + request + "/quotes",
-                                    provider,
-                                    Map.of(
-                                            "providerId",
-                                            providerId,
-                                            "description",
-                                            "Scope",
-                                            "price",
-                                            "80.50",
-                                            "currency",
-                                            "CAD",
-                                            "expiresAt",
-                                            Instant.now().plusSeconds(3600).toString()),
-                                    null,
-                                    201)
-                            .path("id")
-                            .asText();
-            String booking =
-                    call("POST", "/api/v1/quotes/" + quote + "/accept", customer, null, null, 200)
-                            .path("id")
-                            .asText();
+            String booking;
+            if (complete) {
+                String offering =
+                        call(
+                                        "POST",
+                                        "/api/v1/providers/me/" + providerId + "/offerings",
+                                        provider,
+                                        Map.of(
+                                                "title",
+                                                "Direct restart job",
+                                                "description",
+                                                "Fixed scope",
+                                                "price",
+                                                "80.50",
+                                                "currency",
+                                                "CAD",
+                                                "categoryId",
+                                                "10000000-0000-0000-0000-000000000004"),
+                                        null,
+                                        201)
+                                .path("id")
+                                .asText();
+                booking =
+                        call(
+                                        "POST",
+                                        "/api/v1/offerings/" + offering + "/bookings",
+                                        customer,
+                                        Map.of("offeringVersion", 0, "city", "Toronto"),
+                                        UUID.randomUUID().toString(),
+                                        201)
+                                .path("id")
+                                .asText();
+            } else {
+                String request =
+                        call(
+                                        "POST",
+                                        "/api/v1/service-requests",
+                                        customer,
+                                        Map.of(
+                                                "title",
+                                                "Restart job",
+                                                "description",
+                                                "Durability check",
+                                                "city",
+                                                "Toronto",
+                                                "categoryId",
+                                                "10000000-0000-0000-0000-000000000004",
+                                                "currency",
+                                                "CAD"),
+                                        null,
+                                        201)
+                                .path("id")
+                                .asText();
+                String quote =
+                        call(
+                                        "POST",
+                                        "/api/v1/service-requests/" + request + "/quotes",
+                                        provider,
+                                        Map.of(
+                                                "providerId",
+                                                providerId,
+                                                "description",
+                                                "Scope",
+                                                "price",
+                                                "80.50",
+                                                "currency",
+                                                "CAD",
+                                                "expiresAt",
+                                                Instant.now().plusSeconds(3600).toString()),
+                                        null,
+                                        201)
+                                .path("id")
+                                .asText();
+                booking =
+                        call(
+                                        "POST",
+                                        "/api/v1/quotes/" + quote + "/accept",
+                                        customer,
+                                        null,
+                                        null,
+                                        200)
+                                .path("id")
+                                .asText();
+            }
             JsonNode waiting = awaitStatus(booking, customer, "WAIT_PROVIDER");
             String instance = waiting.path("workflowInstanceId").asText();
             assertFalse(instance.isBlank());

@@ -79,6 +79,7 @@ public class CatalogService {
                 entity.price.toPlainString(),
                 entity.currency,
                 category(entity.category),
-                provider(entity.provider));
+                provider(entity.provider),
+                entity.version);
     }
 }
