@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../core/api/api_client.dart';
 import 'catalog.dart';
+import '../../core/auth/auth_session.dart';
+import '../account/account_screen.dart';
 
 class DiscoveryScreen extends StatefulWidget {
-  const DiscoveryScreen({super.key, required this.catalog});
+  const DiscoveryScreen({super.key, required this.catalog, this.session});
   final CatalogRepository catalog;
+  final AuthSession? session;
 
   @override
   State<DiscoveryScreen> createState() => _DiscoveryScreenState();
@@ -75,6 +78,16 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
         style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -1),
       ),
       actions: [
+        if (widget.session != null)
+          IconButton(
+            tooltip: 'Your account',
+            icon: const Icon(Icons.account_circle_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => AccountScreen(session: widget.session!),
+              ),
+            ),
+          ),
         IconButton(
           tooltip: 'Refresh services',
           onPressed: _loading ? null : () => _load(reloadCategories: true),

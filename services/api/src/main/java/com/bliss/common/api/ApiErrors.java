@@ -1,5 +1,6 @@
 package com.bliss.common.api;
 
+import jakarta.persistence.OptimisticLockException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -21,9 +22,11 @@ public class ApiErrors implements ExceptionMapper<Exception> {
         int status =
                 exception instanceof ConstraintViolationException
                         ? 400
-                        : exception instanceof WebApplicationException web
-                                ? web.getResponse().getStatus()
-                                : 500;
+                        : exception instanceof OptimisticLockException
+                                ? 409
+                                : exception instanceof WebApplicationException web
+                                        ? web.getResponse().getStatus()
+                                        : 500;
         String requestId = String.valueOf(request.getProperty(RequestIds.HEADER));
         String detail =
                 switch (status) {
@@ -32,6 +35,7 @@ public class ApiErrors implements ExceptionMapper<Exception> {
                     case 403 -> "You do not have access to this resource.";
                     case 404 -> "The requested resource was not found.";
                     case 405 -> "This action is not supported.";
+                    case 409 -> "This record changed. Refresh and try again.";
                     default -> "The request could not be completed.";
                 };
         if (status >= 500) LOG.errorf(exception, "API failure requestId=%s", requestId);

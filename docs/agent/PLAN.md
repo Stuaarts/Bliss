@@ -27,4 +27,9 @@ external blockers precisely and continue independent, verifiable work.
 Phase 0 complete except archive unavailable (existing extraction preserved).
 Phases 1–2 verified: CI and local PostgreSQL/API checks passed, Docker repaired,
 Compose healthy, and Flutter category filtering/detail navigation verified against
-the live API. The active next phase is Keycloak/OIDC authentication (#2).
+the live API. Phase 3 identity (#2) now includes validated bearer authentication,
+Flutter PKCE login, profile editing/logout, and provider ownership checks, verified
+against live Keycloak and PostgreSQL. Native device login still needs validation
+under #7. Next: provider onboarding and offering management (#3), then requests
+and quotes (#4). Docker's ordinary restart limitation (#17) is mitigated by the
+guarded Windows startup helper; existing container data is preserved.

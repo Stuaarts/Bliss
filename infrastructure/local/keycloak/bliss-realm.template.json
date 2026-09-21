@@ -1,0 +1,32 @@
+{
+  "realm": "bliss",
+  "enabled": true,
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": false,
+  "sslRequired": "external",
+  "accessTokenLifespan": 300,
+  "roles": { "realm": [ {"name": "customer"}, {"name": "provider"}, {"name": "admin"} ] },
+  "clients": [
+    {"clientId": "bliss-api", "enabled": true, "bearerOnly": true, "protocol": "openid-connect"},
+    {
+      "clientId": "bliss-web", "enabled": true, "publicClient": true,
+      "protocol": "openid-connect", "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false, "implicitFlowEnabled": false,
+      "redirectUris": ["http://localhost:3000/"],
+      "webOrigins": ["http://localhost:3000"],
+      "attributes": {"pkce.code.challenge.method": "S256", "post.logout.redirect.uris": "http://localhost:3000/"},
+      "defaultClientScopes": ["basic", "profile", "email", "roles", "web-origins"],
+      "protocolMappers": [{"name": "bliss-api-audience", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "config": {"included.client.audience": "bliss-api", "access.token.claim": "true", "id.token.claim": "false"}}]
+    },
+    {
+      "clientId": "bliss-mobile", "enabled": true, "publicClient": true,
+      "protocol": "openid-connect", "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false, "implicitFlowEnabled": false,
+      "redirectUris": ["com.bliss.mobile:/oauthredirect"],
+      "attributes": {"pkce.code.challenge.method": "S256", "post.logout.redirect.uris": "com.bliss.mobile:/oauthredirect"},
+      "defaultClientScopes": ["basic", "profile", "email", "roles"],
+      "protocolMappers": [{"name": "bliss-api-audience", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "config": {"included.client.audience": "bliss-api", "access.token.claim": "true", "id.token.claim": "false"}}]
+    }
+  ]
+}

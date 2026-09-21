@@ -15,6 +15,7 @@ android {
     }
 
     defaultConfig {
+        manifestPlaceholders["appAuthRedirectScheme"] = "com.bliss.mobile"
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.bliss.bliss_mobile"
         // You can update the following values to match your application needs.

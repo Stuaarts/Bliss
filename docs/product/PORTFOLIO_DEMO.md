@@ -6,6 +6,11 @@ Prerequisite: a working PostgreSQL setup. Start Compose and API with the root RE
 then Flutter web. Browse categories, inspect an offering, show the Swagger schema,
 readiness and metrics, and run catalog/Flutter tests. This is not the full release demo.
 
+Open **Your account**, sign in as the generated local `provider` user, show both
+capabilities, edit the display name and sign out. Credentials are in ignored
+`.work/demo-accounts.json`. This flow has been verified against live Keycloak and
+PostgreSQL. Android/iOS device validation is still pending.
+
 ## Target 5–10 minute release demo (not implemented yet)
 
 1. Start PostgreSQL, Keycloak and Quarkus; show Swagger and registered workflow.
