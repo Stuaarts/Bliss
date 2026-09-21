@@ -35,7 +35,7 @@ OWNER membership creation, owned offering CRUD/archive, strict decimal/category
 validation, version conflicts and Flutter management screens. API and client tests
 pass; live browser creation/edit/archive and persistence checks passed. PR #20
 merged with green CI. Requests/quotes (#4) now have owned APIs and atomic booking
-creation with concurrent acceptance tests; final verify/CI is the gate. Next:
+creation with concurrent acceptance tests; PR #21 merged after final verify/CI passed. Next:
 durable booking orchestration (#5), then the full Flutter lifecycle (#7).
 Docker's ordinary restart limitation (#17) is mitigated by the
 guarded Windows startup helper; existing container data is preserved.

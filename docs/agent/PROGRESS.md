@@ -194,3 +194,21 @@ after API read-route/enum cleanup. V4 migrated the existing local PostgreSQL
 successfully and API readiness is UP. The booking is only CREATED: no payment/workflow starts
 yet, and request/quote Flutter screens remain #7. Next gate: final verification,
 CI, then durable booking orchestration #5.
+
+## Verified checkpoint
+
+PR #21 merged as `eeeaca8` after both API/mobile CI runs passed at `7b89ad2`
+(35554853475 and 35554876126). Issues #2, #3 and #4 are closed by their verified
+PRs. Local `main` is synchronized with GitHub; the implementation includes 26
+passing backend tests and 11 passing Flutter tests plus web compilation. This
+documentation checkpoint follows that merge without changing application code.
+
+Next work is #5: released Flow JPA schema verification, durable booking dispatch,
+stored instance IDs, idempotent fake settlement, human events/timeouts, then a real
+waiting-instance restart demonstration. Upstream persistence/correlation examples
+were inspected read-only; they explicitly leave duplicate-start prevention to the
+application. The current booking remains CREATED with no workflow instance.
+Direct booking (#6), full Flutter lifecycle/native-device validation (#7), chat,
+reviews and disputes (#8–#10) remain open. Docker #17 stays open for the ordinary
+Desktop restart defect; the guarded Bliss helper restores startup without deleting
+container data. The local catalog preview remains available on port 3000.
