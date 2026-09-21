@@ -30,6 +30,10 @@ Compose healthy, and Flutter category filtering/detail navigation verified again
 the live API. Phase 3 identity (#2) now includes validated bearer authentication,
 Flutter PKCE login, profile editing/logout, and provider ownership checks, verified
 against live Keycloak and PostgreSQL. Native device login still needs validation
-under #7. Next: provider onboarding and offering management (#3), then requests
-and quotes (#4). Docker's ordinary restart limitation (#17) is mitigated by the
+under #7. Provider onboarding and offering management (#3) now includes atomic
+OWNER membership creation, owned offering CRUD/archive, strict decimal/category
+validation, version conflicts and Flutter management screens. API and client tests
+pass; live browser creation/edit/archive and persistence checks passed. Final CI
+is the remaining merge gate. Next: requests and
+quotes (#4). Docker's ordinary restart limitation (#17) is mitigated by the
 guarded Windows startup helper; existing container data is preserved.
