@@ -248,3 +248,15 @@ V4→V5 migration passed with existing data preserved; API readiness is UP on 80
 and the existing Flutter preview is restored on 3000. Final GitHub CI gates merge.
 Next slices: direct offering booking #6, Flutter lifecycle/native validation #7,
 then chat/reviews/disputes #8–#10. Full portfolio release is still incomplete.
+
+### Verified Phase 5 checkpoint
+
+PR #23 merged as `e6a5a24` after both CI runs passed at `f2b86e4`
+(35622355865 and 35622369304). Both API jobs verified migrations, 31 regular
+backend scenarios and two packaged-process restart scenarios. Both mobile jobs
+passed formatting, analysis, all 11 tests and release web compilation. Issue #5
+is closed. Current branch is `main`; latest pushed implementation is `e6a5a24`.
+This documentation checkpoint follows that merge without changing application code.
+The working tree is synchronized on push. #6 is the next implementation slice;
+#17 (ordinary Docker restart) and #22 (upstream Flow compatibility) remain open
+with working local mitigations. No real payment movement or public deployment.

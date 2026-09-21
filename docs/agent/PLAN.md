@@ -40,7 +40,8 @@ Phase 5 (#5) now implements durable booking actions, fake settlement, timeouts,
 retries, compensation and protected history/payment/execution reads. Packaged API
 restart tests preserve the same instance through provider and customer waits.
 Two release-specific Flow JPA defects have a tested Bliss-local compatibility
-adapter; #22 tracks its removal after an upstream fix. Final verification/CI gates
-the phase merge. Next: direct offering booking (#6), then Flutter lifecycle (#7).
+adapter; #22 tracks its removal after an upstream fix. PR #23 merged after all
+API/mobile CI checks passed, closing #5. Next: direct offering booking (#6), then
+Flutter lifecycle (#7).
 Docker's ordinary restart limitation (#17) is mitigated by the
 guarded Windows startup helper; existing container data is preserved.
