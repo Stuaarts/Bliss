@@ -294,3 +294,16 @@ deleting volumes. Compose PostgreSQL/Keycloak are healthy. Local V5→V6 migrati
 passed at 19:16 with API readiness UP on 8088; public discovery returns the expected
 offering revision and exact price. The existing Flutter preview is restored on
 3000. GitHub CI is the final merge gate. Next: Flutter lifecycle/native validation #7.
+
+### Verified direct-booking checkpoint
+
+PR #24 merged as `ce6ad6d` after both CI runs passed at `a0b35be`
+(35666823303 and 35666826072). API CI passed all 40 backend scenarios; mobile CI
+passed formatting, analysis, 11 tests and release web compilation. Issue #6 is
+closed. Current branch is `main`; latest pushed implementation is `ce6ad6d`.
+This documentation-only checkpoint reconciles scope and the next slice without
+changing application code. The next implementation is #7: customer/provider
+request, quote, direct-booking and lifecycle screens with real API integration;
+native-device authentication validation remains outstanding. #8–#10 and release
+hardening are still open. Docker #17 and Flow compatibility #22 retain their local
+mitigations. No full portfolio-release or production-readiness claim is made.

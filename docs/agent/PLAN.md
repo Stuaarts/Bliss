@@ -44,7 +44,7 @@ adapter; #22 tracks its removal after an upstream fix. PR #23 merged after all
 API/mobile CI checks passed, closing #5. Direct offering booking (#6) is implemented
 with scope/price snapshots, expected offering revisions, customer-scoped idempotency,
 concurrency tests and the same lifecycle. V6 upgrades existing quote bookings and
-enforces one source. Final verification and CI gate its merge. Next: Flutter
+enforces one source. PR #24 merged after all API/mobile CI checks passed, closing #6. Next: Flutter
 customer/provider lifecycle and native-device validation (#7).
 Docker's ordinary restart limitation (#17) is mitigated by the
 guarded Windows startup helper; existing container data is preserved.

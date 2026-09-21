@@ -2,13 +2,15 @@
 
 Implemented: public category/offering discovery, OIDC profiles and memberships,
 provider onboarding, owned offering management, Flutter catalog/account/business
-screens, request/quote APIs and atomic booking creation, schema constraints,
-operational endpoints and CI configuration.
+screens, request/quote APIs, direct offering bookings with frozen scope/price,
+durable BookingLifecycleFlow and fake settlement, protected booking timeline,
+schema constraints, operational endpoints and CI. Real process-restart tests
+cover both quote and direct sources; populated migration tests preserve old bookings.
 
-Required next: direct booking; durable BookingLifecycleFlow with fake payments;
-mobile request/quote/booking lifecycle; persisted chat; eligible reviews;
-manual-admin DisputeFlow. See issues #5–#10 and the direct-booking acceptance
-criteria under the booking work. A CREATED row alone is not workflow execution.
+Required next: mobile request/quote/direct-booking lifecycle and native-device
+authentication validation; persisted chat; eligible reviews; manual-admin
+DisputeFlow. See issues #7–#10. Backend booking execution is verified; the Flutter
+booking screens are not implemented yet.
 
 Portfolio hardening: migration/concurrency tests, restart demo, screenshots and
 complete CI evidence (#11–#12). Completion means the full master-prompt release
