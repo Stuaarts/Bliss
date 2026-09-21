@@ -1,5 +1,11 @@
 # Portfolio demo
 
+Provider management: sign in as the local provider, open **Your account → Manage
+your business**, then add an individual or company profile. Publish a service with
+a category and exact CAD price; discover it from the public catalog. Edit it, then
+archive it and show that public discovery no longer includes it while provider
+history retains it. Customer-only accounts cannot access these mutations.
+
 ## Available foundation demo
 
 Prerequisite: a working PostgreSQL setup. Start Compose and API with the root README,

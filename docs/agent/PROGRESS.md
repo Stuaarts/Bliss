@@ -146,3 +146,28 @@ the customer capability. Refreshing after the identity session expired cleared t
 private profile and returned to sign-in. Final local checks passed: 14 backend
 tests, Flutter analysis, 9 Flutter tests and release web compilation. Docker and
 both Bliss containers remained healthy across the six-hour idle interval.
+
+## 2026-09-20: provider management slice
+
+Authentication PR #19 merged as `76595f9` after both API/mobile CI runs passed at
+`aad7021` (35537264486 and 35537266448). Issue #2 is complete. Current branch:
+`codex/3-provider-offerings`, based on the merged main.
+
+Provider onboarding creates an INDIVIDUAL or COMPANY and its OWNER membership in
+one transaction. Provider-role holders may own multiple businesses; onboarding
+cannot grant OIDC roles. Owned offering endpoints publish, update and archive,
+validate exact decimal strings/currencies/categories, enforce optimistic versions,
+retain archive history and audit each successful mutation. Both route provider ID
+and offering ownership are checked. MEMBER-only access remains read-only metadata.
+
+Flutter adds business setup/edit, owned service pagination, publish/edit/archive
+forms, conflict messages and expired-session privacy. Local verification: Maven
+verify passes 18 integration tests, Flutter analyze passes, all 11 Flutter tests
+pass. Negative tests cover cross-provider IDs, ordinary membership, revoked roles,
+invalid money/category, stale versions, archive idempotence and audit count.
+No additional database migration is needed; the foundation schema supports this
+slice. Live browser verification passed: created Bliss Demo Studio as a COMPANY,
+published Window cleaning demo at CAD 45.50, edited to CAD 51.20 and archived.
+Database confirms inactive/version 2 and three audit events. Public discovery
+excludes it and its public detail returns 404. Demo history remains available to
+the owner. Docker helper healthy-path check passed; final CI is the merge gate.

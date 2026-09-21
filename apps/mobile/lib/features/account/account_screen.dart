@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/auth/auth_session.dart';
+import '../provider/provider_screen.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key, required this.session});
@@ -112,6 +113,19 @@ class _AccountScreenState extends State<AccountScreen> {
                     child: const Text('Refresh account'),
                   ),
                   const SizedBox(height: 24),
+                  if (session.capabilities.contains('provider'))
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.storefront_outlined),
+                      label: const Text('Manage your business'),
+                      onPressed: session.busy
+                          ? null
+                          : () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    ProviderScreen(session: session),
+                              ),
+                            ),
+                    ),
                   OutlinedButton(
                     onPressed: session.busy ? null : session.signOut,
                     child: const Text('Sign out'),

@@ -34,29 +34,32 @@ class AuthSession extends ChangeNotifier {
 
   Future<void> _bootstrap() async {
     profile =
-        await _request('POST', '/api/v1/me/bootstrap') as Map<String, dynamic>;
+        await request('POST', '/api/v1/me/bootstrap') as Map<String, dynamic>;
   }
 
   Future<void> rename(String name) => _run(() async {
-    profile = await _request('PUT', '/api/v1/me', {
+    profile = await request('PUT', '/api/v1/me', {
       'displayName': name.trim(),
     }) as Map<String, dynamic>;
   });
 
   Future<void> refresh() => _run(() async {
-    profile = await _request('GET', '/api/v1/me') as Map<String, dynamic>;
+    profile = await request('GET', '/api/v1/me') as Map<String, dynamic>;
   });
 
-  Future<Object?> _request(String method, String path, [Object? body]) async {
+  Future<Object?> request(String method, String path, [Object? body]) async {
+    if (!path.startsWith('/api/v1/')) throw ArgumentError('Invalid API path');
     String? token;
     try {
       token = await tokens.accessToken();
     } catch (_) {
       profile = null;
+      notifyListeners();
       throw StateError('Session expired');
     }
     if (token == null) {
       profile = null;
+      notifyListeners();
       throw StateError('Session expired');
     }
     final request = http.Request(method, Uri.parse('$apiBaseUrl$path'))
@@ -69,8 +72,14 @@ class AuthSession extends ChangeNotifier {
         .send(request)
         .then(http.Response.fromStream)
         .timeout(const Duration(seconds: 15));
-    if (response.statusCode == 401) profile = null;
-    if (response.statusCode != 200) throw StateError('Request failed');
+    if (response.statusCode == 401) {
+      profile = null;
+      notifyListeners();
+    }
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw AccountRequestException(response.statusCode);
+    }
+    if (response.statusCode == 204) return null;
     return jsonDecode(response.body);
   }
 
@@ -100,4 +109,16 @@ class AuthSession extends ChangeNotifier {
     _client.close();
     super.dispose();
   }
+}
+
+class AccountRequestException implements Exception {
+  const AccountRequestException(this.status);
+  final int status;
+  String get message => switch (status) {
+    400 => 'Check the fields and try again.',
+    401 => 'Your session ended. Please sign in again.',
+    403 || 404 => 'This business or service is not available to your account.',
+    409 => 'This record changed. Refresh before editing again.',
+    _ => 'We couldn’t complete that action. Please try again.',
+  };
 }
