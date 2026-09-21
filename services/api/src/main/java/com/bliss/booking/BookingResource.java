@@ -40,7 +40,10 @@ public class BookingResource {
             Instant createdAt,
             String workflowInstanceId,
             Instant scheduledAt,
-            Instant decisionDeadline) {}
+            Instant decisionDeadline,
+            UUID offeringId,
+            Long offeringVersion,
+            String description) {}
 
     public static View view(Booking b) {
         return new View(
@@ -56,7 +59,10 @@ public class BookingResource {
                 b.createdAt,
                 b.workflowInstanceId,
                 b.scheduledAt,
-                b.decisionDeadline);
+                b.decisionDeadline,
+                b.offeringId,
+                b.offeringVersion,
+                b.description);
     }
 
     @GET

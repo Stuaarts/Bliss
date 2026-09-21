@@ -38,5 +38,12 @@ History/payment/execution reads enforce the same booking access checks. Engine
 status is visible without exposing raw exception details. Payment simulation is
 enforced in the schema; no real payment adapter or credentials are configured.
 
+Direct bookings derive the customer from the token and all scope/price/provider
+fields from the locked offering. Expected offering versions prevent accepting a
+price changed since discovery. Customer-scoped idempotency keys bind the offering,
+version and normalized city; concurrent retries create a single booking/start intent.
+Archived offerings reject new bookings while original receipts remain retrievable
+by their customer. Provider OWNER and MEMBER identities cannot self-book that provider.
+
 OpenAPI/health/metrics are local development endpoints. Scope management access,
 rate limiting, retention, backup/recovery and abuse controls before product beta (#15).

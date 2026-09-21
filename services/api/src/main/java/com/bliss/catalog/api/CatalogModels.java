@@ -22,7 +22,8 @@ public final class CatalogModels {
                     String price,
             String currency,
             Category category,
-            Provider provider) {}
+            Provider provider,
+            long version) {}
 
     public record Page<T>(List<T> items, int page, int size, long total) {}
 }

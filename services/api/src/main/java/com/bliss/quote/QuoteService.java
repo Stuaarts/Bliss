@@ -1,6 +1,7 @@
 package com.bliss.quote;
 
 import com.bliss.booking.Booking;
+import com.bliss.booking.BookingCreation;
 import com.bliss.booking.BookingResource;
 import com.bliss.catalog.api.CatalogModels;
 import com.bliss.common.Money;
@@ -30,6 +31,7 @@ public class QuoteService {
     @Inject AuditLog audit;
     @Inject EntityManager em;
     @Inject CurrentUser current;
+    @Inject BookingCreation creation;
 
     @ConfigProperty(name = "bliss.quotes.max-validity-seconds", defaultValue = "2592000")
     long maxValiditySeconds;
@@ -141,30 +143,17 @@ public class QuoteService {
                 r.id,
                 Quote.Status.SUBMITTED);
         var b = new Booking();
-        b.id = UUID.randomUUID();
         b.requestId = r.id;
         b.quoteId = q.id;
         b.customerId = r.customerId;
         b.providerId = q.providerId;
         b.title = r.title;
+        b.description = q.description;
         b.city = r.city;
         b.price = q.price;
         b.currency = q.currency;
-        b.status = Booking.Status.CREATED;
-        b.createdAt = Instant.now();
-        b.persistAndFlush();
-        em.createNativeQuery("INSERT INTO booking_workflow_start(booking_id) VALUES (?1)")
-                .setParameter(1, b.id)
-                .executeUpdate();
-        em.createNativeQuery(
-                        "INSERT INTO booking_status_history(id,booking_id,status,actor_user_id,occurred_at) VALUES (?1,?2,'CREATED',?3,?4)")
-                .setParameter(1, UUID.randomUUID())
-                .setParameter(2, b.id)
-                .setParameter(3, r.customerId)
-                .setParameter(4, b.createdAt)
-                .executeUpdate();
+        creation.persist(b);
         audit.record(r.customerId, "QUOTE_ACCEPTED", q.id);
-        audit.record(r.customerId, "BOOKING_CREATED", b.id);
         return BookingResource.view(b);
     }
 

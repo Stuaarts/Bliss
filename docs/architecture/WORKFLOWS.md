@@ -18,8 +18,9 @@ stateDiagram-v2
     WAIT_CUSTOMER --> COMPLETED: customer confirms / capture
 ```
 
-Quote acceptance inserts a durable start request in the same transaction as the
-booking. A dispatcher claims it under the booking lock, stores the canonical engine
+Quote acceptance and direct offering booking share `BookingCreation`, inserting a
+durable start request in the same transaction as the snapshot/history/audit. A
+dispatcher claims it under the booking lock, stores the canonical engine
 instance ID, commits, then starts the instance. A crash before engine persistence
 leaves a claim recoverable after 30 seconds. Existing checkpoints belong to the
 engine's startup restoration; the dispatcher never starts a replacement for them.
@@ -74,7 +75,8 @@ start recovery, ownership checks and history/payment visibility. `WorkflowRestar
 runs during Maven verify: an isolated PostgreSQL container and a packaged API are
 started, waiting loops checkpoint, and the API is forcibly killed. The same database
 restores the same instance, then rejection or completion verifies a single settlement.
-The completion case also crashes while waiting for the customer. This is a real
+The completion case starts from a direct offering booking and also crashes while
+waiting for the customer; the rejection case starts from a quote. This is a real
 process test, not a mock restoration call.
 
 Run one API worker against this local database. Multi-replica workflow ownership,

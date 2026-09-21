@@ -37,6 +37,15 @@ as the customer. Repeat confirmation with the same key; payment operations still
 contain exactly one AUTHORIZE and one CAPTURE. All payments are simulations.
 The full booking Flutter screens remain #7.
 
+For the direct path, get an active offering from discovery, retain its `version`,
+then submit `/api/v1/offerings/{id}/bookings` as a customer with that offeringVersion,
+city and a fresh UUID Idempotency-Key. Show the original price/scope on the resulting
+booking. Repeat the same request: the original ID is returned with no second booking.
+Edit the offering and attempt a new booking with the old version: 409 requires a
+fresh review. Continue the first booking through the same provider/customer actions.
+Automated migration tests also verify upgrading an existing quote booking from V5;
+packaged restart tests cover both quote and direct booking sources.
+
 ## Target 5–10 minute full release demo (remaining UI/review/dispute work)
 
 1. Start PostgreSQL, Keycloak and Quarkus; show Swagger and registered workflow.

@@ -26,11 +26,23 @@ public class Booking extends PanacheEntityBase {
 
     @Id public UUID id;
 
-    @Column(name = "request_id", nullable = false, unique = true)
+    @Column(name = "request_id", unique = true)
     public UUID requestId;
 
-    @Column(name = "quote_id", nullable = false, unique = true)
+    @Column(name = "quote_id", unique = true)
     public UUID quoteId;
+
+    @Column(name = "offering_id")
+    public UUID offeringId;
+
+    @Column(name = "offering_version")
+    public Long offeringVersion;
+
+    @Column(name = "direct_key")
+    public UUID directKey;
+
+    @Column(nullable = false, length = 2000)
+    public String description;
 
     @Column(name = "customer_id", nullable = false)
     public UUID customerId;

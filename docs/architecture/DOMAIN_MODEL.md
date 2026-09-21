@@ -13,7 +13,8 @@ Current Flyway schema:
   OPEN/ACCEPTED/CANCELLED status and version. Scope freezes once quoted.
 - quote: request/provider, immutable scope and exact price, UTC expiry and
   SUBMITTED/ACCEPTED/DECLINED status. Unique provider/request and accepted request.
-- booking: unique request/quote, customer/provider, price and title/city snapshot,
+- booking: either unique request/quote or offering/version with a customer-scoped
+  direct idempotency key; customer/provider, price and title/description/city snapshot,
   lifecycle status, durable workflow instance ID, schedule/decision deadline and version.
 - booking_status_history: transactional history from CREATED through terminal state.
 - audit_event: actor/resource/action metadata, nullable actor for system transitions.
@@ -32,4 +33,9 @@ participants/messages, notifications, reviews, verification, disputes/evidence a
 audit extensions. Booking acceptance is idempotent via its unique request/quote
 constraints and serialized parent-request transaction. The durable start queue
 is committed with booking creation so orchestration can recover after a crash.
+V6 backfills accepted quote scope into existing bookings and enforces exactly one
+booking source. Direct creation locks the customer for key serialization, then the
+offering to serialize snapshot admission against edits/archive. A unique customer/key
+index provides a second duplicate barrier. Both paths share BookingCreation for
+initial history, audit and dispatch. Offering changes never rewrite booking scope.
 Do not precreate empty feature tables merely to match a diagram.
