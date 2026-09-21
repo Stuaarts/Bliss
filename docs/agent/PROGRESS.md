@@ -171,3 +171,26 @@ published Window cleaning demo at CAD 45.50, edited to CAD 51.20 and archived.
 Database confirms inactive/version 2 and three audit events. Public discovery
 excludes it and its public detail returns 404. Demo history remains available to
 the owner. Docker helper healthy-path check passed; final CI is the merge gate.
+
+## 2026-09-20: request/quote transaction slice
+
+Provider PR #20 merged as `a3a1b0b`, after both API/mobile CI runs passed at
+`3a1b510` (35548812854 and 35548825992). Issue #3 is complete. Current branch:
+`codex/4-requests-quotes`, based on merged main.
+
+V4 adds owned customer requests, open provider opportunities, expiring quotes,
+booking snapshots and initial history. Parent-request locks serialize quote
+submission, decline, acceptance and cancellation; unique constraints enforce one
+accepted quote/booking per request. Same-quote retries return the original booking.
+Request scope freezes after quoting; quotes must match request currency and cannot
+come from the customer's own identity. Mutation identity/ownership is server-side.
+Quote validity defaults to 30 days maximum as a configurable local demo policy.
+
+The eight new API scenarios passed, including simultaneous different-quote
+acceptance, simultaneous same-quote retries, cancellation racing acceptance,
+expired/declined/self quotes, customer/provider ownership and money constraints.
+Final Maven verify passed all 26 backend tests, formatting and packaged build
+after API read-route/enum cleanup. V4 migrated the existing local PostgreSQL
+successfully and API readiness is UP. The booking is only CREATED: no payment/workflow starts
+yet, and request/quote Flutter screens remain #7. Next gate: final verification,
+CI, then durable booking orchestration #5.
