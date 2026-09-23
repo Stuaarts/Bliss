@@ -347,3 +347,15 @@ HTTP/JWT processing before the server correctly rejected it as past. The fixture
 now uses a ten-second lead with microsecond precision and still waits for the
 actual scheduled time before starting. Production validation is unchanged. The
 full CI suite must pass on this fix before merging.
+
+### Verified Flutter lifecycle checkpoint
+
+PR #25 merged as `a671e58` after both CI runs passed at `cfdbdab`
+(35925889787 and 35925893940). Each API job passed 37 regular tests and three
+migration/restart integration scenarios without skips; mobile formatting,
+analysis, all 22 tests and release web compilation passed. The scheduling fixture
+fix passed both independent runners. Current branch is `main`, synchronized with
+the merged implementation. This documentation checkpoint records that result.
+Issue #7 stays open for native AppAuth/device validation; #8 conversations is the
+next independent implementation slice. Local Docker, API and Flutter preview are
+running, with the completed demo booking open. No full release claim is made.
