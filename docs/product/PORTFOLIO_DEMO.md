@@ -35,7 +35,9 @@ and accept; poll the resulting booking until WAIT_PROVIDER. Show `/history`,
 and a fresh UUID Idempotency-Key. After that time, start, mark complete and confirm
 as the customer. Repeat confirmation with the same key; payment operations still
 contain exactly one AUTHORIZE and one CAPTURE. All payments are simulations.
-The full booking Flutter screens remain #7.
+The same flow is now available through Flutter's **Your activity** screens;
+see [the verified browser demo and screenshots](../demo/MARKETPLACE.md). Native
+device validation remains #7.
 
 For the direct path, get an active offering from discovery, retain its `version`,
 then submit `/api/v1/offerings/{id}/bookings` as a customer with that offeringVersion,

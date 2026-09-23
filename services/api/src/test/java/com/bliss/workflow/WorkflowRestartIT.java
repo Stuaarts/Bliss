@@ -181,6 +181,8 @@ class WorkflowRestartIT {
             String key = UUID.randomUUID().toString();
             String action = "provider-reject", actor = provider, terminal = "CANCELLED";
             if (complete) {
+                // Leave room for HTTP/JWT processing on a busy CI runner. Rounding a
+                // one-second lead down to whole seconds could make it past on arrival.
                 call(
                         "POST",
                         "/api/v1/bookings/" + booking + "/provider-accept",
@@ -188,8 +190,8 @@ class WorkflowRestartIT {
                         Map.of(
                                 "scheduledAt",
                                 Instant.now()
-                                        .plusSeconds(1)
-                                        .truncatedTo(java.time.temporal.ChronoUnit.SECONDS)
+                                        .plusSeconds(10)
+                                        .truncatedTo(java.time.temporal.ChronoUnit.MICROS)
                                         .toString()),
                         UUID.randomUUID().toString(),
                         202);

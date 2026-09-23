@@ -339,3 +339,11 @@ still outstanding: no Android/iOS device is connected, Android command-line tool
 are missing, and SDK license status is unknown. Issue #7 remains open for this
 work. The next independent feature is authorized conversations (#8). No backend
 schema/routes changed, no real payment moved, and no public deployment occurred.
+
+Initial PR #25 CI passed both mobile jobs and one API job; the duplicate API run
+exposed an existing restart-test timing race. Its provider acceptance schedule
+used now + one second rounded down to seconds, leaving less than one second for
+HTTP/JWT processing before the server correctly rejected it as past. The fixture
+now uses a ten-second lead with microsecond precision and still waits for the
+actual scheduled time before starting. Production validation is unchanged. The
+full CI suite must pass on this fix before merging.
