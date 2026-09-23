@@ -44,7 +44,11 @@ adapter; #22 tracks its removal after an upstream fix. PR #23 merged after all
 API/mobile CI checks passed, closing #5. Direct offering booking (#6) is implemented
 with scope/price snapshots, expected offering revisions, customer-scoped idempotency,
 concurrency tests and the same lifecycle. V6 upgrades existing quote bookings and
-enforces one source. PR #24 merged after all API/mobile CI checks passed, closing #6. Next: Flutter
-customer/provider lifecycle and native-device validation (#7).
+enforces one source. PR #24 merged after all API/mobile CI checks passed, closing #6.
+The Flutter lifecycle (#7) now has requests, quotes, direct booking, provider actions,
+customer confirmation and a live timeline. The web flow passed against the real
+local services; native-device authentication remains unverified. Current branch:
+`codex/7-flutter-marketplace`, awaiting CI and merge. Next independent slice:
+authorized persisted conversations (#8); #7 remains open for native validation.
 Docker's ordinary restart limitation (#17) is mitigated by the
 guarded Windows startup helper; existing container data is preserved.

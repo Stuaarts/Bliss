@@ -90,7 +90,9 @@ void main() {
       await tester.drag(find.byType(ListView), const Offset(0, 1200));
       await tester.pumpAndSettle();
       expect(
-        find.text('This record changed. Refresh before editing again.'),
+        find.text(
+          'This item changed or an action is pending. Refresh and review it before trying again.',
+        ),
         findsOneWidget,
       );
       await session.signOut();

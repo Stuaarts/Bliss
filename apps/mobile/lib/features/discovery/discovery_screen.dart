@@ -4,6 +4,9 @@ import '../../core/api/api_client.dart';
 import 'catalog.dart';
 import '../../core/auth/auth_session.dart';
 import '../account/account_screen.dart';
+import '../marketplace/marketplace_screen.dart';
+import '../marketplace/market_widgets.dart';
+import '../marketplace/booking_screen.dart';
 
 class DiscoveryScreen extends StatefulWidget {
   const DiscoveryScreen({super.key, required this.catalog, this.session});
@@ -78,6 +81,25 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
         style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -1),
       ),
       actions: [
+        if (widget.session != null)
+          ListenableBuilder(
+            listenable: widget.session!,
+            builder: (context, _) => IconButton(
+              tooltip: 'Your activity',
+              icon: const Icon(Icons.receipt_long_outlined),
+              onPressed: () => widget.session!.signedIn
+                  ? privatePage<void>(
+                      context,
+                      widget.session!,
+                      MarketplaceScreen(session: widget.session!),
+                    )
+                  : Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => AccountScreen(session: widget.session!),
+                      ),
+                    ),
+            ),
+          ),
         if (widget.session != null)
           IconButton(
             tooltip: 'Your account',
@@ -163,7 +185,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
               ),
               const SizedBox(height: 12),
               for (final offering in _offerings)
-                _OfferingCard(offering: offering),
+                _OfferingCard(offering: offering, session: widget.session),
               if (_total > 20)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -198,8 +220,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
 }
 
 class _OfferingCard extends StatelessWidget {
-  const _OfferingCard({required this.offering});
+  const _OfferingCard({required this.offering, this.session});
   final Offering offering;
+  final AuthSession? session;
 
   @override
   Widget build(BuildContext context) => Card(
@@ -232,7 +255,38 @@ class _OfferingCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 24),
-                  const Text('Booking will be available in a future update.'),
+                  if (session != null)
+                    ListenableBuilder(
+                      listenable: session!,
+                      builder: (context, _) {
+                        if (session!.capabilities.contains('customer')) {
+                          return FilledButton(
+                            onPressed: () =>
+                                openDirectBooking(context, session!, offering),
+                            child: const Text('Request booking'),
+                          );
+                        }
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              session!.signedIn
+                                  ? 'A customer account is needed to request a booking.'
+                                  : 'Sign in to request this service.',
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) =>
+                                      AccountScreen(session: session!),
+                                ),
+                              ),
+                              child: const Text('Your account'),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                 ],
               ),
             ),

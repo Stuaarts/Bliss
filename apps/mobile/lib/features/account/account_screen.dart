@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../marketplace/marketplace_screen.dart';
+import '../marketplace/market_widgets.dart';
+
 import '../../core/auth/auth_session.dart';
 import '../provider/provider_screen.dart';
 
@@ -126,6 +129,17 @@ class _AccountScreenState extends State<AccountScreen> {
                               ),
                             ),
                     ),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.receipt_long_outlined),
+                    label: const Text('Your activity'),
+                    onPressed: session.busy
+                        ? null
+                        : () => privatePage<void>(
+                            context,
+                            session,
+                            MarketplaceScreen(session: session),
+                          ),
+                  ),
                   OutlinedButton(
                     onPressed: session.busy ? null : session.signOut,
                     child: const Text('Sign out'),
