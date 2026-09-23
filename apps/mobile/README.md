@@ -3,7 +3,10 @@
 Flutter 3.47.5 / Dart 3.13.4. The first slice is a real HTTP catalog client with
 category filters, bounded pagination, provider/offering details and retry states.
 The account screen supports Keycloak sign-in, profile editing and sign-out.
-Booking actions remain tracked in issue #7.
+Your activity connects customer requests, provider opportunities/quotes and both
+booking paths to the real API. Booking details show status history, local schedule
+and deadline times, simulated settlement and role/state-appropriate actions.
+See [demo steps and evidence](../../docs/demo/MARKETPLACE.md).
 
 From this directory, with the API running in the `local` profile:
 
@@ -31,6 +34,21 @@ sessionStorage; it expires after ten minutes and is removed on callback. Native
 refresh tokens use platform secure storage; access tokens stay in memory. Native
 Android/iOS code is analyzed but device login has not yet been verified.
 
-HTTP client and typed mappings live under `core/api` and `features/discovery`.
+HTTP clients and typed mappings live under `core`, `features/discovery` and
+`features/marketplace`.
 Prices remain decimal strings. UI code ignores stale responses and guards disposed
 widgets. Tests use injected HTTP clients; they do not claim a live API demo.
+
+Direct bookings and lifecycle actions keep a UUID retry key and the original body
+in memory until a definite response. An uncertain response freezes form inputs;
+retry sends the original intent. These keys clear on sign-out, session expiry or
+app reload: check Your activity before making another booking after restarting.
+Request/quote creation has no client retry key, so an uncertain response asks the
+user to check their list first. Quote acceptance is idempotent server-side.
+Private routes are bound to the signed-in session; logout disposes their forms,
+and late responses from an older session are rejected.
+
+Native validation remains in #7. On the September 22 workstation check, Flutter
+reported missing Android command-line tools, unknown SDK license status, and no
+connected Android/iOS device. iOS also requires a macOS host. The browser demo
+does not establish native AppAuth callback or secure-storage behavior.

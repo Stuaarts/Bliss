@@ -307,3 +307,43 @@ request, quote, direct-booking and lifecycle screens with real API integration;
 native-device authentication validation remains outstanding. #8–#10 and release
 hardening are still open. Docker #17 and Flow compatibility #22 retain their local
 mitigations. No full portfolio-release or production-readiness claim is made.
+
+## 2026-09-22–23: Flutter marketplace lifecycle
+
+Issue #7 implementation is on `codex/7-flutter-marketplace`, based on main
+`68dfb71`. Your activity connects customer requests, provider opportunities and
+quotes, quote acceptance, direct-offering confirmation and owned booking details.
+Provider schedule/start/completion and customer confirmation/cancellation use the
+existing durable action endpoints. Timelines show local times and simulated
+payment status; visible nonterminal bookings poll without repainting unchanged data.
+
+Session-bound routes dispose private forms on logout. Late requests from an older
+session are rejected. UUID retry keys and frozen request bodies survive uncertain
+responses in the current session; processed-event retries do not leave the UI
+waiting. Keys are deliberately in memory, so users must check their booking list
+after reloading or signing out. Request/quote creation does not permit blind retry
+after an uncertain response. Backend ownership checks remain authoritative.
+
+Real browser verification against local Keycloak, PostgreSQL and API completed
+the request → quote → acceptance → schedule → start → provider completion → customer
+confirmation flow for CAD 85.50 on September 22. On September 23, the local stack
+restart restored the unanswered direct booking and expired it after its provider
+deadline, voiding CAD 65.50. A new direct booking was created and cancelled through
+the UI with a simulated void. Completed/expired/cancelled records remained visible.
+Offering and activity layouts were also checked at 390 pixels. Reproducible steps
+and screenshots are in `docs/demo/MARKETPLACE.md`.
+
+Flutter analysis, all 22 tests and release web compilation passed, followed
+by full GitHub CI before merge. Native AppAuth and secure-storage validation is
+still outstanding: no Android/iOS device is connected, Android command-line tools
+are missing, and SDK license status is unknown. Issue #7 remains open for this
+work. The next independent feature is authorized conversations (#8). No backend
+schema/routes changed, no real payment moved, and no public deployment occurred.
+
+Initial PR #25 CI passed both mobile jobs and one API job; the duplicate API run
+exposed an existing restart-test timing race. Its provider acceptance schedule
+used now + one second rounded down to seconds, leaving less than one second for
+HTTP/JWT processing before the server correctly rejected it as past. The fixture
+now uses a ten-second lead with microsecond precision and still waits for the
+actual scheduled time before starting. Production validation is unchanged. The
+full CI suite must pass on this fix before merging.

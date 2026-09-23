@@ -16,8 +16,11 @@ BookingLifecycleFlow now coordinates persisted human actions, provider deadlines
 retry/compensation and idempotent simulated settlement. Protected history/payment
 reads and forced-process restart tests cover recovery. Customers can also book a
 published offering directly through the API, with an immutable scope/price snapshot
-and protection against stale prices and duplicate submissions. Flutter booking
-screens, chat, reviews and disputes remain upcoming GitHub slices.
+and protection against stale prices and duplicate submissions. Flutter now connects
+customer requests, provider quotes, direct booking, scheduling, lifecycle actions,
+and the booking/payment timeline. The web demo is verified against the real local
+API; native device authentication, chat, reviews and disputes remain outstanding.
+See the [marketplace demo](docs/demo/MARKETPLACE.md) for steps and evidence.
 
 ## Run locally
 
