@@ -35,7 +35,7 @@ refresh tokens use platform secure storage; access tokens stay in memory. Native
 Android/iOS code is analyzed but device login has not yet been verified.
 
 HTTP clients and typed mappings live under `core`, `features/discovery` and
-`features/marketplace` and `features/conversation`.
+`features/marketplace`, `features/conversation` and `features/reviews`.
 Prices remain decimal strings. UI code ignores stale responses and guards disposed
 widgets. Tests use injected HTTP clients; they do not claim a live API demo.
 
@@ -55,6 +55,13 @@ original text/key across route navigation within the same session. After a full
 app reload, read the conversation before resending an unconfirmed message.
 Authorization loss clears the visible history and composer. Chat is plain text;
 attachments, push notifications and read receipts are not implemented.
+
+Completed bookings expose Booking review. Eligibility is read from the API; an
+existing review is shown instead of a second form. Rating and optional comment
+become public when published, as explained in the form. Provider reviews are
+available from offering details without sign-in, with aggregate rating/count,
+pagination and refresh. Lost submission responses preserve the original intent
+for retry; booking uniqueness also protects retries after an app reload.
 
 Native validation remains in #7. On the September 22 workstation check, Flutter
 reported missing Android command-line tools, unknown SDK license status, and no

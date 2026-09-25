@@ -52,7 +52,12 @@ local services; native-device authentication remains unverified. PR #25 merged a
 (#8) now include V7 tables, participant/current-owner access checks, stable message
 cursors, idempotent sends and Flutter chat. Local verification passed 46 backend
 scenarios and 28 Flutter tests; both participants and API restart persistence were
-verified in the browser. Current branch: `codex/8-booking-chat`, pending PR/CI.
-Next independent slice: eligible reviews (#9); #7 remains open for native validation.
+verified in the browser. PR #26 merged as `93b1a02` after all four API/mobile CI
+jobs passed, closing #8. Reviews (#9) now include V8, completed-customer eligibility,
+one review per booking, bounded public reads/averages and Flutter publish/read flows.
+Local checks passed 51 backend scenarios and 33 Flutter tests. Real browser publish,
+reopen and signed-out aggregate reads passed at phone width. Current branch:
+`codex/9-completed-booking-reviews`, pending PR/CI. Next independent slice:
+manual-admin DisputeFlow (#10); #7 remains open for native validation.
 Docker's ordinary restart limitation (#17) is mitigated by the
 guarded Windows startup helper; existing container data is preserved.

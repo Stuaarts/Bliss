@@ -66,4 +66,5 @@ backend routes or migrations.
 Native device authentication remains unverified under #7: the workstation lacks
 Android command-line tools and has no connected mobile device; SDK license status
 is unknown. iOS requires macOS. This evidence covers Flutter web, not a native or
-production release. Chat, reviews and disputes are separate upcoming slices.
+production release. [Chat](CHAT.md) and [reviews](REVIEWS.md) now have separate
+demo evidence; disputes remain upcoming.

@@ -20,10 +20,12 @@ and protection against stale prices and duplicate submissions. Flutter now conne
 customer requests, provider quotes, direct booking, scheduling, lifecycle actions,
 and the booking/payment timeline. The web demo is verified against the real local
 API. Persisted booking conversations now support participant-only chat, polling,
-older-message pagination and safe send retries. Native device authentication,
-reviews and disputes remain outstanding.
+older-message pagination and safe send retries. Completed bookings support one
+customer review, with public provider ratings and comments. Native device
+authentication and disputes remain outstanding.
 See the [marketplace demo](docs/demo/MARKETPLACE.md) for steps and evidence.
 The [chat demo](docs/demo/CHAT.md) records both participants and restart persistence.
+See the [reviews demo](docs/demo/REVIEWS.md) for eligibility and public-rating checks.
 
 ## Run locally
 

@@ -26,13 +26,16 @@ Current Flyway schema:
 - conversation_participant: conversation/user key and CUSTOMER/PROVIDER role snapshot.
 - conversation_message: participant sender, plain text, UTC timestamp, unique
   conversation sequence and sender-scoped UUID retry key.
+- booking_review: unique booking reference, constrained integer rating 1–5,
+  optional plain-text comment and UTC creation time. Customer/provider are derived
+  from the immutable booking relationship; public reads omit those private IDs.
 
 Public reads return DTOs with decimal strings so clients do not round money through
 binary floating point. Lists have deterministic title/id ordering and bounded pages.
 Reference categories are migrated globally; sample providers/offerings are local/test only.
 
 Future slices add customer profiles, addresses, service areas, availability/blackouts,
-request attachments, notifications, reviews, verification, disputes/evidence and
+request attachments, notifications, verification, disputes/evidence and
 audit extensions. Booking acceptance is idempotent via its unique request/quote
 constraints and serialized parent-request transaction. The durable start queue
 is committed with booking creation so orchestration can recover after a crash.
@@ -49,3 +52,9 @@ Every read/write also requires their current capability and booking access.
 Conversation row locking allocates sequences and commits messages together, so
 cursor polling cannot skip a message whose transaction committed late. Message
 sender membership and retry/sequence uniqueness are also enforced by the database.
+
+V8 adds reviews. The booking lock serializes review submissions, checks COMPLETED
+status and the owning customer's current capability, and makes an identical retry
+return the original review. Changed duplicates return 409. Database uniqueness
+prevents a second review per booking. Provider averages/counts are calculated from
+all their reviews, independently of the current page; no stale aggregate is stored.

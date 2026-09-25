@@ -14,8 +14,10 @@ timeline/payment/execution reads show progress; repeated submissions are idempot
 
 Customer UI: OIDC login → create request → compare quotes → accept (or directly
 book a published offering) → booking timeline → confirm completion. Request/quote
-decline and eligible cancellation are available. Disputes and reviews are
-the remaining steps toward the full customer experience.
+decline and eligible cancellation are available. After completion, Booking review
+lets the customer publish one rating and optional public comment. Offering detail
+→ Provider reviews shows the provider's average, review count and paged comments
+without sign-in. Disputes remain the next step toward the full customer experience.
 
 Provider UI: same identity with provider capability → own offerings → opportunities
 → quote → accept/reject assigned booking → start at the scheduled time → mark

@@ -57,5 +57,14 @@ PostgreSQL; this is not end-to-end encryption. No delete/edit/retention policy i
 implemented yet. UUID send keys are scoped to conversation and sender and bind
 normalized text; duplicate retries never create another message or audit event.
 
+Review creation requires the booking customer and current customer capability,
+with the booking locked and COMPLETED. Provider/admin roles never bypass this.
+Public review DTOs expose only review ID, rating, comment and creation time;
+booking/customer IDs, display names and OIDC subjects are excluded. Comments are
+plain text, bounded to 2000 UTF-16 code units, with NUL rejected; audit records omit
+the text. Flutter explicitly explains public visibility before publishing. Reviews
+are immutable in this slice. Moderation, reporting, retention and removal policies
+remain product-beta work; do not present this as a production moderation system.
+
 OpenAPI/health/metrics are local development endpoints. Scope management access,
 rate limiting, retention, backup/recovery and abuse controls before product beta (#15).

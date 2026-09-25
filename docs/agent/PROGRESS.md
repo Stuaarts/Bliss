@@ -387,3 +387,40 @@ restart failed safely and succeeded once the API was ready.
 Remaining: PR/CI and merge; reviews (#9) next. Native auth (#7), invitations/ownership
 transfer for chat, attachments, read receipts, push and retention remain outside
 this slice. No real payment or public deployment occurred.
+
+### September 25 — chat merge checkpoint
+
+PR #26 merged as `93b1a02`, closing #8, after both API and both mobile CI jobs
+passed at `df1bb8e` (runs 36152153242 and 36152194589). Work continued on
+`codex/9-completed-booking-reviews`, based on the merged main branch.
+
+## September 25, 2026 — completed-booking reviews (#9)
+
+V8 adds a unique review per booking, constrained 1–5 rating, optional bounded plain
+text and UTC time. A booking lock serializes eligibility and creation; only the
+owning customer with current capability may submit for COMPLETED bookings. Exact
+normalized retries return the original review; changed duplicates return 409.
+Public provider pages return average/count over all reviews, with bounded paging
+and no booking/customer identity fields. No cached rating counter can drift.
+
+Flutter now exposes Booking review on completed bookings and Provider reviews from
+offering detail. The form states public visibility/immutability, validates rating,
+preserves uncertain submission intent, reloads on duplicate conflict, and disposes
+with the private session. Public ratings need no login and support retry/pagination.
+
+Maven verify passed 48 regular tests plus three packaged migration/restart scenarios
+(51 total, no skips). The five new review scenarios cover invalid lifecycle states,
+ownership/capability/anonymous rejection, validation, concurrent creation, database
+uniqueness and public aggregate/privacy behavior. Flutter formatting/analysis,
+33 tests and release web build passed. A retry widget test initially tapped before
+the scroll layout settled; awaiting that layout resolved the fixture failure.
+
+Browser checks against real local services verified no-review empty state, customer
+publishing on the completed September garden help booking, reopening without a
+duplicate form, and signed-out provider reads showing 5.00 / 5 and one review.
+Form/saved/public views passed at 390 × 844; screenshots are in
+`docs/demo/REVIEWS.md`. V8 upgraded the existing local database without reset.
+
+PR/CI remain before merge. Next feature: #10 manual-admin disputes. #7 native
+authentication and #15 production moderation/privacy remain open. No real payment,
+public hosting, new vendor service or upstream Flow change occurred.
