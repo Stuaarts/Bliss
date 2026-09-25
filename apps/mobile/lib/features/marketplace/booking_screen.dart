@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/auth/auth_session.dart';
 import '../discovery/catalog.dart';
+import '../conversation/chat_screen.dart';
 import 'marketplace.dart';
 import 'market_widgets.dart';
 
@@ -192,6 +193,32 @@ class _BookingScreenState extends State<BookingScreen> {
     }
   }
 
+  Future<void> _chat() async {
+    setState(() {
+      _acting = true;
+      _error = null;
+    });
+    try {
+      final conversation = await widget.session.request(
+        'POST',
+        '/api/v1/bookings/${widget.bookingId}/conversation',
+      ) as Json;
+      if (!mounted) return;
+      await privatePage<void>(
+        context,
+        widget.session,
+        ChatScreen(
+          session: widget.session,
+          conversationId: conversation['id'] as String,
+        ),
+      );
+    } catch (e) {
+      if (mounted) setState(() => _error = marketError(e));
+    } finally {
+      if (mounted) setState(() => _acting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final booking = _booking;
@@ -239,6 +266,14 @@ class _BookingScreenState extends State<BookingScreen> {
             ),
             const SizedBox(height: 12),
             Text(booking.description),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _acting || _loading ? null : _chat,
+                icon: const Icon(Icons.chat_bubble_outline),
+                label: const Text('Messages'),
+              ),
+            ),
             const SizedBox(height: 12),
             Text(
               '${booking.city} · ${booking.currency} ${booking.price}',

@@ -48,7 +48,11 @@ enforces one source. PR #24 merged after all API/mobile CI checks passed, closin
 The Flutter lifecycle (#7) now has requests, quotes, direct booking, provider actions,
 customer confirmation and a live timeline. The web flow passed against the real
 local services; native-device authentication remains unverified. PR #25 merged as
-`a671e58` after both API/mobile CI runs passed. Current branch: `main`. Next independent slice:
-authorized persisted conversations (#8); #7 remains open for native validation.
+`a671e58` after both API/mobile CI runs passed. Authorized persisted conversations
+(#8) now include V7 tables, participant/current-owner access checks, stable message
+cursors, idempotent sends and Flutter chat. Local verification passed 46 backend
+scenarios and 28 Flutter tests; both participants and API restart persistence were
+verified in the browser. Current branch: `codex/8-booking-chat`, pending PR/CI.
+Next independent slice: eligible reviews (#9); #7 remains open for native validation.
 Docker's ordinary restart limitation (#17) is mitigated by the
 guarded Windows startup helper; existing container data is preserved.

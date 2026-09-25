@@ -14,12 +14,18 @@ timeline/payment/execution reads show progress; repeated submissions are idempot
 
 Customer UI: OIDC login → create request → compare quotes → accept (or directly
 book a published offering) → booking timeline → confirm completion. Request/quote
-decline and eligible cancellation are available. Chat, disputes and reviews are
+decline and eligible cancellation are available. Disputes and reviews are
 the remaining steps toward the full customer experience.
 
 Provider UI: same identity with provider capability → own offerings → opportunities
 → quote → accept/reject assigned booking → start at the scheduled time → mark
-complete. Chat remains planned. See [verified demo](../demo/MARKETPLACE.md).
+complete. See [verified demo](../demo/MARKETPLACE.md).
+
+Customer/provider chat: open an owned booking → Messages → send plain text.
+Both participants can reopen it through Your activity → Messages. The visible
+chat polls every three seconds, supports refresh and loading earlier messages,
+and retains an uncertain send for an idempotent retry. Completed/cancelled bookings
+keep their conversations. See [chat evidence and access policy](../demo/CHAT.md).
 
 Planned admin: authenticated scoped access → review evidence → explicit dispute
 decision → idempotent fake capture/refund and audit record.
