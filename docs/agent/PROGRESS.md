@@ -424,3 +424,10 @@ Form/saved/public views passed at 390 × 844; screenshots are in
 PR/CI remain before merge. Next feature: #10 manual-admin disputes. #7 native
 authentication and #15 production moderation/privacy remain open. No real payment,
 public hosting, new vendor service or upstream Flow change occurred.
+
+### Reviews merge checkpoint
+
+PR #27 merged as `9610918`, closing #9, after all four API/mobile jobs passed at
+`6dedc34` (runs 36154068172 and 36154116278). Main is synchronized with that change.
+The next active slice is #10, durable disputes with manual admin decisions and
+simulated settlement. Native-device validation remains #7.

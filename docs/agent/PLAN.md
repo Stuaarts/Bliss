@@ -57,7 +57,8 @@ jobs passed, closing #8. Reviews (#9) now include V8, completed-customer eligibi
 one review per booking, bounded public reads/averages and Flutter publish/read flows.
 Local checks passed 51 backend scenarios and 33 Flutter tests. Real browser publish,
 reopen and signed-out aggregate reads passed at phone width. Current branch:
-`codex/9-completed-booking-reviews`, pending PR/CI. Next independent slice:
-manual-admin DisputeFlow (#10); #7 remains open for native validation.
+`main`: PR #27 merged as `9610918` after both API/mobile CI runs passed, closing #9.
+Next independent slice: manual-admin DisputeFlow (#10); #7 remains open for native
+validation.
 Docker's ordinary restart limitation (#17) is mitigated by the
 guarded Windows startup helper; existing container data is preserved.
