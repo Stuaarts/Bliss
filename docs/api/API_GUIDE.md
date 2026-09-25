@@ -131,3 +131,43 @@ Direct booking DTOs have `offeringId` and `offeringVersion`, with null `requestI
 and `quoteId`. Quote bookings have the inverse source fields. Both include the
 immutable `description` snapshot and use the same booking actions, authorization,
 payment simulation and restart recovery.
+
+## Booking conversations
+
+All paths below use `/api/v1` and require an authenticated, initialized profile.
+
+| Method/path | Behavior |
+| --- | --- |
+| `POST /bookings/{id}/conversation` | Open or return the booking's unique conversation; 200, no body/key needed. |
+| `GET /conversations?page=0&size=20` | Owned participant conversations, newest-created first; standard page envelope. |
+| `GET /conversations/{id}` | Conversation ID, booking ID/title, createdAt and lastSequence. |
+| `GET /conversations/{id}/messages?size=50` | Latest messages, returned in ascending sequence order. |
+| `POST /conversations/{id}/messages` | Send `{"body":"Hello"}` with UUID `Idempotency-Key`; 200 message receipt. |
+
+Conversation pages accept page 0–100000 and size 1–100. Message reads accept size
+1–100 (default 50), returning `{items,hasMore}`. Add `before=<sequence>` to load
+older messages or `after=<sequence>` to poll newer messages, never both. Cursors
+are exclusive; before must be at least 1, after at least 0. Each response is
+ascending. With after, continue from the last returned sequence while hasMore is
+true. With before, continue from the first returned sequence. Without a cursor,
+hasMore indicates earlier history. Sequence allocation serializes commits per
+conversation; timestamps are not pagination cursors.
+
+A message includes id, sequence, body, senderName, senderRole, mine and UTC
+createdAt. Sender identity/role cannot be supplied by clients. Bodies are trimmed,
+nonblank plain text, at most 2000 UTF-16 code units, with no NUL characters. Unknown
+fields, invalid UUID keys/cursors and malformed text return 400. An exact retry
+with the same conversation/sender/key returns the original message; changed text
+with that key returns 409. Different senders may reuse a key independently.
+
+First open atomically snapshots the booking customer and current provider OWNERs.
+All reads/sends require this membership plus the current matching capability and
+booking ownership. MEMBER, outsider and admin-only callers cannot access private
+chat. Revoked owners lose access; later owners do not inherit history. Missing or
+inaccessible conversations return 404, anonymous requests 401. Conversations can
+be opened/read after completion or cancellation. There are no edit/delete,
+attachment, pre-booking chat or participant-management endpoints in this slice.
+
+V7 only adds conversation tables/indexes; existing bookings remain unchanged.
+Back up before upgrading a non-disposable database. An application rollback can
+leave these additive tables in place; do not drop them once messages exist.

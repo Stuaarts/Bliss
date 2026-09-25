@@ -48,7 +48,14 @@ fresh review. Continue the first booking through the same provider/customer acti
 Automated migration tests also verify upgrading an existing quote booking from V5;
 packaged restart tests cover both quote and direct booking sources.
 
-## Target 5–10 minute full release demo (remaining UI/review/dispute work)
+## Available chat demo
+
+Open an owned booking's Messages as the customer, send a demo message, sign out,
+then sign in as its provider and reply through Your activity → Messages. Restart
+the API without resetting PostgreSQL and reopen as the customer to show both
+messages. See [verified steps and screenshots](../demo/CHAT.md).
+
+## Target 5–10 minute full release demo (remaining review/dispute work)
 
 1. Start PostgreSQL, Keycloak and Quarkus; show Swagger and registered workflow.
 2. Customer logs in and creates a request; provider submits a quote.

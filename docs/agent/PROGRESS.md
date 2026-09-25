@@ -359,3 +359,31 @@ the merged implementation. This documentation checkpoint records that result.
 Issue #7 stays open for native AppAuth/device validation; #8 conversations is the
 next independent implementation slice. Local Docker, API and Flutter preview are
 running, with the completed demo booking open. No full release claim is made.
+
+## September 24, 2026 — persisted booking conversations (#8)
+
+V7 adds one conversation per booking, snapshotted participants and messages with
+sender-scoped retry keys and serialized sequence allocation. Access requires both
+snapshot membership and current capability/customer or provider OWNER access.
+Outsiders, MEMBERs, admin-only identities and replacement owners cannot read/write
+history. Revoked owners lose access. Bounded sequence pagination stays stable while
+new messages arrive; exact send retries return the original receipt and audit event.
+Text is validated server-side and rendered without HTML interpretation.
+
+Flutter exposes Messages from bookings and the activity list, with three-second
+visible-route polling, refresh, earlier messages and session-scoped idempotent send
+retry. Read cursors advance only on reads, so a send receipt cannot skip intervening
+messages. Authorization loss clears history/composer, and logout disposes private
+routes and rejects late responses. Pending sends survive route changes in memory.
+
+Local Maven verify passed 43 regular tests plus three packaged migration/restart
+scenarios, including six new chat scenarios. Flutter formatting/analysis, all 28
+tests and release web build passed. Real browser checks sent as customer, replied
+as provider, stopped/restarted the API and reloaded both messages as customer.
+The 390 × 844 layout also passed; evidence is in `docs/demo/CHAT.md`. The API's V7
+migration upgraded the existing demo database without reset. One login during
+restart failed safely and succeeded once the API was ready.
+
+Remaining: PR/CI and merge; reviews (#9) next. Native auth (#7), invitations/ownership
+transfer for chat, attachments, read receipts, push and retention remain outside
+this slice. No real payment or public deployment occurred.

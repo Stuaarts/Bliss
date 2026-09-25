@@ -45,5 +45,17 @@ version and normalized city; concurrent retries create a single booking/start in
 Archived offerings reject new bookings while original receipts remain retrievable
 by their customer. Provider OWNER and MEMBER identities cannot self-book that provider.
 
+Chat requires both persisted conversation membership and current booking access:
+the customer with customer capability, or a snapshotted provider OWNER who still
+has provider capability and OWNER membership. MEMBER and admin alone grant no
+chat access; hidden/missing conversations return 404. New provider owners do not
+inherit historical conversations. Participant transfer/invitation requires a future
+explicit policy. Sender identity is derived from the authenticated subject.
+Messages are bounded plain text (2000 UTF-16 code units), never interpreted as HTML.
+Audit records contain IDs/actions, not message bodies. Messages are stored in
+PostgreSQL; this is not end-to-end encryption. No delete/edit/retention policy is
+implemented yet. UUID send keys are scoped to conversation and sender and bind
+normalized text; duplicate retries never create another message or audit event.
+
 OpenAPI/health/metrics are local development endpoints. Scope management access,
 rate limiting, retention, backup/recovery and abuse controls before product beta (#15).

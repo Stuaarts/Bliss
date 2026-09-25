@@ -35,11 +35,11 @@ refresh tokens use platform secure storage; access tokens stay in memory. Native
 Android/iOS code is analyzed but device login has not yet been verified.
 
 HTTP clients and typed mappings live under `core`, `features/discovery` and
-`features/marketplace`.
+`features/marketplace` and `features/conversation`.
 Prices remain decimal strings. UI code ignores stale responses and guards disposed
 widgets. Tests use injected HTTP clients; they do not claim a live API demo.
 
-Direct bookings and lifecycle actions keep a UUID retry key and the original body
+Direct bookings, lifecycle actions and chat sends keep a UUID retry key and the original body
 in memory until a definite response. An uncertain response freezes form inputs;
 retry sends the original intent. These keys clear on sign-out, session expiry or
 app reload: check Your activity before making another booking after restarting.
@@ -47,6 +47,14 @@ Request/quote creation has no client retry key, so an uncertain response asks th
 user to check their list first. Quote acceptance is idempotent server-side.
 Private routes are bound to the signed-in session; logout disposes their forms,
 and late responses from an older session are rejected.
+
+Booking → Messages opens a persisted conversation. Your activity → Messages lists
+existing conversations. Visible chats poll every three seconds, refresh on demand,
+and page through older messages using sequence cursors. Pending sends retain the
+original text/key across route navigation within the same session. After a full
+app reload, read the conversation before resending an unconfirmed message.
+Authorization loss clears the visible history and composer. Chat is plain text;
+attachments, push notifications and read receipts are not implemented.
 
 Native validation remains in #7. On the September 22 workstation check, Flutter
 reported missing Android command-line tools, unknown SDK license status, and no

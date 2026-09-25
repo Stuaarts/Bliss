@@ -22,14 +22,17 @@ Current Flyway schema:
 - booking_event: persistent UUID-keyed action inbox with actor, payload and timestamps.
 - payment/payment_transaction: simulated amount/currency/status and unique operation ledger.
 - workflow_instance_entity/task_info_entity/cloud_event_entity: released Flow JPA schema.
+- conversation: unique booking, creation time and serialized message sequence counter.
+- conversation_participant: conversation/user key and CUSTOMER/PROVIDER role snapshot.
+- conversation_message: participant sender, plain text, UTC timestamp, unique
+  conversation sequence and sender-scoped UUID retry key.
 
 Public reads return DTOs with decimal strings so clients do not round money through
 binary floating point. Lists have deterministic title/id ordering and bounded pages.
 Reference categories are migrated globally; sample providers/offerings are local/test only.
 
 Future slices add customer profiles, addresses, service areas, availability/blackouts,
-request attachments, conversations/
-participants/messages, notifications, reviews, verification, disputes/evidence and
+request attachments, notifications, reviews, verification, disputes/evidence and
 audit extensions. Booking acceptance is idempotent via its unique request/quote
 constraints and serialized parent-request transaction. The durable start queue
 is committed with booking creation so orchestration can recover after a crash.
@@ -39,3 +42,10 @@ offering to serialize snapshot admission against edits/archive. A unique custome
 index provides a second duplicate barrier. Both paths share BookingCreation for
 initial history, audit and dispatch. Offering changes never rewrite booking scope.
 Do not precreate empty feature tables merely to match a diagram.
+
+V7 adds chat tables without changing existing bookings. A booking lock serializes
+first open and snapshots its customer and current provider OWNER identities.
+Every read/write also requires their current capability and booking access.
+Conversation row locking allocates sequences and commits messages together, so
+cursor polling cannot skip a message whose transaction committed late. Message
+sender membership and retry/sequence uniqueness are also enforced by the database.

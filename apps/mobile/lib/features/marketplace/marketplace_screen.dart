@@ -5,6 +5,8 @@ import 'marketplace.dart';
 import 'market_widgets.dart';
 import 'booking_screen.dart';
 import 'request_screen.dart';
+import '../conversation/conversation.dart';
+import '../conversation/chat_screen.dart';
 
 class MarketplaceScreen extends StatefulWidget {
   const MarketplaceScreen({super.key, required this.session});
@@ -44,6 +46,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       final MarketPage<Object> result;
       if (_section == 'Bookings') {
         result = await _repo.bookings(_page);
+      } else if (_section == 'Messages') {
+        result = MarketPage.read(
+          await _repo.get('conversations?page=$_page&size=20'),
+          ConversationSummary.fromJson,
+        );
       } else if (_section == 'My quotes') {
         result = providerId == null
             ? const MarketPage([], 0)
@@ -142,7 +149,14 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   Future<void> _open(Object item) async {
-    if (item is Booking) {
+    if (item is ConversationSummary) {
+      await privatePage<void>(
+        context,
+        widget.session,
+        ChatScreen(session: widget.session, conversationId: item.id),
+      );
+    }
+    if (item is Booking && mounted) {
       await privatePage<void>(
         context,
         widget.session,
@@ -188,6 +202,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           children: [
             for (final section in [
               'Bookings',
+              'Messages',
               if (widget.session.capabilities.contains('customer'))
                 'My requests',
               if (widget.session.capabilities.contains('provider')) ...[
@@ -253,6 +268,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         for (final item in _items)
           Card(
             child: switch (item) {
+              ConversationSummary c => ListTile(
+                title: Text(c.title),
+                subtitle: const Text('Booking conversation'),
+                leading: const Icon(Icons.chat_bubble_outline),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _open(c),
+              ),
               Booking b => ListTile(
                 title: Text(b.title),
                 subtitle: Text(

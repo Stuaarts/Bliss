@@ -5,13 +5,15 @@ provider onboarding, owned offering management, Flutter catalog/account/business
 screens, customer/provider request and quote screens, direct offering booking
 confirmation, lifecycle actions, request/quote APIs, bookings with frozen scope/price,
 durable BookingLifecycleFlow and fake settlement, protected booking timeline,
-schema constraints, operational endpoints and CI. Real process-restart tests
+persisted booking conversations with authorized Flutter chat, schema constraints,
+operational endpoints and CI. Real process-restart tests
 cover both quote and direct sources; populated migration tests preserve old bookings.
 
-Required next: native-device authentication validation (#7); persisted chat;
-eligible reviews; manual-admin DisputeFlow (#8–#10). Flutter web lifecycle evidence
+Required next: native-device authentication validation (#7), eligible reviews (#9)
+and manual-admin DisputeFlow (#10). Flutter web lifecycle evidence
 is recorded in the [marketplace demo](../demo/MARKETPLACE.md). Native execution is
 not yet validated, and the full portfolio release remains incomplete.
+Chat browser and restart evidence is in the [chat demo](../demo/CHAT.md).
 
 Portfolio hardening: migration/concurrency tests, restart demo, screenshots and
 complete CI evidence (#11–#12). Completion means the full master-prompt release
