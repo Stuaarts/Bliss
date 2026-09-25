@@ -7,6 +7,7 @@ import '../account/account_screen.dart';
 import '../marketplace/marketplace_screen.dart';
 import '../marketplace/market_widgets.dart';
 import '../marketplace/booking_screen.dart';
+import '../reviews/provider_reviews_screen.dart';
 
 class DiscoveryScreen extends StatefulWidget {
   const DiscoveryScreen({super.key, required this.catalog, this.session});
@@ -185,7 +186,11 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
               ),
               const SizedBox(height: 12),
               for (final offering in _offerings)
-                _OfferingCard(offering: offering, session: widget.session),
+                _OfferingCard(
+                  offering: offering,
+                  session: widget.session,
+                  api: widget.catalog.api,
+                ),
               if (_total > 20)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -220,8 +225,13 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
 }
 
 class _OfferingCard extends StatelessWidget {
-  const _OfferingCard({required this.offering, this.session});
+  const _OfferingCard({
+    required this.offering,
+    required this.api,
+    this.session,
+  });
   final Offering offering;
+  final ApiClient api;
   final AuthSession? session;
 
   @override
@@ -244,6 +254,20 @@ class _OfferingCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text('${offering.providerName} · ${offering.city}'),
+                  if (offering.providerId.isNotEmpty)
+                    TextButton.icon(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => ProviderReviewsScreen(
+                            api: api,
+                            providerId: offering.providerId,
+                            providerName: offering.providerName,
+                          ),
+                        ),
+                      ),
+                      icon: const Icon(Icons.star_outline),
+                      label: const Text('Provider reviews'),
+                    ),
                   const SizedBox(height: 24),
                   Text(
                     offering.description,
