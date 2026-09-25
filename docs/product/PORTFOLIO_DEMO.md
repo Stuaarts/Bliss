@@ -55,7 +55,15 @@ then sign in as its provider and reply through Your activity → Messages. Resta
 the API without resetting PostgreSQL and reopen as the customer to show both
 messages. See [verified steps and screenshots](../demo/CHAT.md).
 
-## Target 5–10 minute full release demo (remaining review/dispute work)
+## Available reviews demo
+
+Open a completed booking as its customer → Booking review → choose 1–5 stars and
+optionally describe the service → Publish review. Reopening shows the saved review.
+Sign out, open an offering from that provider → Provider reviews, and show its
+average/count and comment. No booking/customer identity is included in public
+responses. See [verification and limits](../demo/REVIEWS.md).
+
+## Target 5–10 minute full release demo (remaining dispute work)
 
 1. Start PostgreSQL, Keycloak and Quarkus; show Swagger and registered workflow.
 2. Customer logs in and creates a request; provider submits a quote.

@@ -171,3 +171,31 @@ attachment, pre-booking chat or participant-management endpoints in this slice.
 V7 only adds conversation tables/indexes; existing bookings remain unchanged.
 Back up before upgrading a non-disposable database. An application rollback can
 leave these additive tables in place; do not drop them once messages exist.
+
+## Completed-booking reviews
+
+`GET /bookings/{id}/reviews` requires booking access and returns
+`{eligible,review}`. Only its customer with current customer capability is eligible,
+and only when status is COMPLETED and no review exists. The assigned provider owner
+can read the existing review but is never eligible to submit for that customer.
+
+`POST /bookings/{id}/reviews` accepts `{"rating":5,"comment":"Great work"}`.
+Rating is a whole number 1–5. Comment is optional (null/absent becomes empty), trimmed
+plain text, at most 2000 UTF-16 code units, with no NUL. Unknown fields return 400.
+The server derives the customer and provider from the booking. An initial submission
+returns 201; an identical normalized submission returns 200 with the original review.
+No retry key is required: the unique booking is the idempotency scope. A changed
+duplicate or non-COMPLETED booking returns 409. Missing/unowned bookings and callers
+without customer capability return 404; anonymous calls return 401.
+
+`GET /providers/{id}/reviews?page=0&size=20` is public. It returns
+`{items,page,size,total,averageRating}` sorted by creation time descending then ID.
+Page is 0–100000 and size 1–100. Rating average is a decimal string rounded half-up
+to two places over **all** provider reviews, not only the page; no reviews means
+`total:0,averageRating:null`. A missing provider returns 404. Public items contain
+only `id,rating,comment,createdAt`; no booking/customer identity is exposed. These
+are reviews of completed services, not identity-verification endorsements.
+
+Reviews cannot be edited or deleted through this API. V8 adds only the review table
+and index, preserving existing bookings/chat. Keep these tables on application
+rollback; do not discard submitted reviews as a rollback shortcut.

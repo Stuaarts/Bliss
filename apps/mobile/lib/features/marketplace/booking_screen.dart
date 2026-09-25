@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../core/auth/auth_session.dart';
 import '../discovery/catalog.dart';
 import '../conversation/chat_screen.dart';
+import '../reviews/review_screen.dart';
 import 'marketplace.dart';
 import 'market_widgets.dart';
 
@@ -274,6 +275,24 @@ class _BookingScreenState extends State<BookingScreen> {
                 label: const Text('Messages'),
               ),
             ),
+            if (booking.status == 'COMPLETED')
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: _acting || _loading
+                      ? null
+                      : () => privatePage<void>(
+                          context,
+                          widget.session,
+                          ReviewScreen(
+                            session: widget.session,
+                            bookingId: widget.bookingId,
+                          ),
+                        ),
+                  icon: const Icon(Icons.star_outline),
+                  label: const Text('Booking review'),
+                ),
+              ),
             const SizedBox(height: 12),
             Text(
               '${booking.city} · ${booking.currency} ${booking.price}',

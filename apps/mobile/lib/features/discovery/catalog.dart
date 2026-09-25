@@ -24,6 +24,7 @@ class Offering {
     required this.providerName,
     required this.city,
     this.version = 0,
+    this.providerId = '',
   });
   final String id;
   final String title;
@@ -35,6 +36,7 @@ class Offering {
   final String providerName;
   final String city;
   final int version;
+  final String providerId;
 
   factory Offering.fromJson(Map<String, dynamic> json) {
     final provider = json['provider'] as Map<String, dynamic>;
@@ -46,6 +48,7 @@ class Offering {
       currency: json['currency'] as String,
       category: Category.fromJson(json['category'] as Map<String, dynamic>),
       providerName: provider['displayName'] as String,
+      providerId: provider['id'] as String? ?? '',
       city: provider['city'] as String,
       version: json['version'] as int? ?? 0,
     );
