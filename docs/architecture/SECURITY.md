@@ -68,3 +68,15 @@ remain product-beta work; do not present this as a production moderation system.
 
 OpenAPI/health/metrics are local development endpoints. Scope management access,
 rate limiting, retention, backup/recovery and abuse controls before product beta (#15).
+
+Disputes are private to the current customer/provider owner and authenticated
+admins. Identity and evidence role come from the token and database, never request
+fields. Admins who are the booking customer or any provider member cannot decide
+their own case. Case/evidence/decision text is bounded plain text; audit and Flow
+input contain IDs/actions without that content. All participants can read the
+shared evidence and admin rationale; these are PostgreSQL records, not end-to-end
+encrypted messages. Current provider owners inherit case access, unlike chat's
+participant snapshot. No attachment, appeal, edit/delete, moderation or retention
+workflow exists yet (#15). Admin capability grants case reads, not global chat or
+booking reads. UI clears private state on logout/access loss and rejects stale
+responses. Final admin choices only affect simulated payments in the local demo.

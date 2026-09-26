@@ -199,3 +199,55 @@ are reviews of completed services, not identity-verification endorsements.
 Reviews cannot be edited or deleted through this API. V8 adds only the review table
 and index, preserving existing bookings/chat. Keep these tables on application
 rollback; do not discard submitted reviews as a rollback shortcut.
+
+## Disputes and manual decisions (#10)
+
+All routes below are under `/api/v1` and require bearer authentication. Reads
+are limited to the booking customer with customer capability, a current assigned
+provider OWNER with provider capability, or an admin. Other users receive 404.
+Unlike chat, current provider owners inherit case access. Admin case access does
+not bypass booking/chat access. Lists accept `page=0..100000,size=1..100`.
+
+| Route | Behavior |
+| --- | --- |
+| `GET /bookings/{id}/disputes` | Booking-scoped `{eligible,filingDeadline,dispute}`; existing case or null |
+| `POST /bookings/{id}/disputes` | Customer `{reason}`; 201 new case, 200 exact normalized retry, 409 changed/existing or ineligible |
+| `GET /disputes` | Scoped `{items,page,size,total}`, newest cases first |
+| `GET /disputes/{id}` | Private case, permissions, saved deadlines, amount and optional decision |
+| `GET /disputes/{id}/evidence` | Oldest-first paged `{id,role,body,createdAt,mine}` |
+| `POST /disputes/{id}/evidence` | Participant `{body}` with UUID `Idempotency-Key`; 200 new or identical retry |
+| `GET /disputes/{id}/history` | Paged `{status,occurredAt,system}` oldest first |
+| `GET /disputes/{id}/execution` | Instance ID, status and checkpoint presence; no stack trace |
+| `POST /disputes/{id}/decision` | Independent admin `{outcome,rationale}` with UUID `Idempotency-Key`; 202 admitted/replayed |
+
+Text is required, stripped, nonblank, NUL-free and at most 2000 UTF-16 code units.
+Unknown JSON properties and malformed/missing UUID keys are rejected with 400.
+Evidence keys are bound to case, actor and normalized body; decision keys bind
+admin, case, outcome and rationale. Changed retries return 409. The case itself
+is the open-request idempotency boundary (one case per booking). Flutter retains
+uncertain submissions for an exact retry for the current authenticated session.
+
+Only WAIT_CUSTOMER or COMPLETED bookings can be disputed, within seven days of
+the latest WAIT_CUSTOMER history entry. A pending booking action conflicts (409).
+Defaults are `bliss.dispute.filing-seconds=604800` and
+`bliss.dispute.evidence-seconds=86400`. The saved evidence deadline is fixed at
+opening. Initial reason counts as customer evidence; both parties submitting or
+deadline expiry advances COLLECTING_EVIDENCE to UNDER_REVIEW and closes evidence.
+There is no default winner and no automatic payment on timeout.
+
+Admins cannot add evidence solely by having admin capability. A deciding admin
+must not be the booking customer or any member of the provider (including MEMBER).
+`outcome` is CUSTOMER_FAVORED or PROVIDER_FAVORED. Only one decision is accepted
+in UNDER_REVIEW. The response contains `outcome,rationale,admittedAt,processed`;
+202 with `processed:false` is not settlement success. Poll case state/history.
+Resolution atomically refunds/voids for the customer or captures/retains capture
+for the provider, using only the fake adapter. Exact decision retries remain 202
+with their current processed value after resolution; competing decisions return 409.
+
+Exhausted transient retries leave the payment unchanged and the decision unprocessed.
+The execution API reports FAULTED from a durable marker even though Flow deletes
+the failed checkpoint. New writes stop; support/operator recovery is not yet a
+self-service feature. Evidence, rationale and history have no edit/delete/appeal
+API. Existing published reviews remain visible if a later dispute refunds the
+booking; a new review still requires COMPLETED. V9 rollback constraints are in
+[the domain model](../architecture/DOMAIN_MODEL.md).

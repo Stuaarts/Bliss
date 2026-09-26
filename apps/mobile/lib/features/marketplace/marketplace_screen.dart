@@ -7,6 +7,8 @@ import 'booking_screen.dart';
 import 'request_screen.dart';
 import '../conversation/conversation.dart';
 import '../conversation/chat_screen.dart';
+import '../dispute/dispute.dart';
+import '../dispute/dispute_screen.dart';
 
 class MarketplaceScreen extends StatefulWidget {
   const MarketplaceScreen({super.key, required this.session});
@@ -50,6 +52,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         result = MarketPage.read(
           await _repo.get('conversations?page=$_page&size=20'),
           ConversationSummary.fromJson,
+        );
+      } else if (_section == 'Disputes') {
+        result = MarketPage.read(
+          await _repo.get('disputes?page=$_page&size=20'),
+          DisputeSummary.fromJson,
         );
       } else if (_section == 'My quotes') {
         result = providerId == null
@@ -149,7 +156,14 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   Future<void> _open(Object item) async {
-    if (item is ConversationSummary) {
+    if (item is DisputeSummary) {
+      await privatePage<void>(
+        context,
+        widget.session,
+        DisputeScreen(session: widget.session, disputeId: item.id),
+      );
+    }
+    if (item is ConversationSummary && mounted) {
       await privatePage<void>(
         context,
         widget.session,
@@ -203,6 +217,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             for (final section in [
               'Bookings',
               'Messages',
+              'Disputes',
               if (widget.session.capabilities.contains('customer'))
                 'My requests',
               if (widget.session.capabilities.contains('provider')) ...[
@@ -274,6 +289,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                 leading: const Icon(Icons.chat_bubble_outline),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => _open(c),
+              ),
+              DisputeSummary d => ListTile(
+                title: Text(d.title),
+                subtitle: Text(disputeStatus(d.status)),
+                leading: const Icon(Icons.help_outline),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _open(d),
               ),
               Booking b => ListTile(
                 title: Text(b.title),

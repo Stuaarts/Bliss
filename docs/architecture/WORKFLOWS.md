@@ -46,7 +46,7 @@ are local simulation policies, not approved commercial cancellation/payment term
 `PaymentGateway` isolates the side-effect boundary. `FakePaymentGateway` implements
 AUTHORIZE, CAPTURE, VOID and REFUND with a unique booking/operation ledger key.
 No card data, payment credentials or external money movement exists. REFUND is
-verified at the adapter boundary; dispute/refund endpoints remain issue #10.
+verified at the adapter boundary and through DisputeFlow (#10).
 Transient payment/persistence failures retry up to three times after the initial
 attempt, with a 250 ms base delay. Exhaustion faults the workflow for diagnosis;
 automated operator recovery and real-provider reconciliation remain hardening work.
@@ -86,5 +86,43 @@ instances exist or change workflow identity/version without a migration plan.
 History, payment and execution endpoints enforce booking ownership. Execution
 status exposes engine state without stack traces or other users' data.
 
-DisputeFlow (#10) remains planned: evidence → manual admin review → authorized
-refund/void or capture → resolution. No automated adjudication.
+## DisputeFlow (#10)
+
+```mermaid
+stateDiagram-v2
+    WAIT_CUSTOMER --> DISPUTED: customer files within window
+    COMPLETED --> DISPUTED: customer files within window
+    DISPUTED --> COLLECTING_EVIDENCE: durable case start
+    COLLECTING_EVIDENCE --> UNDER_REVIEW: both parties submit or deadline
+    UNDER_REVIEW --> RESOLVED_CUSTOMER: independent admin favors customer
+    UNDER_REVIEW --> RESOLVED_PROVIDER: independent admin favors provider
+```
+
+The booking's latest WAIT_CUSTOMER history starts a seven-day filing window.
+Opening the case atomically records its initial evidence, history, audit and start
+intent and sets the booking DISPUTED. BookingLifecycleFlow then stops. DisputeFlow
+(`com.bliss/dispute-resolution/1.0.0`) retains one canonical instance and checks
+durable evidence/decision rows using a two-second persisted wait loop. Its input
+contains only case ID and done flag, never evidence text.
+
+After both parties submit or the saved 24-hour deadline expires, manual review
+begins. Timeout never picks a winner. An independent admin records one immutable
+decision and rationale. Customer-favored settlement refunds CAPTURED payments
+(booking REFUNDED), or voids AUTHORIZED payments (booking CANCELLED).
+Provider-favored settlement captures AUTHORIZED payments or retains CAPTURED
+payments (booking COMPLETED). Settlement, case/booking history, audit and decision
+processing commit together. Transient payment/database failures retry three times
+after the first attempt, each in a new transaction.
+
+Flow's pinned persistence writer deletes failed checkpoints. A Bliss lifecycle
+listener therefore retains a failure timestamp on the case, including failures
+after restoration. The execution API reports FAULTED without exception details.
+No automatic redispatch or new evidence/decision is admitted on a failed case;
+the original decision remains retry-readable and payment changes roll back.
+Operator investigation/recovery tooling is still future hardening, not a UI retry
+that bypasses the decision. Single-worker operating limits above also apply here.
+
+`DisputeTest` covers authorization, deadlines, competing decisions, idempotency,
+all settlement outcomes and exhausted retry rollback. `DisputeRestartIT` runs a
+real booking through completion, kills the packaged API in both evidence and
+admin waits, then verifies the same instance and one capture/refund ledger entry.

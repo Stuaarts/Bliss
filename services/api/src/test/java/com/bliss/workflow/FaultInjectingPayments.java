@@ -18,7 +18,7 @@ public class FaultInjectingPayments implements PaymentGateway {
     final ConcurrentHashMap<UUID, AtomicInteger> remaining = new ConcurrentHashMap<>();
     final ConcurrentHashMap<UUID, AtomicInteger> attempts = new ConcurrentHashMap<>();
 
-    void failNext(UUID booking, int times) {
+    public void failNext(UUID booking, int times) {
         remaining.put(booking, new AtomicInteger(times));
         attempts.put(booking, new AtomicInteger());
     }

@@ -1,6 +1,6 @@
 # ADR-002: Quarkus Flow for durable orchestration
 
-Implemented for BookingLifecycleFlow; DisputeFlow remains #10. Use Flow for
+Implemented for BookingLifecycleFlow and DisputeFlow (#10). Use Flow for
 human waits, timeout, retry and compensation. CRUD stays in application services.
 Pin released 1.2.0.CR1 against Quarkus core 3.39.0, matching the inspected local
 checkout. This avoids coupling to its 2.0.0-SNAPSHOT. The RC is a documented risk.

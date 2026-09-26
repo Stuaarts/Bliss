@@ -7,6 +7,7 @@ import '../../core/auth/auth_session.dart';
 import '../discovery/catalog.dart';
 import '../conversation/chat_screen.dart';
 import '../reviews/review_screen.dart';
+import '../dispute/dispute_screen.dart';
 import 'marketplace.dart';
 import 'market_widgets.dart';
 
@@ -220,6 +221,21 @@ class _BookingScreenState extends State<BookingScreen> {
     }
   }
 
+  Future<void> _dispute() async {
+    setState(() {
+      _acting = true;
+      _error = null;
+    });
+    try {
+      await openBookingDispute(context, widget.session, widget.bookingId);
+      if (mounted) await _load();
+    } catch (e) {
+      if (mounted) setState(() => _error = marketError(e));
+    } finally {
+      if (mounted) setState(() => _acting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final booking = _booking;
@@ -293,6 +309,14 @@ class _BookingScreenState extends State<BookingScreen> {
                   label: const Text('Booking review'),
                 ),
               ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _acting || _loading ? null : _dispute,
+                icon: const Icon(Icons.help_outline),
+                label: const Text('Dispute / support'),
+              ),
+            ),
             const SizedBox(height: 12),
             Text(
               '${booking.city} · ${booking.currency} ${booking.price}',

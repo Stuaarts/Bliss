@@ -40,7 +40,10 @@ public class BookingWorkflowSteps {
         em.createNativeQuery("UPDATE booking_workflow_start SET started=true WHERE booking_id=?1")
                 .setParameter(1, b.id)
                 .executeUpdate();
-        if (b.status.terminal()) return new State(b.id, true);
+        // DisputeFlow owns settlement once a dispute is opened. Never resume
+        // the ordinary confirmation path while that case is outstanding.
+        if (b.status.terminal() || b.status == Booking.Status.DISPUTED)
+            return new State(b.id, true);
         @SuppressWarnings("unchecked")
         List<Object[]> rows =
                 em.createNativeQuery(

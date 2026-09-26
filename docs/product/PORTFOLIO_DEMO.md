@@ -63,7 +63,14 @@ Sign out, open an offering from that provider → Provider reviews, and show its
 average/count and comment. No booking/customer identity is included in public
 responses. See [verification and limits](../demo/REVIEWS.md).
 
-## Target 5–10 minute full release demo (remaining dispute work)
+## Available dispute demo
+
+An eligible customer opens a case from the booking; its provider submits evidence.
+Sign in as an independent admin to read evidence and record a reasoned outcome.
+Watch the case resolve and reopen the booking to show simulated refund/capture.
+See [dispute steps and recovery checks](../demo/DISPUTES.md).
+
+## Target 5–10 minute full release demo (final recording pending)
 
 1. Start PostgreSQL, Keycloak and Quarkus; show Swagger and registered workflow.
 2. Customer logs in and creates a request; provider submits a quote.
