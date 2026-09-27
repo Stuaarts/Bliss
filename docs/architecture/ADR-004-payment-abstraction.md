@@ -4,7 +4,10 @@ Implemented in #5. PaymentGateway accepts AUTHORIZE, CAPTURE, VOID and REFUND us
 the booking's exact price/currency snapshot. The portfolio adapter persists fake
 transactions with unique booking/operation keys. Its writes share the booking
 transaction; tests inject transient failures after ledger writes to verify rollback
-and retry. Public refund/dispute actions remain #10. There is no runtime switch
+and retry. DisputeFlow (#10) settles an independent admin's recorded decision:
+customer-favored captured payments are refunded, authorizations are voided, and
+provider-favored authorizations are captured. Existing captures are retained.
+There is no runtime switch
 to a real payment provider.
 
 No real money, credentials or card data. Real marketplace settlement and compliance

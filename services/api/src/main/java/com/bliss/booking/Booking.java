@@ -17,10 +17,12 @@ public class Booking extends PanacheEntityBase {
         WAIT_CUSTOMER,
         COMPLETED,
         CANCELLED,
-        EXPIRED;
+        EXPIRED,
+        DISPUTED,
+        REFUNDED;
 
         public boolean terminal() {
-            return this == COMPLETED || this == CANCELLED || this == EXPIRED;
+            return this == COMPLETED || this == CANCELLED || this == EXPIRED || this == REFUNDED;
         }
     }
 

@@ -27,7 +27,7 @@ if (-not $desktopRunning) {
         throw 'Unsafe Docker runtime path.'
     }
     if (Test-Path -LiteralPath $runtime) {
-        Move-Item -LiteralPath $runtime -Destination $backup
+        [IO.Directory]::Move($runtime, $backup)
         Write-Output "Preserved stale Docker runtime at $backup"
     }
     New-Item -ItemType Directory -Path $runtime -Force | Out-Null
@@ -40,7 +40,9 @@ if (-not $desktopRunning) {
     if (Test-Path -LiteralPath $secretsRuntime) {
         $unexpected = Get-ChildItem -LiteralPath $secretsRuntime -Force | Where-Object { $_.Name -notin @('engine.sock','engine.sock.stale') }
         if ($unexpected) { throw 'Secrets engine contains non-runtime files; manual inspection required.' }
-        Move-Item -LiteralPath $secretsRuntime -Destination $secretsBackup
+        # Rename the directory atomically. Move-Item can leave socket reparse
+        # points behind while moving the other children on Windows.
+        [IO.Directory]::Move($secretsRuntime, $secretsBackup)
         New-Item -ItemType Directory -Path $secretsRuntime | Out-Null
         Write-Output "Preserved secrets runtime at $secretsBackup"
     }

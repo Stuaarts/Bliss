@@ -431,3 +431,41 @@ PR #27 merged as `9610918`, closing #9, after all four API/mobile jobs passed at
 `6dedc34` (runs 36154068172 and 36154116278). Main is synchronized with that change.
 The next active slice is #10, durable disputes with manual admin decisions and
 simulated settlement. Native-device validation remains #7.
+
+## 2026-09-26 — Manual disputes (#10)
+
+V9 and DisputeFlow add one customer case per eligible booking, bounded private
+evidence, a saved collection deadline and independent admin review. Both parties
+submitting or timeout opens review; no automatic winner is chosen. Customer-favored
+decisions refund captures or void authorizations; provider-favored decisions capture
+or retain capture. Case/booking history, payment, decision processing and audit
+commit together. Actor-scoped retries and booking-first locks serialize admissions.
+Flutter connects filing, activity lists, evidence, admin decisions and polling.
+
+Maven verify passed September 25: 55 ordinary scenarios and five packaged-process/
+migration scenarios, zero failures/skips (60 total). New tests cover access denial,
+filing/evidence deadlines, duplicate/concurrent actions, all settlement paths,
+transient rollback and exhausted retries. Both dispute restart scenarios kill the
+packaged API during evidence collection and admin review and retain the canonical
+instance with one settlement. Flutter analysis, 39 tests and release web build pass.
+
+The exhausted-retry check found that the pinned Flow persistence writer removes
+failed checkpoints. A Bliss lifecycle listener retains a content-free failure
+timestamp so execution reads report FAULTED, payments remain unchanged and automatic
+redispatch stops. Operator recovery remains hardening; no upstream source was edited
+for this change. Existing local upstream modifications were left untouched.
+
+On September 26, real browser checks at phone width verified customer filing,
+provider evidence, admin customer-favored decision, pending-to-applied polling and
+customer re-login/reopening. September garden help now shows Refunded/CAD 85.50;
+the DB ledger has exactly one AUTHORIZE, CAPTURE and REFUND. V9 preserved existing
+data. Screenshots and policies: `docs/demo/DISPUTES.md`. All funds are simulated.
+
+The host restart also exposed a Windows helper defect: Move-Item left a socket
+reparse point behind in the secrets runtime folder. Replacing runtime-directory
+moves with atomic Directory.Move preserved the stale folders and started Docker
+successfully. PostgreSQL/Keycloak became healthy with their data intact. #17 remains
+open for Docker's ordinary startup limitation; no reinstall/reset was needed.
+
+PR/CI and merge are the remaining gate for this slice. Native auth (#7), final
+database hardening (#11), release demo (#12) and production policies remain open.

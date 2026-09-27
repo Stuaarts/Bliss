@@ -71,7 +71,8 @@ class Booking {
       currency,
       status;
   final DateTime? scheduledAt, deadline;
-  bool get terminal => ['COMPLETED', 'CANCELLED', 'EXPIRED'].contains(status);
+  bool get terminal =>
+      ['COMPLETED', 'CANCELLED', 'EXPIRED', 'REFUNDED'].contains(status);
   static DateTime? _date(Object? value) =>
       value == null ? null : DateTime.parse(value as String);
   List<String> actions({
@@ -138,6 +139,7 @@ String statusLabel(String status) => switch (status) {
   'COMPLETED' => 'Completed',
   'CANCELLED' => 'Cancelled',
   'EXPIRED' => 'Expired',
+  'DISPUTED' => 'Disputed',
   'OPEN' => 'Open',
   'ACCEPTED' => 'Accepted',
   'SUBMITTED' => 'Submitted',

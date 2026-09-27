@@ -35,7 +35,7 @@ binary floating point. Lists have deterministic title/id ordering and bounded pa
 Reference categories are migrated globally; sample providers/offerings are local/test only.
 
 Future slices add customer profiles, addresses, service areas, availability/blackouts,
-request attachments, notifications, verification, disputes/evidence and
+request attachments, notifications, verification and
 audit extensions. Booking acceptance is idempotent via its unique request/quote
 constraints and serialized parent-request transaction. The durable start queue
 is committed with booking creation so orchestration can recover after a crash.
@@ -58,3 +58,12 @@ status and the owning customer's current capability, and makes an identical retr
 return the original review. Changed duplicates return 409. Database uniqueness
 prevents a second review per booking. Provider averages/counts are calculated from
 all their reviews, independently of the current page; no stale aggregate is stored.
+
+V9 adds one dispute per booking, evidence, an immutable admin decision, case history
+and durable workflow start intent. All admissions and settlement lock the booking
+before the case; unique keys also prevent duplicate cases/evidence/decisions.
+DISPUTED hands settlement ownership to DisputeFlow; REFUNDED is terminal.
+Case deadlines and workflow identity survive restarts. A content-free failure
+timestamp survives Flow's deletion of failed checkpoints. V9 changes allowed
+booking states: do not roll back to an older binary while cases or these statuses
+exist. Preserve evidence/history; plan a forward migration instead of dropping data.
