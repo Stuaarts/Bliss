@@ -56,15 +56,19 @@ verified in the browser. PR #26 merged as `93b1a02` after all four API/mobile CI
 jobs passed, closing #8. Reviews (#9) now include V8, completed-customer eligibility,
 one review per booking, bounded public reads/averages and Flutter publish/read flows.
 Local checks passed 51 backend scenarios and 33 Flutter tests. Real browser publish,
-reopen and signed-out aggregate reads passed at phone width. Current branch:
-`main`: PR #27 merged as `9610918` after both API/mobile CI runs passed, closing #9.
+reopen and signed-out aggregate reads passed at phone width. PR #27 merged as
+`9610918` after both API/mobile CI runs passed, closing #9.
 DisputeFlow (#10) is merged in PR #28 as `2cab47e`: V9,
 private evidence, independent admin decisions, durable waits and simulated
 refund/void/capture. All 60 backend scenarios and 39 Flutter tests passed; browser
 customer/provider/admin checks and phone screenshots passed. All four API/mobile
-CI jobs passed at `17f0e90`. Database hardening (#11) is implemented on
-`codex/11-database-invariants`: V10 constraints and populated V8/V9 upgrade,
-invalid-data rollback and empty-schema type tests. Verification and CI gate its
-merge. Next is full release evidence (#12); #7 remains open for native validation.
+CI jobs passed at `17f0e90`. Database hardening (#11) merged in PR #29 as
+`41e564f`: V10 constraints and populated V8/V9 upgrade, invalid-data rollback and
+empty-schema type tests. All four API/mobile CI jobs passed at `c95ea84`, including
+63 backend scenarios and 39 Flutter tests. The restart test now waits for a
+nonempty, matching workflow identity before taking its pre-crash snapshot.
+Current branch: `codex/12-portfolio-demo`, consolidating the timed walkthrough,
+release evidence checklist and architecture/action documentation. Full sign-off
+(#12) remains open while native-device validation (#7) is unfinished.
 Docker's ordinary restart limitation (#17) is mitigated by the
 guarded Windows startup helper; existing container data is preserved.

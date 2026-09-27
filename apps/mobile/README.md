@@ -35,7 +35,7 @@ refresh tokens use platform secure storage; access tokens stay in memory. Native
 Android/iOS code is analyzed but device login has not yet been verified.
 
 HTTP clients and typed mappings live under `core`, `features/discovery` and
-`features/marketplace`, `features/conversation` and `features/reviews`.
+`features/marketplace`, `features/conversation`, `features/reviews` and `features/dispute`.
 Prices remain decimal strings. UI code ignores stale responses and guards disposed
 widgets. Tests use injected HTTP clients; they do not claim a live API demo.
 
@@ -63,7 +63,15 @@ available from offering details without sign-in, with aggregate rating/count,
 pagination and refresh. Lost submission responses preserve the original intent
 for retry; booking uniqueness also protects retries after an app reload.
 
-Native validation remains in #7. On the September 22 workstation check, Flutter
+Booking → Dispute / support opens an eligible private case or reopens an existing
+one. Your activity → Disputes lists authorized cases. Participants add evidence;
+an independent admin records the outcome/rationale once review begins. The UI
+polls until settlement is applied, distinguishes pending decisions from completion,
+and shows a support state after exhausted settlement retries. Exact uncertain
+submissions retain their original body/key in the signed-in session. See
+[the dispute demo](../../docs/demo/DISPUTES.md).
+
+Native validation remains in #7. On the September 26 workstation check, Flutter
 reported missing Android command-line tools, unknown SDK license status, and no
 connected Android/iOS device. iOS also requires a macOS host. The browser demo
 does not establish native AppAuth callback or secure-storage behavior.
