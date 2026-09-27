@@ -185,9 +185,12 @@ class DisputeTest {
     void expireEvidence(String id) {
         QuarkusTransaction.requiringNew()
                 .run(
-                        () ->
-                                em.find(Dispute.class, UUID.fromString(id)).evidenceDeadline =
-                                        Instant.now().minusSeconds(1));
+                        () -> {
+                            var dispute = em.find(Dispute.class, UUID.fromString(id));
+                            // Model a case opened before its deadline, then let that deadline pass.
+                            dispute.createdAt = Instant.now().minusSeconds(86401);
+                            dispute.evidenceDeadline = Instant.now().minusSeconds(1);
+                        });
     }
 
     long count(String query, String id) {

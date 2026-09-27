@@ -476,3 +476,33 @@ PR #28 merged as `2cab47e`, closing #10, after all four API/mobile CI jobs passe
 at `17f0e90` (runs 36252989901 and 36253015017). Main is synchronized. Database
 hardening (#11) is next: populated upgrades and direct constraint tests across
 bookings, payments, chat, reviews and disputes, alongside existing concurrency tests.
+
+## 2026-09-26 — Database invariants (#11)
+
+V10 adds finite-money checks to offering/request/quote/booking/payment, payment
+currency format, known booking/dispute history states, and consistent dispute
+deadline/resolution timestamps. PostgreSQL numeric NaN passed the previous
+nonnegative checks; direct SQL regressions now reject it at all five boundaries.
+Released V1–V9 migrations are unchanged. No records are rewritten by V10.
+
+DatabaseInvariantsIT adds three real PostgreSQL scenarios: empty-schema UUID/UTC/
+decimal types; complete row preservation across populated V8→V9→V10 (19 tables),
+followed by direct invalid-write rejection; and V9 NaN data preventing migration
+with every V10 DDL change rolled back, followed by fixture-only correction and a
+successful upgrade. The matrix and operator preflight/recovery guide are in
+`docs/architecture/DATABASE_INVARIANTS.md`.
+
+Local full verify passed all 55 API scenarios and the five existing migration/
+restart scenarios. The new type test initially included Flyway's own installed_on
+metadata and failed; limiting the check to application tables fixed the fixture.
+The final targeted verify then passed all three new database scenarios and
+formatting (63 distinct backend scenarios covered across these runs). The timeout
+fixture now moves both case creation and deadline into the past, retaining a
+valid chronology. No Flutter code changed in this slice.
+
+The local V9 database was backed up to ignored `.work/before-v10.sql`; every
+documented preflight returned zero invalid rows. V10 then applied to the populated
+local database and API readiness returned UP. The existing resolved customer case,
+one AUTHORIZE/CAPTURE/REFUND ledger, two chat messages and five-star review remain.
+CI remains before merge. #7 native-device authentication and #12 full release
+evidence remain.
