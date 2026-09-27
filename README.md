@@ -4,7 +4,7 @@ A local-services marketplace connecting customers with individual professionals
 and companies. Rebuilding the preserved prototype as a Java 21 / Quarkus modular
 monolith with PostgreSQL and a Flutter client.
 
-**Status: foundation under construction, not a completed portfolio release.**
+**Status: local web marketplace flows verified; native mobile validation remains open.**
 
 Implemented: public category/provider/offering discovery backed by Flyway and
 PostgreSQL, a Flutter HTTP catalog client, bounded pagination, health/metrics,
@@ -28,6 +28,12 @@ See the [marketplace demo](docs/demo/MARKETPLACE.md) for steps and evidence.
 The [chat demo](docs/demo/CHAT.md) records both participants and restart persistence.
 See the [reviews demo](docs/demo/REVIEWS.md) for eligibility and public-rating checks.
 See the [dispute demo](docs/demo/DISPUTES.md) for manual decisions and recovery checks.
+
+![Completed booking and simulated payment](docs/demo/marketplace-completed.png)
+
+Use the [8–10 minute walkthrough](docs/product/PORTFOLIO_DEMO.md#timed-web-walkthrough)
+and [release evidence checklist](docs/product/RELEASE_CHECKLIST.md) to present the
+working scope and remaining limits. No real payments or public deployment.
 
 ## Run locally
 
@@ -62,6 +68,12 @@ the release-candidate dependency will be reevaluated before product beta.
 
 The `local` profile loads explicitly marked sample offerings. Production uses
 only reference categories; never reuse the local-demo database for production.
+`dev-api.ps1` starts Docker, prepares the generated demo identities, waits for
+PostgreSQL/Keycloak, and starts Quarkus. The frontend runs in the second terminal.
+Keep those terminals open; stop their foreground processes with Ctrl+C before
+running Maven verification (dev mode and tests share the API build directory).
+Create a provider-owned business once through Your account → Manage your business;
+the sample catalog alone does not grant a demo user ownership of a provider.
 On this workstation the ignored SDK is `.tools/flutter/bin/flutter.bat`.
 For Android emulator networking, see [mobile setup](apps/mobile/README.md).
 
@@ -115,7 +127,7 @@ See [progress](docs/agent/PROGRESS.md) for evidence.
 modular monolith organized by capability. `infrastructure` contains local startup
 scripts. `docs` records product scope, architecture decisions and execution state.
 
-The core process will be request → quote → booking → service → confirmation or
+The core process is request → quote → booking → service → confirmation or
 dispute → simulated settlement. Standard offerings also support direct booking.
 Quarkus Flow coordinates the long waits, timeouts, retries and payment compensation;
 the relational domain remains authoritative for API reads.
@@ -123,6 +135,17 @@ See [workflow design and the release-specific JPA compatibility fix](docs/archit
 See [database invariants and upgrade preflight](docs/architecture/DATABASE_INVARIANTS.md)
 before applying schema changes to an existing database.
 Run one local API worker; this slice does not support distributed workflow ownership.
+
+```mermaid
+flowchart LR
+  Client[Flutter customer / provider / admin] --> API[Quarkus modular monolith]
+  Client --> Auth[Keycloak OIDC / PKCE]
+  API --> DB[(PostgreSQL / Flyway)]
+  API --> Flow[BookingLifecycleFlow / DisputeFlow]
+  Flow --> DB
+  Flow --> Pay[Simulated payment ledger]
+  Pay --> DB
+```
 
 - [Reconnaissance](docs/agent/RECONNAISSANCE.md)
 - [Execution plan](docs/agent/PLAN.md)

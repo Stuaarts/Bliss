@@ -42,4 +42,4 @@ The “Verified customer” label means a completed booking, not identity verifi
 
 Review editing/deletion, provider replies, moderation/reporting and retention are
 not implemented. Production abuse/privacy policies remain #15. Native device
-authentication remains #7; manual-admin disputes are the next feature (#10).
+authentication remains #7; manual-admin disputes are now documented in [the dispute demo](DISPUTES.md).

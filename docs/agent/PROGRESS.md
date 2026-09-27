@@ -513,3 +513,28 @@ subsequent execution read already contained a checkpoint. The helper now require
 a nonempty case workflow ID matching the execution response before returning the
 pre-crash snapshot. This strengthens the recovery assertion instead of treating
 an unassigned ID as valid. Both new database migration suites passed in those runs.
+
+## 2026-09-27 — Database merge and release evidence (#12)
+
+The final local dispute restart recheck passed both packaged-process scenarios.
+PR #29 merged as `41e564f`, closing #11, after all four API/mobile jobs passed at
+`c95ea84` (push run 36286965393 and PR run 36286967602). Each final API job ran all
+63 backend scenarios; Flutter formatting, analysis, 39 tests and web build passed.
+
+The release documentation now links the verified marketplace, chat, review and
+dispute runs, adds an 8–10 minute presentation script, and explains how to prove
+the same workflow instance survives a restart. README and architecture/action
+catalogs describe the implemented functionality. The new
+`docs/product/RELEASE_CHECKLIST.md` distinguishes demonstrated local web behavior
+from unfinished native-device validation. Screenshots come from the separate
+verified runs; no narrated video or native run is claimed.
+
+#7 and #12 remain open: the latest workstation check has no connected Android/iOS
+target, Android command-line tools are missing and license status is unknown.
+All 68 local Markdown links, diff whitespace and tracked-file hygiene checks
+passed. The Windows backend helper started Docker/API with the V10 data intact;
+PostgreSQL/Keycloak were healthy, readiness UP, and Swagger/OpenAPI/metrics/Dev UI
+returned HTTP 200. OpenAPI included booking/dispute routes and startup warmed both
+workflows. The documentation slice still requires its own green CI before merge.
+Production policy, hosting, real payments and license decisions remain outside
+the local portfolio demonstration.
