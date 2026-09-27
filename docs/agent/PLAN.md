@@ -29,8 +29,8 @@ Phases 1–2 verified: CI and local PostgreSQL/API checks passed, Docker repaire
 Compose healthy, and Flutter category filtering/detail navigation verified against
 the live API. Phase 3 identity (#2) now includes validated bearer authentication,
 Flutter PKCE login, profile editing/logout, and provider ownership checks, verified
-against live Keycloak and PostgreSQL. Native device login still needs validation
-under #7. Provider onboarding and offering management (#3) now includes atomic
+against live Keycloak and PostgreSQL. Android login is now verified; the complete
+native marketplace flow and iOS remain under #7. Provider onboarding and offering management (#3) now includes atomic
 OWNER membership creation, owned offering CRUD/archive, strict decimal/category
 validation, version conflicts and Flutter management screens. API and client tests
 pass; live browser creation/edit/archive and persistence checks passed. PR #20
@@ -47,7 +47,7 @@ concurrency tests and the same lifecycle. V6 upgrades existing quote bookings an
 enforces one source. PR #24 merged after all API/mobile CI checks passed, closing #6.
 The Flutter lifecycle (#7) now has requests, quotes, direct booking, provider actions,
 customer confirmation and a live timeline. The web flow passed against the real
-local services; native-device authentication remains unverified. PR #25 merged as
+local services; native-device authentication was unverified at that checkpoint. PR #25 merged as
 `a671e58` after both API/mobile CI runs passed. Authorized persisted conversations
 (#8) now include V7 tables, participant/current-owner access checks, stable message
 cursors, idempotent sends and Flutter chat. Local verification passed 46 backend
@@ -71,12 +71,16 @@ PR #30 merged as `42e98ff` after all four API/mobile CI jobs passed at `3d17c9b`
 The timed walkthrough, release checklist and architecture/action documentation
 are synchronized on `main`. Android now builds, installs and launches on a dedicated
 API 36 emulator, with the AppAuth callback handler registered. Full sign-off (#12)
-remains open for end-to-end native login, token recovery/logout and iOS checks (#7).
+remains open for the complete native marketplace lifecycle and iOS checks (#7).
 PR #31 merged as `ba1699e` after all four API/mobile CI jobs passed at `4a19f98`.
-Current branch: `main`. Four reproduced native session ordering defects are fixed;
+Four reproduced native session ordering defects are fixed;
 seven regressions (46 ordinary Flutter tests total) and three Android fixture
 process phases pass. Real Keycloak browser checks remain distinct from synthetic
-storage/refresh verification. Windows input error 87 prevented interactive native
-verification; real browser PKCE/identity-provider logout and iOS remain next.
+storage/refresh verification. Current branch: `codex/7-native-oidc-e2e`. The separate
+Android UiAutomator driver now passes real browser PKCE, customer/provider recovery,
+identity-provider logout and account switching. Removing MainActivity's empty
+task affinity fixes the reproduced callback failure. A guarded PowerShell runner
+reproduces the local check; Android app/driver compilation is added to CI.
+Complete native marketplace and iOS verification remain next; CI must pass before merge.
 Docker's ordinary restart limitation (#17) is mitigated by the
 guarded Windows startup helper; existing container data is preserved.
