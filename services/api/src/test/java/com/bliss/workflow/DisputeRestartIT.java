@@ -233,17 +233,25 @@ class DisputeRestartIT {
         JsonNode result;
         do {
             result = api.call("GET", "/api/v1/disputes/" + id, token, null, null, 200);
-            boolean persisted =
-                    !checkpoint
-                            || api.call(
-                                            "GET",
-                                            "/api/v1/disputes/" + id + "/execution",
-                                            token,
-                                            null,
-                                            null,
-                                            200)
-                                    .path("checkpointPresent")
-                                    .asBoolean();
+            boolean persisted = !checkpoint;
+            if (checkpoint) {
+                var execution =
+                        api.call(
+                                "GET",
+                                "/api/v1/disputes/" + id + "/execution",
+                                token,
+                                null,
+                                null,
+                                200);
+                // Dispatch may occur between these reads. Do not return the earlier
+                // case snapshot until it names the same persisted engine instance.
+                var instance = result.path("workflowInstanceId");
+                persisted =
+                        instance.isTextual()
+                                && !instance.asText().isBlank()
+                                && instance.asText().equals(execution.path("instanceId").asText())
+                                && execution.path("checkpointPresent").asBoolean();
+            }
             if (expected.equals(result.path("status").asText()) && persisted) return result;
             Thread.sleep(100);
         } while (System.nanoTime() < deadline);

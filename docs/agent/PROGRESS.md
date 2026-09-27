@@ -506,3 +506,10 @@ local database and API readiness returned UP. The existing resolved customer cas
 one AUTHORIZE/CAPTURE/REFUND ledger, two chat messages and five-star review remain.
 CI remains before merge. #7 native-device authentication and #12 full release
 evidence remain.
+
+PR #29's first push CI passed all jobs, while its PR run exposed a race in the
+dispute restart test helper: the case read could precede workflow dispatch but the
+subsequent execution read already contained a checkpoint. The helper now requires
+a nonempty case workflow ID matching the execution response before returning the
+pre-crash snapshot. This strengthens the recovery assertion instead of treating
+an unassigned ID as valid. Both new database migration suites passed in those runs.
