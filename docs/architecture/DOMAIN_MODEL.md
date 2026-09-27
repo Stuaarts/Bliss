@@ -67,3 +67,9 @@ Case deadlines and workflow identity survive restarts. A content-free failure
 timestamp survives Flow's deletion of failed checkpoints. V9 changes allowed
 booking states: do not roll back to an older binary while cases or these statuses
 exist. Preserve evidence/history; plan a forward migration instead of dropping data.
+
+V10 rejects numeric NaN at every money boundary, validates payment currency and
+history state values, and enforces dispute deadline/resolution timestamp consistency.
+It adds constraints without rewriting existing records. See the
+[database verification matrix and upgrade preflight](DATABASE_INVARIANTS.md) for
+populated V5/V8/V9 upgrades, direct constraint tests and application-only rules.

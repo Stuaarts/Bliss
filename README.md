@@ -120,6 +120,8 @@ dispute → simulated settlement. Standard offerings also support direct booking
 Quarkus Flow coordinates the long waits, timeouts, retries and payment compensation;
 the relational domain remains authoritative for API reads.
 See [workflow design and the release-specific JPA compatibility fix](docs/architecture/WORKFLOWS.md).
+See [database invariants and upgrade preflight](docs/architecture/DATABASE_INVARIANTS.md)
+before applying schema changes to an existing database.
 Run one local API worker; this slice does not support distributed workflow ownership.
 
 - [Reconnaissance](docs/agent/RECONNAISSANCE.md)
