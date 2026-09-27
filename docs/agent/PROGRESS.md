@@ -595,3 +595,36 @@ The normal APK replaced the fixture build, launched successfully, and the dedica
 emulator was stopped with its data preserved. API readiness is UP. #7/#12 remain
 open for the interactive native and iOS checks; no real native browser login or
 identity-provider logout is inferred from the successful fixture tests.
+
+## 2026-09-27 — Real Android browser authentication (#7)
+
+The separate UiAutomator driver reproduced a real Keycloak callback failure twice:
+the redirect receiver ran, but Chrome remained visible and the authenticated
+profile never appeared. Removing MainActivity's empty task affinity fixed it.
+The same test then passed in 51.818 seconds; the tracked PowerShell runner repeated
+the full check successfully in 47.963 seconds after rebuilding/reinstalling the
+normal debug app and both driver APKs.
+
+The run verifies customer PKCE login and API profile, customer recovery after
+force-stop, logout persisting across restart, fresh provider credentials and
+provider controls, provider recovery, then identity-provider logout and switching
+back to customer without provider controls. A final logout/restart leaves the app
+signed out. Real emulator screenshots are in docs/demo/ANDROID.md. Windows window
+activation failed twice, so no further desktop input was attempted; the Android
+instrumentation runs on-device and does not depend on Windows focus.
+
+The runner restricts execution to Bliss_Test, checks local services, reads generated
+credentials without printing them, and removes staged inputs in finally. Host and
+device cleanup were verified after the repeat. A separate Android CI job compiles
+the app and instrumentation driver; real Keycloak emulator execution stays a local
+gate. No credentials, APKs or raw device logs are tracked.
+
+Current branch: codex/7-native-oidc-e2e, based on pushed main checkpoint 8cc689a.
+CI and merge remain pending. #7/#12 remain open for the complete native marketplace
+lifecycle and iOS validation; the latter needs a macOS host. The existing browser
+marketplace evidence and 63 backend/46 Flutter scenario counts are unchanged.
+
+Final local checks: Flutter analysis and all 46 tests passed. The documentation
+checker passed 74 local Markdown links and 253 tracked/new paths; diff whitespace
+is clean. Actual Android runner screenshots were visually reviewed before adding
+only the three credential-free application screens to documentation.

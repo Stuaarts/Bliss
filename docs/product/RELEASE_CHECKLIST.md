@@ -19,9 +19,9 @@ the separate verified runs; no narrated video is claimed.
 | Reviews | Completed-customer eligibility, one review per booking, public rating/privacy tests |
 | Disputes | Private evidence, independent admin decision, manual review wait and simulated refund verified |
 | Backend quality gates | 63 scenarios: 55 ordinary + 8 migration/packaged-process scenarios |
-| Flutter quality gates | Analysis, formatting, 46 tests; release web build is checked for each PR |
+| Flutter quality gates | Analysis, formatting, 46 tests; release web build and Android app/test-driver compilation are checked for each PR |
 | Operations and docs | Swagger/OpenAPI, health/metrics, action catalog, ADRs, workflow diagrams and setup/demo instructions |
-| Native device login | **Open #7:** APK build/startup/callback registration plus real Android storage/refresh/local-logout fixture tests pass. Real browser PKCE, account recovery, provider logout and iOS remain unverified |
+| Native device login | Real Android Keycloak browser login, customer/provider recovery after process death, logout and account switching pass. **Open #7:** complete native marketplace lifecycle and iOS validation |
 | Full portfolio sign-off | **Open #12:** retain until the remaining native platform gate is resolved or an explicit web-only scope is agreed |
 
 ## Evidence index
@@ -30,9 +30,10 @@ the separate verified runs; no narrated video is claimed.
   provider timeout, completed capture and phone layout.
 - [Chat](../demo/CHAT.md), [reviews](../demo/REVIEWS.md) and
   [disputes](../demo/DISPUTES.md): observed UI behavior, screenshots and limits.
-- [Android smoke check](../demo/ANDROID.md): successful debug build, emulator
-  installation/startup, callback registration, three-process session fixture and
-  remaining native acceptance steps.
+- [Android authentication](../demo/ANDROID.md): real Keycloak browser callback,
+  process-death recovery, logout/account switching, screenshots and reproducible
+  runner; also includes the three-process synthetic session fixture and remaining
+  native marketplace/iOS acceptance steps.
 - [Database matrix](../architecture/DATABASE_INVARIANTS.md): constraints, migration
   preservation, invalid-data rollback, preflight and operator recovery.
 - [Workflow design](../architecture/WORKFLOWS.md): durable waits, local JPA adapter,

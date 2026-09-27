@@ -1,11 +1,64 @@
-# Android build and emulator smoke check
+# Android authentication and emulator verification
 
 Verified September 27, 2026 on Windows with Flutter 3.47.5, Java 21 and the
-installed Android API 36 Google Play x86_64 image. This check establishes a debug
-APK build, installation, activity startup and registered callback handler. It
-does not establish a successful native OIDC sign-in or session recovery.
+installed Android API 36 Google Play x86_64 image. The debug app passes real
+Keycloak browser login, session recovery after process death, logout and account
+switching on the dedicated Bliss_Test emulator. The complete native marketplace
+lifecycle and iOS checks remain open under #7.
 
-## Observed results
+## Real Keycloak browser regression
+
+The first two real-login runs reached the AppAuth redirect receiver but remained
+in Chrome without showing the authenticated profile. Removing the empty
+`android:taskAffinity` from MainActivity fixed the return to Bliss, consistent
+with [AppAuth's Android troubleshooting guidance](https://pub.dev/packages/flutter_appauth/versions/12.1.0#troubleshooting).
+The same device test then passed in 51.818 seconds. It verified:
+
+- Customer browser login and authenticated API profile, without provider controls.
+- Customer session restoration after force-stop, without another browser login.
+- Logout followed by process restart remains signed out.
+- Provider login requires fresh browser credentials and exposes provider controls.
+- Provider session restoration after force-stop.
+- Provider logout, switch back to customer without provider controls, and final
+  logout/restart leaves Bliss signed out.
+
+The standalone `android/native_smoke` UiAutomator driver runs outside Bliss so
+force-stop actually kills its Flutter process. The driver uses real AppAuth,
+secure storage, Chrome, Keycloak and API responses. Dependencies are test-only;
+the driver is a separate APK and is not included in the marketplace app.
+
+Start the backend following the root README and boot a dedicated emulator named
+`Bliss_Test` with Chrome installed. Both generated demo identities must already
+have Bliss profiles (sign into each once, as in the marketplace demo). From the
+repository root, using PowerShell 7:
+
+```powershell
+./infrastructure/scripts/test-android-oidc.ps1 -DeviceId emulator-5554 `
+    -JavaHome 'C:\Program Files\Java\jdk-21'
+```
+
+The runner refuses physical devices and other AVD names, checks local services,
+builds and installs the app/driver, and reverses ports 8088/8180. It reads generated
+demo credentials privately from `.work/demo-accounts.json` and current display
+names from local PostgreSQL. Credentials are staged only for the test, never put
+in command arguments, and removed from host/device in `finally`. The driver checks
+the local Keycloak URL and Bliss realm before entering them. It stops Chrome and
+Bliss but does not clear their data; use only the dedicated demo emulator.
+
+Results and app-only screenshots are kept under ignored `.work/native-oidc`.
+Success requires `OK (1 test)` plus the account-switch checkpoint; an exit code
+alone is insufficient because Android instrumentation can return zero on failure.
+The host bounds instrumentation to four minutes. On failure inspect the local
+logs before repeating. A successful test leaves Bliss signed out. CI compiles the
+app and driver on Linux; it does not execute this local emulator/Keycloak gate.
+
+Actual emulator evidence (September 27, 2026):
+
+| Customer restored after process death | Provider signed in | Signed out after restart |
+| --- | --- | --- |
+| ![Customer restored](android-customer-restored.png) | ![Provider signed in](android-provider-signed-in.png) | ![Signed out](android-signed-out.png) |
+
+## Initial build and startup results
 
 - `flutter build apk --debug` passed. Gradle installed NDK 28.2.13676358, Android
   Platform 35 (required by a plugin) and CMake 3.22.1 using existing SDK license
@@ -76,9 +129,9 @@ removed the seed, prompting the harness correction. Seven native channel tests
 also passed, bringing ordinary Flutter coverage to 46 tests. The actual native
 catalog was observed loading API data. Windows UI input then failed twice with
 `SendInput sent 0 of 1 events; GetLastError=87`; interactive automation stopped.
-The fixture results do not replace the remaining real Keycloak/browser checks.
+The fixture results are separate from the later real Keycloak checks above.
 
-## Repeat and complete interactive native verification
+## Remaining native marketplace and iOS verification
 
 Start the backend using the root README. Start an Android emulator with sufficient
 free internal space, or connect a USB-debuggable device. From `apps/mobile`, run:
@@ -93,8 +146,10 @@ adb -s emulator-5554 install -r build/app/outputs/flutter-apk/app-debug.apk
 adb -s emulator-5554 shell am start -W -n com.bliss.bliss_mobile/.MainActivity
 ```
 
-Use a visible device for the remaining acceptance checks. Keep generated demo
-credentials private; use the existing customer/provider identities.
+Use a visible device for the remaining marketplace acceptance checks. Keep
+generated demo credentials private; use the existing customer/provider identities.
+Authentication steps 2–4 below are now covered by the real Android driver above;
+retain them when repeating the complete marketplace flow or testing iOS.
 
 1. Browse the real catalog; verify loading and retry behavior if the API stops.
 2. Sign in through the system browser and return through the AppAuth callback.

@@ -32,7 +32,8 @@ Web tokens stay in memory, so a reload requires sign-in again (the identity serv
 may still have an SSO session). Only the PKCE transaction is temporarily stored in
 sessionStorage; it expires after ten minutes and is removed on callback. Native
 refresh tokens use platform secure storage; access tokens stay in memory. Native
-Android/iOS code is analyzed but device login has not yet been verified.
+Android browser login, recovery and logout are verified on the dedicated emulator;
+iOS device login remains unverified.
 
 HTTP clients and typed mappings live under `core`, `features/discovery` and
 `features/marketplace`, `features/conversation`, `features/reviews` and `features/dispute`.
@@ -73,11 +74,15 @@ submissions retain their original body/key in the signed-in session. See
 
 Native validation remains in #7. On September 27, the Android debug APK built,
 installed and launched on a dedicated API 36 emulator, and Android resolved the
-AppAuth callback handler. See [the smoke check and remaining device steps](../../docs/demo/ANDROID.md).
+AppAuth callback handler. See [authentication evidence and remaining device steps](../../docs/demo/ANDROID.md).
 Three separate Android test processes verified real secure-storage persistence,
 AppAuth refresh/rotation and local logout using synthetic OIDC responses. Native
 session ordering now rejects stale reads/responses and serializes credential writes.
-Seven platform-channel regression tests run in CI. End-to-end Keycloak browser
-login, real-account recovery and identity-provider logout remain unverified.
+Seven platform-channel regression tests run in CI. The separate UiAutomator driver
+now passes real Keycloak browser login, customer/provider recovery after process
+death, identity-provider logout and account switching. An empty MainActivity
+task affinity prevented returning from Chrome; removing it fixes the callback.
+The root `infrastructure/scripts/test-android-oidc.ps1` reproduces the local check.
+CI compiles the Android app and driver; native marketplace completion remains open.
 Android command-line tools are still missing; Gradle used existing SDK license
 acceptance for build dependencies. iOS requires a macOS host.
