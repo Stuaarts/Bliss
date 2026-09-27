@@ -23,6 +23,14 @@ OIDC provider warning messages that can include rejected token material are
 suppressed. Audit events retain actor/resource IDs and action names, not tokens
 or submitted profile text. No access/refresh token is stored in web localStorage.
 
+Native refresh tokens use platform secure storage. Session generations reject
+refresh/authorization results and storage reads from before logout or account
+replacement. Writes/deletes are serialized so a pending platform write cannot
+finish after logout's deletion. Storage failures are reported, not treated as
+successful persistence. Android fixture tests verify storage across process death,
+native refresh/rotation and local logout; real browser PKCE and identity-provider
+logout still require device validation. See [Android evidence](../demo/ANDROID.md).
+
 Opportunity reads expose only job scope, category, city and budget to providers;
 no customer identity/contact fields. Quote submission requires provider OWNER
 membership and excludes the request's customer identity. Acceptance/decline require

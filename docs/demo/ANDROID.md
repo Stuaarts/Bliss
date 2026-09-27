@@ -24,13 +24,61 @@ does not establish a successful native OIDC sign-in or session recovery.
   `net.openid.appauth.RedirectUriReceiverActivity` in the Bliss package.
 - ADB reverse mappings connected device localhost ports 8088 and 8180 to the host.
 
-The ignored artifact is `apps/mobile/build/app/outputs/flutter-apk/app-debug.apk`.
-Its SHA-256 is
+Debug builds write to ignored `apps/mobile/build/app/outputs/flutter-apk/app-debug.apk`.
+The initial smoke-check artifact's SHA-256 was
 `63d1320adaf3a3287212072261ddd434b7dfc1987f83999cbf33628d9ca6c6bf`.
-It is a debug build, not a signed distribution release. Generated Kotlin session
+Later builds replace that file and have their own hashes. It is a debug build,
+not a signed distribution release. Generated Kotlin session
 files are ignored alongside Gradle/build outputs.
 
-## Repeat and complete native verification
+## Automated native session regression
+
+`test/native_auth_test.dart` covers native session ordering through mocked platform
+channels. Four tests failed on the original implementation: a late refresh could
+restore a signed-out session, an old failed refresh could clear a new account, an
+in-flight storage write could finish after logout's delete, and a delayed storage
+read could revive old credentials. Session generations now reject stale results;
+serialized secure-storage mutations ensure logout deletion follows an active write.
+Additional tests cover late authorization, storage failure recovery, shared refresh
+and rotated-token/logout-hint handling. These tests run in ordinary Flutter CI.
+
+`integration_test/native_session_test.dart` uses real Android AppAuth and secure
+storage plugins with a synthetic localhost OIDC fixture. Its three separate
+processes seed storage, restore/rotate/clear a refresh token, then verify a new
+process remains signed out. It never uses demo-account credentials or the real
+Keycloak realm, and does not exercise browser login or identity-provider logout.
+Run it only on a dedicated test emulator: it installs a test build of Bliss.
+
+From `apps/mobile`, with Flutter and ADB on PATH (PowerShell):
+
+```powershell
+$device = 'emulator-5554' # Select the dedicated test emulator from adb devices -l.
+foreach ($phase in @('seed', 'restore', 'signed-out')) {
+    adb -s $device shell am force-stop com.bliss.bliss_mobile
+    flutter test integration_test/native_session_test.dart -d $device --no-uninstall `
+        --dart-define=OIDC_ISSUER=http://localhost:18180 `
+        "--dart-define=NATIVE_TEST_PHASE=$phase"
+    if ($LASTEXITCODE -ne 0) { throw "Native phase failed: $phase" }
+}
+```
+
+`--no-uninstall` is essential: Flutter otherwise removes the app and its data
+after each phase, invalidating the persistence check. The seed phase refuses to
+overwrite an existing session. If a phase fails, investigate before repeating;
+do not clear unrelated device data. After testing, rebuild/install the normal
+debug APK without either test define before an interactive demo. The fixture
+test binary is not a usable marketplace app. Device tests are a separate local
+gate; ordinary CI formats/analyzes them but does not claim to execute an emulator.
+
+On September 27, all three phases passed on Bliss_Test/API 36 with the corrected
+`--no-uninstall` command. The first attempt failed because automatic uninstall
+removed the seed, prompting the harness correction. Seven native channel tests
+also passed, bringing ordinary Flutter coverage to 46 tests. The actual native
+catalog was observed loading API data. Windows UI input then failed twice with
+`SendInput sent 0 of 1 events; GetLastError=87`; interactive automation stopped.
+The fixture results do not replace the remaining real Keycloak/browser checks.
+
+## Repeat and complete interactive native verification
 
 Start the backend using the root README. Start an Android emulator with sufficient
 free internal space, or connect a USB-debuggable device. From `apps/mobile`, run:
