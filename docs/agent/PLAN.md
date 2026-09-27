@@ -58,11 +58,11 @@ one review per booking, bounded public reads/averages and Flutter publish/read f
 Local checks passed 51 backend scenarios and 33 Flutter tests. Real browser publish,
 reopen and signed-out aggregate reads passed at phone width. Current branch:
 `main`: PR #27 merged as `9610918` after both API/mobile CI runs passed, closing #9.
-DisputeFlow (#10) is implemented on `codex/10-manual-dispute-workflow`: V9,
+DisputeFlow (#10) is merged in PR #28 as `2cab47e`: V9,
 private evidence, independent admin decisions, durable waits and simulated
 refund/void/capture. All 60 backend scenarios and 39 Flutter tests passed; browser
-customer/provider/admin checks and phone screenshots passed. PR/CI remain before
-merge. Next independent slice is database hardening (#11), then full release
+customer/provider/admin checks and phone screenshots passed. All four API/mobile
+CI jobs passed at `17f0e90`. Next independent slice is database hardening (#11), then full release
 evidence (#12); #7 remains open for native validation.
 Docker's ordinary restart limitation (#17) is mitigated by the
 guarded Windows startup helper; existing container data is preserved.

@@ -469,3 +469,10 @@ open for Docker's ordinary startup limitation; no reinstall/reset was needed.
 
 PR/CI and merge are the remaining gate for this slice. Native auth (#7), final
 database hardening (#11), release demo (#12) and production policies remain open.
+
+### Disputes merge checkpoint
+
+PR #28 merged as `2cab47e`, closing #10, after all four API/mobile CI jobs passed
+at `17f0e90` (runs 36252989901 and 36253015017). Main is synchronized. Database
+hardening (#11) is next: populated upgrades and direct constraint tests across
+bookings, payments, chat, reviews and disputes, alongside existing concurrency tests.
