@@ -55,7 +55,7 @@ jobs:
           cache: true
       - run: flutter pub get
         working-directory: apps/mobile
-      - run: dart format --output=none --set-exit-if-changed lib test
+      - run: dart format --output=none --set-exit-if-changed lib test integration_test
         working-directory: apps/mobile
       - run: flutter analyze
         working-directory: apps/mobile

@@ -72,5 +72,9 @@ The timed walkthrough, release checklist and architecture/action documentation
 are synchronized on `main`. Android now builds, installs and launches on a dedicated
 API 36 emulator, with the AppAuth callback handler registered. Full sign-off (#12)
 remains open for end-to-end native login, token recovery/logout and iOS checks (#7).
+Current branch: `codex/7-native-session-verification`. Four reproduced native
+session ordering defects are fixed; seven regression tests and three Android
+fixture process phases pass. Real Keycloak browser checks remain distinct from
+synthetic storage/refresh verification. Full builds and CI gate this slice's merge.
 Docker's ordinary restart limitation (#17) is mitigated by the
 guarded Windows startup helper; existing container data is preserved.

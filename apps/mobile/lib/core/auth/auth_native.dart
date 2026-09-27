@@ -17,24 +17,48 @@ class NativeAuthTokens implements AuthTokens {
   String? _idToken;
   DateTime? _expires;
   Future<String?>? _refreshing;
+  int _generation = 0;
+  Future<void> _storageWrites = Future<void>.value();
   bool get _allowHttp => kDebugMode && Uri.parse(issuerUrl).host == 'localhost';
 
   @override
   Future<void> restore() async {
-    _refresh = await _storage.read(key: _key);
+    final generation = _generation;
+    await _storageWrites;
+    if (generation != _generation) return;
+    final refresh = await _storage.read(key: _key);
+    if (generation != _generation) return;
+    _refresh = refresh;
     if (_refresh != null) await accessToken();
   }
 
-  Future<void> _save(TokenResponse response) async {
+  // Serialize platform writes: a delete must follow any write already in flight.
+  Future<void> _writeStorage(Future<void> Function() action) {
+    final operation = _storageWrites.then((_) => action());
+    _storageWrites = operation.catchError((Object _) {});
+    return operation;
+  }
+
+  Future<void> _save(TokenResponse response, int generation) async {
+    if (generation != _generation) return;
+    final refresh = response.refreshToken ?? _refresh;
+    await _writeStorage(() async {
+      if (generation == _generation && refresh != null) {
+        await _storage.write(key: _key, value: refresh);
+      }
+    });
+    if (generation != _generation) return;
     _access = response.accessToken;
     _expires = response.accessTokenExpirationDateTime;
     _idToken = response.idToken ?? _idToken;
-    _refresh = response.refreshToken ?? _refresh;
-    if (_refresh != null) await _storage.write(key: _key, value: _refresh);
+    _refresh = refresh;
   }
 
   @override
   Future<void> signIn() async {
+    final generation = _generation + 1;
+    await _clear();
+    if (generation != _generation) return;
     final response = await _appAuth.authorizeAndExchangeCode(
       AuthorizationTokenRequest(
         _clientId,
@@ -44,7 +68,7 @@ class NativeAuthTokens implements AuthTokens {
         allowInsecureConnections: _allowHttp,
       ),
     );
-    await _save(response);
+    await _save(response, generation);
   }
 
   @override
@@ -56,15 +80,16 @@ class NativeAuthTokens implements AuthTokens {
     }
     if (_refresh == null) return null;
     if (_refreshing != null) return _refreshing;
-    _refreshing = _renew();
+    final refreshing = _renew(_generation);
+    _refreshing = refreshing;
     try {
-      return await _refreshing;
+      return await refreshing;
     } finally {
-      _refreshing = null;
+      if (identical(_refreshing, refreshing)) _refreshing = null;
     }
   }
 
-  Future<String?> _renew() async {
+  Future<String?> _renew(int generation) async {
     try {
       final response = await _appAuth.token(
         TokenRequest(
@@ -75,20 +100,22 @@ class NativeAuthTokens implements AuthTokens {
           allowInsecureConnections: _allowHttp,
         ),
       );
-      await _save(response);
-      return _access;
+      await _save(response, generation);
+      return generation == _generation ? _access : null;
     } catch (_) {
-      await _clear();
+      if (generation == _generation) await _clear();
       rethrow;
     }
   }
 
   Future<void> _clear() async {
+    _generation++;
     _access = null;
     _refresh = null;
     _idToken = null;
     _expires = null;
-    await _storage.delete(key: _key);
+    _refreshing = null;
+    await _writeStorage(() => _storage.delete(key: _key));
   }
 
   @override

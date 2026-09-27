@@ -558,3 +558,30 @@ Kotlin's generated session directory is now ignored.
 This is build/startup evidence only. Native PKCE login, persisted refresh-token
 recovery, logout and iOS remain unverified; #7 and #12 stay open. No native UI flow
 or secure-storage success is inferred from a registered callback.
+
+## 2026-09-27 — Native session lifecycle (#7)
+
+The Android catalog visibly loaded real API data. Native Windows input failed
+twice with `SendInput sent 0 of 1 events; GetLastError=87`; UI automation stopped.
+No native browser login is claimed. Independent code verification reproduced four
+ordering defects: late refresh restored a logged-out session, failed old refresh
+cleared a new account, an in-flight storage write outlasted deletion, and a delayed
+storage read revived old credentials. NativeAuthTokens now guards asynchronous
+results with a session generation and serializes credential writes/deletes.
+
+Seven platform-channel tests pass, including late authorization, write-failure
+recovery, shared refresh and token rotation/logout hints. Flutter analysis and
+all 46 ordinary tests pass. The Android integration test uses real AppAuth/secure
+storage plugins with synthetic OIDC HTTP responses. Three separate processes
+verify persisted seed, refresh/rotation/deletion, then continued sign-out after
+process death. All three phases passed on the dedicated Bliss_Test/API 36 emulator.
+The first persistence run exposed Flutter's default test-app uninstall; the
+corrected `--no-uninstall` command retains storage between phases.
+
+The fixture has no demo credentials, browser login or real identity-provider
+logout. It refuses to overwrite an existing seed-phase session and runs only on
+a dedicated test emulator. Reproduction and limits: `docs/demo/ANDROID.md`.
+The normal release web and debug APK rebuilds pass; the normal APK was reinstalled
+and cold-launched successfully after replacing the fixture. All 71 local Markdown
+links, diff whitespace and tracked-file hygiene checks pass. PR CI remains before
+merge; #7/#12 stay open for real native authentication/lifecycle evidence and iOS.
