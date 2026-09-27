@@ -585,3 +585,13 @@ The normal release web and debug APK rebuilds pass; the normal APK was reinstall
 and cold-launched successfully after replacing the fixture. All 71 local Markdown
 links, diff whitespace and tracked-file hygiene checks pass. PR CI remains before
 merge; #7/#12 stay open for real native authentication/lifecycle evidence and iOS.
+
+### Native session merge checkpoint
+
+PR #31 merged as `ba1699e` after all four API/mobile jobs passed at `4a19f98`
+(push 36327118198, PR 36327121173). API CI passed all 63 scenarios; mobile CI passed
+formatting, analysis, 46 tests and release web compilation. Main is synchronized.
+The normal APK replaced the fixture build, launched successfully, and the dedicated
+emulator was stopped with its data preserved. API readiness is UP. #7/#12 remain
+open for the interactive native and iOS checks; no real native browser login or
+identity-provider logout is inferred from the successful fixture tests.

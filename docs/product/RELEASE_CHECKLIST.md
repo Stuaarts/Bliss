@@ -43,6 +43,12 @@ the separate verified runs; no narrated video is claimed.
 - Final code checks at `c95ea84`: [push CI](https://github.com/Stuaarts/Bliss/actions/runs/36286965393)
   and [PR CI](https://github.com/Stuaarts/Bliss/actions/runs/36286967602), all API/mobile
   jobs passed. Later documentation-only updates have their own CI history.
+- Native session ordering and Android fixture verification: [PR #31](https://github.com/Stuaarts/Bliss/pull/31),
+  merged as `ba1699e`. All four jobs passed at `4a19f98` in
+  [push CI](https://github.com/Stuaarts/Bliss/actions/runs/36327118198) and
+  [PR CI](https://github.com/Stuaarts/Bliss/actions/runs/36327121173): 63 backend
+  scenarios and 46 ordinary Flutter tests, analysis/formatting/web build. The three
+  native fixture phases are verified locally, separately from CI.
 
 On September 27, the documented Windows backend helper started Docker and the
 API against the existing V10 database. PostgreSQL and Keycloak were healthy;
