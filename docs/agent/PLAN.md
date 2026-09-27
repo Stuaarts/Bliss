@@ -67,8 +67,10 @@ CI jobs passed at `17f0e90`. Database hardening (#11) merged in PR #29 as
 empty-schema type tests. All four API/mobile CI jobs passed at `c95ea84`, including
 63 backend scenarios and 39 Flutter tests. The restart test now waits for a
 nonempty, matching workflow identity before taking its pre-crash snapshot.
-Current branch: `codex/12-portfolio-demo`, consolidating the timed walkthrough,
-release evidence checklist and architecture/action documentation. Full sign-off
-(#12) remains open while native-device validation (#7) is unfinished.
+PR #30 merged as `42e98ff` after all four API/mobile CI jobs passed at `3d17c9b`.
+The timed walkthrough, release checklist and architecture/action documentation
+are synchronized on `main`. Android now builds, installs and launches on a dedicated
+API 36 emulator, with the AppAuth callback handler registered. Full sign-off (#12)
+remains open for end-to-end native login, token recovery/logout and iOS checks (#7).
 Docker's ordinary restart limitation (#17) is mitigated by the
 guarded Windows startup helper; existing container data is preserved.

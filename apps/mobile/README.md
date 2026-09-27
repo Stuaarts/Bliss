@@ -71,7 +71,9 @@ and shows a support state after exhausted settlement retries. Exact uncertain
 submissions retain their original body/key in the signed-in session. See
 [the dispute demo](../../docs/demo/DISPUTES.md).
 
-Native validation remains in #7. On the September 26 workstation check, Flutter
-reported missing Android command-line tools, unknown SDK license status, and no
-connected Android/iOS device. iOS also requires a macOS host. The browser demo
-does not establish native AppAuth callback or secure-storage behavior.
+Native validation remains in #7. On September 27, the Android debug APK built,
+installed and launched on a dedicated API 36 emulator, and Android resolved the
+AppAuth callback handler. See [the smoke check and remaining device steps](../../docs/demo/ANDROID.md).
+End-to-end native login, secure-storage recovery and logout remain unverified.
+Android command-line tools are still missing; Gradle used existing SDK license
+acceptance for build dependencies. iOS requires a macOS host.

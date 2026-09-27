@@ -21,7 +21,7 @@ the separate verified runs; no narrated video is claimed.
 | Backend quality gates | 63 scenarios: 55 ordinary + 8 migration/packaged-process scenarios |
 | Flutter quality gates | Analysis, formatting, 39 tests and release web build |
 | Operations and docs | Swagger/OpenAPI, health/metrics, action catalog, ADRs, workflow diagrams and setup/demo instructions |
-| Native device login | **Open #7:** Android command-line tools missing, license status unknown, no connected Android/iOS target on the latest workstation check; iOS needs macOS |
+| Native device login | **Open #7:** Android debug APK builds, installs and launches on API 36; callback handler resolves. Native sign-in, token recovery/logout and iOS validation remain unverified |
 | Full portfolio sign-off | **Open #12:** retain until the remaining native platform gate is resolved or an explicit web-only scope is agreed |
 
 ## Evidence index
@@ -30,6 +30,8 @@ the separate verified runs; no narrated video is claimed.
   provider timeout, completed capture and phone layout.
 - [Chat](../demo/CHAT.md), [reviews](../demo/REVIEWS.md) and
   [disputes](../demo/DISPUTES.md): observed UI behavior, screenshots and limits.
+- [Android smoke check](../demo/ANDROID.md): successful debug build, emulator
+  installation/startup, callback registration and remaining native acceptance steps.
 - [Database matrix](../architecture/DATABASE_INVARIANTS.md): constraints, migration
   preservation, invalid-data rollback, preflight and operator recovery.
 - [Workflow design](../architecture/WORKFLOWS.md): durable waits, local JPA adapter,

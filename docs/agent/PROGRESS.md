@@ -538,3 +538,23 @@ returned HTTP 200. OpenAPI included booking/dispute routes and startup warmed bo
 workflows. The documentation slice still requires its own green CI before merge.
 Production policy, hosting, real payments and license decisions remain outside
 the local portfolio demonstration.
+
+### Release docs merged; Android environment advanced
+
+PR #30 merged as `42e98ff` after all four API/mobile CI jobs passed at `3d17c9b`
+(push 36301363619, PR 36301370072). This delivers the timed walkthrough, release
+checklist and current architecture/action catalog while leaving #12 open for #7.
+
+The Android investigation found an existing API 36 emulator and accepted SDK
+license files despite Flutter doctor's missing command-line tools warning.
+`flutter build apk --debug` passed; Gradle installed the missing NDK/platform/CMake
+dependencies using those existing licenses. The existing emulator had insufficient
+internal storage, so a separate project-local Bliss_Test AVD was created without
+deleting its data. Installation succeeded and, after boot completed, cold launch
+returned Status: ok. Android resolves the AppAuth callback to Bliss's receiver.
+Evidence, APK hash and remaining native acceptance steps: `docs/demo/ANDROID.md`.
+Kotlin's generated session directory is now ignored.
+
+This is build/startup evidence only. Native PKCE login, persisted refresh-token
+recovery, logout and iOS remain unverified; #7 and #12 stay open. No native UI flow
+or secure-storage success is inferred from a registered callback.
