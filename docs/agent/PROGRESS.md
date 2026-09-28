@@ -628,3 +628,14 @@ Final local checks: Flutter analysis and all 46 tests passed. The documentation
 checker passed 74 local Markdown links and 253 tracked/new paths; diff whitespace
 is clean. Actual Android runner screenshots were visually reviewed before adding
 only the three credential-free application screens to documentation.
+
+### 2026-09-28 — Android authentication merge checkpoint
+
+PR #32 merged as `a892dd9` after all six API/mobile/Android jobs passed at
+`aae6927` (push 36346822438, PR 36346825784). API CI passed all 63 scenarios;
+Flutter CI passed analysis, 46 tests and release web compilation. Clean Linux
+Android app and driver compilation passed. Main CI 36347290131 also passed.
+Current branch is main, synchronized to merge commit a892dd9. Issues #7 and #12
+remain open and were updated with actual authentication evidence and remaining
+native marketplace/iOS acceptance work. Bliss_Test was stopped with data intact.
+The next slice verifies the full native customer/provider marketplace lifecycle.

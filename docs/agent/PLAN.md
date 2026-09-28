@@ -76,11 +76,13 @@ PR #31 merged as `ba1699e` after all four API/mobile CI jobs passed at `4a19f98`
 Four reproduced native session ordering defects are fixed;
 seven regressions (46 ordinary Flutter tests total) and three Android fixture
 process phases pass. Real Keycloak browser checks remain distinct from synthetic
-storage/refresh verification. Current branch: `codex/7-native-oidc-e2e`. The separate
+storage/refresh verification. The separate
 Android UiAutomator driver now passes real browser PKCE, customer/provider recovery,
 identity-provider logout and account switching. Removing MainActivity's empty
 task affinity fixes the reproduced callback failure. A guarded PowerShell runner
 reproduces the local check; Android app/driver compilation is added to CI.
-Complete native marketplace and iOS verification remain next; CI must pass before merge.
+PR #32 merged as `a892dd9` after all six API/mobile/Android jobs passed at `aae6927`.
+Main CI also passed (run 36347290131). Current branch: `main`.
+Complete native marketplace and iOS verification remain next.
 Docker's ordinary restart limitation (#17) is mitigated by the
 guarded Windows startup helper; existing container data is preserved.
