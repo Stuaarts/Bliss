@@ -83,6 +83,10 @@ now passes real Keycloak browser login, customer/provider recovery after process
 death, identity-provider logout and account switching. An empty MainActivity
 task affinity prevented returning from Chrome; removing it fixes the callback.
 The root `infrastructure/scripts/test-android-oidc.ps1` reproduces the local check.
-CI compiles the Android app and driver; native marketplace completion remains open.
+CI compiles the Android app and drivers. The separate
+[native marketplace run](../../docs/demo/ANDROID_MARKETPLACE.md) passes request,
+quote, scheduled booking, completion/capture, chat, review reopening and
+background/resume against real local services. Add `-Scenario marketplace` to the
+runner command for that check. iOS and secondary native paths remain unverified.
 Android command-line tools are still missing; Gradle used existing SDK license
 acceptance for build dependencies. iOS requires a macOS host.

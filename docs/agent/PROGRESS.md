@@ -639,3 +639,45 @@ Current branch is main, synchronized to merge commit a892dd9. Issues #7 and #12
 remain open and were updated with actual authentication evidence and remaining
 native marketplace/iOS acceptance work. Bliss_Test was stopped with data intact.
 The next slice verifies the full native customer/provider marketplace lifecycle.
+
+## 2026-09-28 — Native Android request-to-review verification (#7)
+
+The normal Android APK completed a real customer/provider marketplace run on
+Bliss_Test/API 36 against local Keycloak, Quarkus and PostgreSQL. UI controls created
+the request and quote, accepted the quote, exchanged two messages, scheduled work,
+waited for the real scheduled time, started/finished work, confirmed completion,
+and displayed simulated capture. After app-process restart the same booking and
+messages reopened; the customer published and reopened a review, backgrounded and
+resumed the app, then restarted and signed out. The final fresh run passed all
+checkpoints in 375.264 seconds. No marketplace product change was required.
+
+Driver development corrected Flutter hint-label selection, explicit input focus,
+and review-card combined semantics. An earlier run completed/published its review
+but failed the final rating selector; that result was not counted as an end-to-end
+pass. The fresh native-20260928-b run passed. Read-only database inspection found
+one authorization, one capture, two messages and one review on its completed booking.
+Shared native controls were extracted without changing authentication behavior;
+the separate real OIDC regression passed again in 48.438 seconds. Generated host
+credential inputs were absent after cleanup. Reviewed app-only screenshots and
+reproduction commands are in docs/demo/ANDROID_MARKETPLACE.md.
+
+The PowerShell runner now supports explicit marketplace phases for diagnosis,
+a ten-minute full-flow limit and an existing-run guard (verified against the first
+persisted request). It preserves demo data; partial phases do not claim full-flow
+success. The local Docker startup helper restored healthy services without resetting
+volumes. No backend tests were run alongside the API dev process; CI retains the
+full 63 backend/46 Flutter checks and compiles both native drivers.
+
+## 2026-10-05 — Resume and prepare native marketplace merge
+
+Saved full-run and authentication recheck logs both confirm success. Current branch:
+codex/7-native-marketplace, based on pushed main checkpoint 5227c12 (its CI passed).
+The emulator is currently stopped. Evidence dates remain September 28; no new device
+run is inferred from this documentation update. Older README/demo statements about
+unverified Android login are corrected. #7/#12 remain open for iOS and secondary
+native paths; this slice still needs its own clean-checkout CI and merge.
+
+Pre-PR documentation checks passed 92 local Markdown links and 259 tracked/new
+paths for generated artifacts and high-confidence secret patterns. Diff whitespace
+is clean. The saved shared-driver authentication run passed all checkpoints; no
+additional runtime changes were made after that successful recheck.

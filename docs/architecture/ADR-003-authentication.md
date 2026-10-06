@@ -33,4 +33,6 @@ Generated realm/password files live only under ignored `.work`. Keycloak 26.7.4
 uses a persistent local volume and loopback port 8180; its development mode is
 not production infrastructure. Client redirects are exact, not wildcard URLs.
 API production startup requires `BLISS_OIDC_URL`; real deployments require HTTPS.
-Native device validation and production session hardening remain tracked work.
+Real Android browser login, customer/provider session recovery after process death,
+logout and account switching are verified in [the Android evidence](../demo/ANDROID.md).
+iOS device validation and production session hardening remain tracked work.

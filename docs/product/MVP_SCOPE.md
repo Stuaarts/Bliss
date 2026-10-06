@@ -11,11 +11,11 @@ evidence and durable simulated settlement, schema constraints,
 operational endpoints and CI. Real process-restart tests
 cover both quote and direct sources; populated migration tests preserve old bookings.
 
-Required next: native-device authentication validation (#7)
-and final portfolio sign-off (#12). Database hardening (#11) is verified and merged.
-Flutter web lifecycle evidence
-is recorded in the [marketplace demo](../demo/MARKETPLACE.md). Native execution is
-not yet validated, and the full portfolio release remains incomplete.
+Android authentication and the primary request-to-review lifecycle now pass on
+the dedicated emulator. See [native evidence](../demo/ANDROID_MARKETPLACE.md) and
+[web evidence](../demo/MARKETPLACE.md). Remaining validation under #7 covers iOS
+and secondary native paths; final portfolio sign-off (#12) remains open.
+Database hardening (#11) is verified and merged.
 Chat browser and restart evidence is in the [chat demo](../demo/CHAT.md).
 
 Portfolio hardening includes migration/concurrency tests, restart demo, screenshots

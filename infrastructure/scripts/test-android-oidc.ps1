@@ -1,5 +1,11 @@
 #Requires -Version 7.0
 param(
+    [ValidateSet('authentication', 'marketplace')]
+    [string]$Scenario = 'authentication',
+    [ValidateSet('all', 'request', 'quote', 'accept', 'fulfil', 'review')]
+    [string]$MarketplacePhase = 'all',
+    [ValidatePattern('^[a-z0-9-]{1,40}$')]
+    [string]$RunId = ('run-' + (Get-Date -Format 'yyyyMMdd-HHmmss')),
     [string]$DeviceId = 'emulator-5554',
     [string]$AndroidSdk = "$env:LOCALAPPDATA/Android/Sdk",
     [string]$JavaHome = $env:JAVA_HOME
@@ -11,9 +17,12 @@ $flutter = Join-Path $root '.tools/flutter/bin/flutter.bat'
 if (-not (Test-Path -LiteralPath $flutter)) { $flutter = (Get-Command flutter).Source }
 if ($JavaHome) { $env:JAVA_HOME = $JavaHome }
 $env:ANDROID_HOME = $AndroidSdk
-$results = Join-Path $root '.work/native-oidc'
+$results = Join-Path $root $(if ($Scenario -eq 'marketplace') { ".work/native-marketplace/$RunId-$MarketplacePhase" } else { '.work/native-oidc' })
 $inputPath = Join-Path $results 'accounts.json'
 $deviceInput = '/data/local/tmp/bliss-native-auth.json'
+if ($Scenario -eq 'authentication' -and $MarketplacePhase -ne 'all') {
+    throw 'MarketplacePhase applies only to the marketplace scenario.'
+}
 
 function Invoke-Checked([string]$Program, [string[]]$Arguments) {
     & $Program @Arguments
@@ -41,6 +50,13 @@ try {
     $profileJson = $sql | & docker compose exec -T postgres sh -c 'exec psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -At'
     if ($LASTEXITCODE -ne 0) { throw 'Could not read local demo profile names.' }
     $profiles = $profileJson | ConvertFrom-Json -AsHashtable
+    if ($Scenario -eq 'marketplace' -and $MarketplacePhase -in @('all', 'request')) {
+        # RunId has a strict allowlist; prevent a repeat from creating ambiguous duplicates.
+        $existsSql = "SELECT EXISTS (SELECT 1 FROM service_request WHERE title = 'Android garden $RunId');"
+        $exists = $existsSql | & docker compose exec -T postgres sh -c 'exec psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -At'
+        if ($LASTEXITCODE -ne 0) { throw 'Could not check the local marketplace run ID.' }
+        if ("$exists".Trim() -ne 'f') { throw 'This run ID already has a request. Inspect it and resume a specific phase, or use a fresh run ID.' }
+    }
     $fixture = @{}
     foreach ($name in @('customer', 'provider')) {
         $account = @($accounts | Where-Object username -eq $name)
@@ -72,25 +88,39 @@ try {
         Invoke-Checked $adb @('-s', $DeviceId, 'push', $inputPath, $deviceInput)
         Invoke-Checked $adb @('-s', $DeviceId, 'shell', 'chmod', '600', $deviceInput)
         $logPath = Join-Path $results 'instrumentation.log'
-        $process = Start-Process -FilePath $adb -WindowStyle Hidden -PassThru -ArgumentList @(
-            '-s', $DeviceId, 'shell', 'am', 'instrument', '-w', '-r', '-e', 'blissRun', 'local-demo',
-            'com.bliss.native_smoke.test/androidx.test.runner.AndroidJUnitRunner'
-        ) -RedirectStandardOutput $logPath -RedirectStandardError (Join-Path $results 'instrumentation-errors.log')
-        if (-not $process.WaitForExit(240000)) {
+        $instrumentation = @('-s', $DeviceId, 'shell', 'am', 'instrument', '-w', '-r', '-e', 'blissRun')
+        if ($Scenario -eq 'marketplace') {
+            $instrumentation += @('marketplace', '-e', 'runId', $RunId, '-e', 'marketplacePhase', $MarketplacePhase,
+                '-e', 'class', 'com.bliss.native_smoke.NativeMarketplaceTest')
+        } else {
+            $instrumentation += @('local-demo', '-e', 'class', 'com.bliss.native_smoke.NativeOidcTest')
+        }
+        $instrumentation += 'com.bliss.native_smoke.test/androidx.test.runner.AndroidJUnitRunner'
+        $process = Start-Process -FilePath $adb -WindowStyle Hidden -PassThru -ArgumentList $instrumentation `
+            -RedirectStandardOutput $logPath -RedirectStandardError (Join-Path $results 'instrumentation-errors.log')
+        $timeout = if ($Scenario -eq 'marketplace') { 600000 } else { 240000 }
+        if (-not $process.WaitForExit($timeout)) {
             $process.Kill()
             & $adb -s $DeviceId shell am force-stop com.bliss.native_smoke
-            throw 'Native authentication check exceeded four minutes; inspect the ignored logs.'
+            throw 'Native check exceeded its time limit; inspect the ignored logs.'
         }
         $log = Get-Content -LiteralPath $logPath -Raw
         # Android instrumentation may return exit 0 even when an assertion fails.
-        if ($process.ExitCode -ne 0 -or $log -notmatch 'OK \(1 test\)' -or
-            $log -notmatch 'Switch back to customer after identity-provider logout') {
-            throw "Native authentication failed. Inspect $logPath (kept local)."
+        $checkpoint = if ($Scenario -eq 'authentication') { 'Switch back to customer after identity-provider logout' }
+            elseif ($MarketplacePhase -eq 'all') { 'Native marketplace lifecycle finished; signed out' } else { 'Verified: Native' }
+        if ($process.ExitCode -ne 0 -or $log -notmatch 'OK \(1 test\)' -or $log -notmatch $checkpoint) {
+            throw "Native check failed. Inspect $logPath (kept local)."
         }
-        foreach ($name in @('android-customer-restored.png', 'android-provider-signed-in.png', 'android-signed-out.png')) {
+        $screenshots = if ($Scenario -eq 'authentication') {
+            @('android-customer-restored.png', 'android-provider-signed-in.png', 'android-signed-out.png')
+        } elseif ($MarketplacePhase -eq 'all') {
+            @('android-marketplace-request.png', 'android-marketplace-chat.png', 'android-marketplace-provider-complete.png',
+                'android-marketplace-completed.png', 'android-marketplace-review.png')
+        } else { @() }
+        foreach ($name in $screenshots) {
             Invoke-Checked $adb @('-s', $DeviceId, 'pull', "/sdcard/Android/data/com.bliss.native_smoke/files/$name", (Join-Path $results $name))
         }
-        Write-Output 'PASS: real browser login, customer/provider recovery, logout and account switching. Bliss is signed out.'
+        Write-Output "PASS: $Scenario ($MarketplacePhase). See instrumentation checkpoints for verified actions."
         Write-Output "Logs and credential-free app screenshots: $results"
     } finally {
         & $adb -s $DeviceId shell rm -f $deviceInput
