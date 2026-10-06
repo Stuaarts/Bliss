@@ -4,7 +4,7 @@ A local-services marketplace connecting customers with individual professionals
 and companies. Rebuilding the preserved prototype as a Java 21 / Quarkus modular
 monolith with PostgreSQL and a Flutter client.
 
-**Status: local web marketplace flows verified; native mobile validation remains open.**
+**Status: local web marketplace and the Android request-to-review flow verified; iOS remains unverified.**
 
 Implemented: public category/provider/offering discovery backed by Flyway and
 PostgreSQL, a Flutter HTTP catalog client, bounded pagination, health/metrics,
@@ -23,8 +23,11 @@ API. Persisted booking conversations now support participant-only chat, polling,
 older-message pagination and safe send retries. Completed bookings support one
 customer review, with public provider ratings and comments. Disputes now collect
 private evidence and wait for an independent admin decision before simulated
-refund, void or capture. Native device authentication remains unverified.
+refund, void or capture. Real Android browser login, process-death session recovery,
+logout and account switching are verified; iOS remains unverified.
 See the [marketplace demo](docs/demo/MARKETPLACE.md) for steps and evidence.
+The [Android marketplace run](docs/demo/ANDROID_MARKETPLACE.md) verifies the native
+request, quote, booking, chat, completion and review flow with real local services.
 The [chat demo](docs/demo/CHAT.md) records both participants and restart persistence.
 See the [reviews demo](docs/demo/REVIEWS.md) for eligibility and public-rating checks.
 See the [dispute demo](docs/demo/DISPUTES.md) for manual decisions and recovery checks.

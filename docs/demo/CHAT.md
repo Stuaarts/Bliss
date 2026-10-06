@@ -39,4 +39,6 @@ There is no pre-booking chat, attachment, push delivery, read receipt, edit/dele
 participant invitation or realtime transport. Polling runs every three seconds
 while the route is visible. Unconfirmed sends retain their original key/text in
 memory; after reloading the app, read history before deciding to resend.
-Native Android/iOS authentication remains unverified under #7.
+Later [Android authentication](ANDROID.md) verifies real login/recovery/logout;
+[native marketplace evidence](ANDROID_MARKETPLACE.md) records the Android booking
+chat check. This page's backend-restart demonstration is web-only. iOS remains unverified.

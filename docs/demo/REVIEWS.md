@@ -41,5 +41,7 @@ Public averages use all of a provider's reviews and are not limited to the page.
 The “Verified customer” label means a completed booking, not identity verification.
 
 Review editing/deletion, provider replies, moderation/reporting and retention are
-not implemented. Production abuse/privacy policies remain #15. Native device
-authentication remains #7; manual-admin disputes are now documented in [the dispute demo](DISPUTES.md).
+not implemented. Production abuse/privacy policies remain #15.
+[Android authentication](ANDROID.md) and [native marketplace verification](ANDROID_MARKETPLACE.md)
+have separate evidence; iOS remains unverified. Manual-admin disputes are documented
+in [the dispute demo](DISPUTES.md).

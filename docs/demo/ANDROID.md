@@ -3,8 +3,9 @@
 Verified September 27, 2026 on Windows with Flutter 3.47.5, Java 21 and the
 installed Android API 36 Google Play x86_64 image. The debug app passes real
 Keycloak browser login, session recovery after process death, logout and account
-switching on the dedicated Bliss_Test emulator. The complete native marketplace
-lifecycle and iOS checks remain open under #7.
+switching on the dedicated Bliss_Test emulator. The later
+[native request-to-review run](ANDROID_MARKETPLACE.md) verifies the primary
+marketplace lifecycle. iOS and secondary native paths remain open under #7.
 
 ## Real Keycloak browser regression
 
@@ -131,7 +132,7 @@ catalog was observed loading API data. Windows UI input then failed twice with
 `SendInput sent 0 of 1 events; GetLastError=87`; interactive automation stopped.
 The fixture results are separate from the later real Keycloak checks above.
 
-## Remaining native marketplace and iOS verification
+## Native marketplace and remaining platform verification
 
 Start the backend using the root README. Start an Android emulator with sufficient
 free internal space, or connect a USB-debuggable device. From `apps/mobile`, run:
@@ -146,14 +147,15 @@ adb -s emulator-5554 install -r build/app/outputs/flutter-apk/app-debug.apk
 adb -s emulator-5554 shell am start -W -n com.bliss.bliss_mobile/.MainActivity
 ```
 
-Use a visible device for the remaining marketplace acceptance checks. Keep
+The [native marketplace driver](ANDROID_MARKETPLACE.md) now covers the primary
+quote-booking lifecycle, chat, review and background/resume. Keep
 generated demo credentials private; use the existing customer/provider identities.
 Authentication steps 2–4 below are now covered by the real Android driver above;
 retain them when repeating the complete marketplace flow or testing iOS.
 
 1. Browse the real catalog; verify loading and retry behavior if the API stops.
 2. Sign in through the system browser and return through the AppAuth callback.
-   Confirm the correct account and capabilities appear.
+   Confirm the correct account and capabilities appear (verified on Android).
 3. Force-stop and reopen Bliss without clearing app data. Confirm the stored
    refresh token restores the session and the API accepts refreshed credentials.
 4. Sign out, force-stop and reopen. Confirm private activity is unavailable and

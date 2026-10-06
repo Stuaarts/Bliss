@@ -63,8 +63,9 @@ leaving the UI waiting. Existing account, catalog and provider tests also pass.
 Backend contracts and authorization remain server-enforced; this change adds no
 backend routes or migrations.
 
-Native device authentication remains unverified under #7: the workstation lacks
-Android command-line tools and has no connected mobile device; SDK license status
-is unknown. iOS requires macOS. This evidence covers Flutter web, not a native or
-production release. [Chat](CHAT.md) and [reviews](REVIEWS.md) now have separate
+This September 22–23 evidence covers Flutter web. Later
+[Android authentication](ANDROID.md) verifies real browser login/recovery/logout;
+the separate [Android marketplace run](ANDROID_MARKETPLACE.md) records native
+lifecycle verification. iOS requires macOS and remains unverified. No production
+release is claimed. [Chat](CHAT.md) and [reviews](REVIEWS.md) have separate
 demo evidence; [disputes](DISPUTES.md) now include the manual admin/refund path.

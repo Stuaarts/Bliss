@@ -1,7 +1,8 @@
 # Portfolio release evidence
 
-The local **web** marketplace is demonstrated. This is not a native-mobile or
-production release. The walkthrough is documented, with genuine screenshots from
+The local **web** marketplace and **Android request-to-review** flow are demonstrated.
+This is not a signed mobile distribution or production release. The walkthrough
+is documented, with genuine screenshots from
 the separate verified runs; no narrated video is claimed.
 
 | Gate | Evidence / current result |
@@ -14,14 +15,14 @@ the separate verified runs; no narrated video is claimed.
 | Request / quote / direct booking | Browser evidence plus concurrent acceptance, price snapshot and duplicate tests |
 | Durable orchestration | BookingLifecycleFlow and DisputeFlow; forced packaged-process restart tests retain instance identity |
 | Simulated payments | AUTHORIZE/CAPTURE/VOID/REFUND, unique ledger, transient rollback and exhausted-retry tests |
-| Flutter connected to API | Customer/provider/admin web flows against actual local services; responsive screenshots |
+| Flutter connected to API | Customer/provider/admin web flows and native Android customer/provider request-to-review flow against actual local services |
 | Chat | Persisted participant-scoped messages, retry/pagination, browser restart evidence |
 | Reviews | Completed-customer eligibility, one review per booking, public rating/privacy tests |
 | Disputes | Private evidence, independent admin decision, manual review wait and simulated refund verified |
 | Backend quality gates | 63 scenarios: 55 ordinary + 8 migration/packaged-process scenarios |
 | Flutter quality gates | Analysis, formatting, 46 tests; release web build and Android app/test-driver compilation are checked for each PR |
 | Operations and docs | Swagger/OpenAPI, health/metrics, action catalog, ADRs, workflow diagrams and setup/demo instructions |
-| Native device login | Real Android Keycloak browser login, customer/provider recovery after process death, logout and account switching pass. **Open #7:** complete native marketplace lifecycle and iOS validation |
+| Native device validation | Real Android Keycloak login/recovery/logout and primary request-to-review flow pass. **Open #7:** iOS and secondary native paths (direct booking/cancellation, dispute/admin and outage/retry checks) |
 | Full portfolio sign-off | **Open #12:** retain until the remaining native platform gate is resolved or an explicit web-only scope is agreed |
 
 ## Evidence index
@@ -33,7 +34,11 @@ the separate verified runs; no narrated video is claimed.
 - [Android authentication](../demo/ANDROID.md): real Keycloak browser callback,
   process-death recovery, logout/account switching, screenshots and reproducible
   runner; also includes the three-process synthetic session fixture and remaining
-  native marketplace/iOS acceptance steps.
+  secondary native/iOS acceptance steps.
+- [Android marketplace](../demo/ANDROID_MARKETPLACE.md): UI-created request,
+  quote, real scheduling wait, completed simulated capture, two-way chat, saved
+  review reopening, process recovery and background/resume; reproducible driver
+  and genuine screenshots. The full live run passed in 375.264 seconds.
 - [Database matrix](../architecture/DATABASE_INVARIANTS.md): constraints, migration
   preservation, invalid-data rollback, preflight and operator recovery.
 - [Workflow design](../architecture/WORKFLOWS.md): durable waits, local JPA adapter,

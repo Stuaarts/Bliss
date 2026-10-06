@@ -71,7 +71,7 @@ PR #30 merged as `42e98ff` after all four API/mobile CI jobs passed at `3d17c9b`
 The timed walkthrough, release checklist and architecture/action documentation
 are synchronized on `main`. Android now builds, installs and launches on a dedicated
 API 36 emulator, with the AppAuth callback handler registered. Full sign-off (#12)
-remains open for the complete native marketplace lifecycle and iOS checks (#7).
+remains open for secondary native paths and iOS checks (#7).
 PR #31 merged as `ba1699e` after all four API/mobile CI jobs passed at `4a19f98`.
 Four reproduced native session ordering defects are fixed;
 seven regressions (46 ordinary Flutter tests total) and three Android fixture
@@ -82,7 +82,13 @@ identity-provider logout and account switching. Removing MainActivity's empty
 task affinity fixes the reproduced callback failure. A guarded PowerShell runner
 reproduces the local check; Android app/driver compilation is added to CI.
 PR #32 merged as `a892dd9` after all six API/mobile/Android jobs passed at `aae6927`.
-Main CI also passed (run 36347290131). Current branch: `main`.
-Complete native marketplace and iOS verification remain next.
+Main CI also passed (run 36347290131).
+Current branch: `codex/7-native-marketplace`, based on main checkpoint `5227c12`.
+The real Android request-to-review run passed on September 28 in 375.264 seconds,
+including two-way chat, actual schedule enforcement, simulated capture, process
+recovery, saved review reopening and background/resume. Authentication recheck
+passed in 48.438 seconds after extracting shared driver controls. The runner
+rejects duplicate run IDs and documents safe phase-based diagnosis. CI/merge for
+this slice remain pending; iOS and secondary native paths remain next.
 Docker's ordinary restart limitation (#17) is mitigated by the
 guarded Windows startup helper; existing container data is preserved.
