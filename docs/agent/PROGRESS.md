@@ -681,3 +681,15 @@ Pre-PR documentation checks passed 92 local Markdown links and 259 tracked/new
 paths for generated artifacts and high-confidence secret patterns. Diff whitespace
 is clean. The saved shared-driver authentication run passed all checkpoints; no
 additional runtime changes were made after that successful recheck.
+
+### Native marketplace merge checkpoint
+
+PR #33 merged as `0e04a80` after all six API/mobile/Android jobs passed at
+`1f0f9ac` (push 37397402890, PR 37397405582). Each API run passed all 63 scenarios;
+Flutter passed all 46 tests, analysis, formatting and release web compilation.
+Both native scenarios compiled with the normal Android APK on clean Linux CI.
+Current branch is main, synchronized to the pushed merge commit 0e04a80. The
+documentation checkpoint following it changes no runtime or test behavior.
+Issues #7/#12 remain open for the explicitly listed native platform/secondary-path
+checks. No iOS or production release is claimed. The emulator remains stopped;
+the successful local UI evidence and generated demo data are preserved.

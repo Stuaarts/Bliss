@@ -61,6 +61,12 @@ the separate verified runs; no narrated video is claimed.
   [PR CI](https://github.com/Stuaarts/Bliss/actions/runs/36346825784).
   [Main CI](https://github.com/Stuaarts/Bliss/actions/runs/36347290131) also passed.
   Android CI compiles the app/driver; real Keycloak execution is verified locally.
+- Native Android request-to-review evidence: [PR #33](https://github.com/Stuaarts/Bliss/pull/33),
+  merged as `0e04a80` after all six checks passed at `1f0f9ac` in
+  [push CI](https://github.com/Stuaarts/Bliss/actions/runs/37397402890) and
+  [PR CI](https://github.com/Stuaarts/Bliss/actions/runs/37397405582). Each API run
+  passed 63 scenarios; Flutter passed 46 tests, analysis/formatting/web build;
+  Android app and both instrumented scenarios compiled on clean Linux runners.
 
 On September 27, the documented Windows backend helper started Docker and the
 API against the existing V10 database. PostgreSQL and Keycloak were healthy;
