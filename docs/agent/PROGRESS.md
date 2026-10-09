@@ -759,3 +759,26 @@ Current branch: main, synchronized to the merge above before this documentation
 checkpoint. The local API is healthy, Docker data is preserved and the dedicated
 emulator is stopped with its data intact. Staged credentials are absent. No iOS,
 physical-device or signed-distribution result is inferred from these checks.
+
+## 2026-10-09 — iOS simulator build and native session fixture (#7/#12)
+
+Current branch: `7-ios-simulator-verification`, using the user's requested naming
+without codex/. The Windows workstation has no Xcode; standard macOS CI now
+builds the normal iOS app and runs three isolated native session processes.
+The pinned secure-storage plugin requires Keychain entitlements that were missing
+from Runner. All three configurations now reference Runner.entitlements with the
+documented empty keychain-access-groups array. Existing AppAuth callback/scene
+registration is retained for compilation and subsequent native verification.
+
+The guarded macOS script creates and deletes only its own disposable simulator;
+synthetic fixture tokens never use personal/demo accounts. Initial code checkpoint
+`8cce162` is pushed; [native run](https://github.com/Stuaarts/Bliss/actions/runs/37884919565)
+passed. It reported Xcode 16.4 / 16F6, Flutter 3.47.5 and an iPhone 11 / iOS 26.2
+simulator. The normal app compiled in 42.0 seconds; the built callback scheme
+check and each seed/restore/signed-out process passed. Downloaded artifacts and
+the job log confirm actual native plugin execution. Local Flutter analysis,
+integration-test formatting, Bash syntax and entitlement XML/configuration checks
+passed. The final runner revision adds separate evidence directories and explicit
+interruption cleanup; its native and ordinary CI still need to pass before merge.
+See [iOS validation](../demo/IOS.md) for commands, evidence boundaries and the
+remaining real browser/marketplace acceptance checks. #7/#12 remain open.

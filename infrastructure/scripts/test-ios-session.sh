@@ -10,8 +10,8 @@ for tool in flutter xcrun python3; do
 done
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-evidence="$root/.work/ios-session"
-mkdir -p "$evidence"
+mkdir -p "$root/.work/ios-session"
+evidence="$(mktemp -d "$root/.work/ios-session/run-XXXXXX")"
 cd "$root/apps/mobile"
 
 xcodebuild -version | tee "$evidence/xcode.txt"
@@ -67,6 +67,8 @@ cleanup() {
   xcrun simctl delete "$device" || true
 }
 trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 printf 'device=%s\ntype=%s\nruntime=%s\n' "$device" "$device_type" "$runtime" | tee "$evidence/device.txt"
 xcrun simctl boot "$device"
 xcrun simctl bootstatus "$device" -b
@@ -78,5 +80,5 @@ for phase in seed restore signed-out; do
     --dart-define=OIDC_ISSUER=http://localhost:18180 \
     --dart-define=NATIVE_TEST_PHASE="$phase" 2>&1 | tee "$evidence/$phase.log"
 done
-echo "PASS: iOS app compile, callback registration, Keychain persistence, AppAuth refresh/rotation and logout."
+echo "PASS: iOS app compile, callback registration, Keychain persistence, AppAuth refresh/rotation and logout." | tee "$evidence/result.txt"
 echo "Real browser PKCE, identity-provider logout and marketplace UI are separate checks."

@@ -1,0 +1,82 @@
+# iOS simulator validation
+
+The first iOS gate compiles the normal Flutter app and exercises the real iOS
+Keychain and AppAuth plugins in three separate simulator app processes. It uses
+synthetic tokens and a loopback OIDC fixture, without demo-account credentials or
+the marketplace backend. It does not establish real browser PKCE login,
+identity-provider logout, account switching or marketplace UI acceptance.
+
+## Reproduce on macOS
+
+Install Xcode with an iOS Simulator runtime and Flutter 3.47.5, then run from the
+repository root:
+
+```sh
+bash infrastructure/scripts/test-ios-session.sh
+```
+
+The script rejects other operating systems, builds the actual app first and
+checks the built callback scheme `com.bliss.mobile`. It creates a disposable
+`Bliss_Test_iOS_*` iPhone simulator, selecting an installed compatible runtime.
+It never selects, erases or deletes an existing simulator. Its exit handler shuts
+down and deletes only the UUID it created, including when a test fails.
+
+The test entry point is [native_session_test.dart](../../apps/mobile/integration_test/native_session_test.dart).
+Each invocation uses the same installed bundle and `--no-uninstall` to preserve
+app data between processes:
+
+1. `seed` refuses to overwrite an existing session, writes a synthetic refresh
+   token to real secure storage and reads it back.
+2. `restore` reads that token in a new process, uses the native AppAuth refresh
+   request against an in-app loopback server, checks the grant/client/token,
+   verifies rotation in Keychain and signs out locally.
+3. `signed-out` starts another process, confirms the token was removed and
+   checks that restoring a session produces no access token.
+
+Runner's Debug, Profile and Release configurations use the same Keychain
+[entitlements](../../apps/mobile/ios/Runner/Runner.entitlements). The empty
+`keychain-access-groups` array follows the pinned
+[secure-storage plugin setup](https://pub.dev/packages/flutter_secure_storage/versions/11.2.0).
+No cross-app Keychain group, Apple signing team or distribution profile is added.
+
+## CI and evidence
+
+The [iOS workflow](../../.github/workflows/ios.yml) runs on standard `macos-15`
+when mobile code, its runner script or workflow changes. It can also be run
+manually after landing on main. It does not run again on the pull-request event;
+the branch push supplies the iOS result for that commit. Concurrency cancels an
+obsolete run, and the job has a 30-minute limit.
+
+Each invocation writes a new directory under `.work/ios-session` so old phase
+logs cannot be mistaken for evidence from a later failed run. Private CI
+artifacts retain the commit, tool versions, selected simulator/runtime,
+normal app build and three fixture-phase logs for seven days. No real account
+tokens, credentials or signed application archive belong in those artifacts.
+The Windows workstation can check formatting, analysis and script syntax; only
+the macOS execution supplies native iOS evidence.
+
+Initial execution: [iOS simulator run](https://github.com/Stuaarts/Bliss/actions/runs/37884919565)
+passed on October 9, 2026 at `8cce162`. The runner reported Xcode 16.4 / build
+16F6, Flutter 3.47.5 and an iPhone 11 simulator using iOS 26.2. All evidence below
+comes from that run's downloaded artifact and job log:
+
+| Check | Observed result |
+| --- | --- |
+| Normal app, including Swift Package Manager plugins | Built `Runner.app`; Xcode build 42.0 seconds |
+| Built bundle and callback scheme | `com.bliss.blissMobile` / `com.bliss.mobile` verified |
+| `seed`, first process | One test passed using real secure storage |
+| `restore`, second process | One test passed: persisted seed, native refresh, rotation and local logout |
+| `signed-out`, third process | One test passed: token absent and no restored access token |
+
+The final runner revision also adds separate evidence directories and explicit
+interruption handling; its own CI result remains pending at this checkpoint.
+
+## Remaining acceptance under #7/#12
+
+- Real Keycloak browser sign-in and callback return for customer and provider.
+- Process-death session recovery, background/resume, identity-provider logout
+  and account switching with the expected capabilities and no stale private data.
+- The actual request-to-review marketplace UI, chat and simulated settlement
+  against the real API, plus direct cancellation, dispute and connection recovery.
+- Physical-device and signed-distribution validation are separate from simulator
+  acceptance; neither is implied by a successful simulator job.
