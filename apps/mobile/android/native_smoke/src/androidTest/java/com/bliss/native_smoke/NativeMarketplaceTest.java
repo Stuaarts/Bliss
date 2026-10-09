@@ -10,14 +10,11 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
-import androidx.test.uiautomator.UiScrollable;
-import androidx.test.uiautomator.UiSelector;
-import androidx.test.uiautomator.Until;
 import org.json.JSONObject;
 import org.junit.Test;
 
 /** Real UI mutations only: no API shortcuts or database state changes. */
-public class NativeMarketplaceTest extends NativeDemoDriver {
+public class NativeMarketplaceTest extends NativeMarketplaceDriver {
     @Test
     public void requestQuoteBookingChatAndReview() throws Exception {
         var args = InstrumentationRegistry.getArguments();
@@ -154,70 +151,4 @@ public class NativeMarketplaceTest extends NativeDemoDriver {
         }
     }
 
-    private void account(JSONObject wanted) throws Exception {
-        restartBliss();
-        label("Your account").click();
-        device.wait(Until.hasObject(By.desc("Sign in")), 3000);
-        if (findLabel("Sign out") != null) logout();
-        signIn(wanted);
-    }
-
-    private void openBooking(String title) throws Exception {
-        label("Your activity").click();
-        item(title).click();
-        label("Booking");
-        label(title);
-    }
-
-    private UiObject2 containing(String value) {
-        UiObject2 found = device.wait(Until.findObject(By.descContains(value)), TIMEOUT);
-        if (found == null) found = device.wait(Until.findObject(By.textContains(value)), 1000);
-        assertNotNull("Missing expected content: " + value, found);
-        return found;
-    }
-
-    private UiObject2 visible(String value) throws Exception {
-        if (findLabel(value) == null) {
-            new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().description(value));
-        }
-        return label(value);
-    }
-
-    private UiObject2 item(String title) throws Exception {
-        device.wait(Until.hasObject(By.descContains(title)), TIMEOUT);
-        if (!device.hasObject(By.descContains(title))) {
-            new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().descriptionContains(title));
-        }
-        return containing(title);
-    }
-
-    private void button(String value) throws Exception {
-        visible(value);
-        UiObject2 control = device.wait(Until.findObject(By.desc(value).clickable(true).enabled(true)), TIMEOUT);
-        assertNotNull("Missing enabled button: " + value, control);
-        control.click();
-    }
-
-    private void confirm(String value) throws Exception {
-        button(value);
-        label("Go back");
-        button(value);
-    }
-
-    private void field(String label, String value) throws Exception {
-        UiObject2 input = device.wait(Until.findObject(By.clazz("android.widget.EditText").hint(label)), TIMEOUT);
-        for (int attempt = 0; input == null && attempt < 4; attempt++) {
-            new UiScrollable(new UiSelector().scrollable(true)).scrollForward();
-            input = device.findObject(By.clazz("android.widget.EditText").hint(label));
-        }
-        assertNotNull("Missing field: " + label, input);
-        input.click();
-        UiObject2 focused = device.wait(Until.findObject(By.clazz("android.widget.EditText").focused(true)), TIMEOUT);
-        assertNotNull("Field did not receive focus: " + label, focused);
-        focused.setText(value);
-        assertTrue("Field value did not update: " + label,
-                device.wait(Until.hasObject(By.clazz("android.widget.EditText").text(value)), TIMEOUT));
-        device.waitForIdle();
-        if (device.executeShellCommand("dumpsys input_method").contains("mInputShown=true")) device.pressBack();
-    }
 }

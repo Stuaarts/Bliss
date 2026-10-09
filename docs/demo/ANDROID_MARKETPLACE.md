@@ -79,11 +79,11 @@ They contain generated local demo data, without credentials or tokens.
 
 The existing [Android authentication regression](ANDROID.md) remains a separate
 check of customer/provider recovery, logout and account switching. CI compiles
-both drivers; local live-service execution is not represented as a CI emulator run.
+all native scenarios; local live-service execution is not represented as a CI emulator run.
 
 This checks the primary quote-booking lifecycle. Direct booking/cancellation,
-native admin/dispute screens, native API-outage/retry behavior, iOS, physical-device
-coverage and signed distribution builds are not established by this run. Their
-existing API/Flutter tests and web evidence remain distinct. The app-process
+native admin/dispute screens and catalog outage/retry have
+[separate drivers and evidence](ANDROID_SECONDARY.md). iOS, physical-device
+coverage and signed distribution builds remain unverified. The app-process
 restart does not restart the backend; backend workflow restoration is covered by
 the separate packaged-process tests and browser demonstration.

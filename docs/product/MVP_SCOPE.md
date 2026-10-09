@@ -13,8 +13,10 @@ cover both quote and direct sources; populated migration tests preserve old book
 
 Android authentication and the primary request-to-review lifecycle now pass on
 the dedicated emulator. See [native evidence](../demo/ANDROID_MARKETPLACE.md) and
-[web evidence](../demo/MARKETPLACE.md). Remaining validation under #7 covers iOS
-and secondary native paths; final portfolio sign-off (#12) remains open.
+[web evidence](../demo/MARKETPLACE.md). Remaining platform verification under #7
+covers iOS. [Secondary Android evidence](../demo/ANDROID_SECONDARY.md) now covers
+direct booking/cancellation, customer/provider/admin disputes and catalog recovery.
+Final portfolio sign-off (#12) remains open for the remaining platform gate.
 Database hardening (#11) is verified and merged.
 Chat browser and restart evidence is in the [chat demo](../demo/CHAT.md).
 

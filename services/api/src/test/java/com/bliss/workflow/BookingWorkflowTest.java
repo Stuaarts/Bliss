@@ -182,7 +182,8 @@ class BookingWorkflowTest {
                         d.booking));
         // Allow multiple engine-managed waits before moving on: checkpoints must support loops.
         Thread.sleep(4500);
-        String schedule = Instant.now().plusSeconds(1).truncatedTo(ChronoUnit.SECONDS).toString();
+        // Leave headroom for HTTP/CI latency and second-precision rounding.
+        String schedule = Instant.now().plusSeconds(5).truncatedTo(ChronoUnit.SECONDS).toString();
         UUID accepted = UUID.randomUUID();
         for (int i = 0; i < 2; i++)
             given().auth()

@@ -83,13 +83,15 @@ task affinity fixes the reproduced callback failure. A guarded PowerShell runner
 reproduces the local check; Android app/driver compilation is added to CI.
 PR #32 merged as `a892dd9` after all six API/mobile/Android jobs passed at `aae6927`.
 Main CI also passed (run 36347290131).
-Current branch: `main`, synchronized through PR #33 merge `0e04a80`.
+Current branch: `codex/7-native-secondary-flows`, based on main checkpoint `009a44e`
+after PR #33 merge `0e04a80`.
 The real Android request-to-review run passed on September 28 in 375.264 seconds,
 including two-way chat, actual schedule enforcement, simulated capture, process
 recovery, saved review reopening and background/resume. Authentication recheck
 passed in 48.438 seconds after extracting shared driver controls. The runner
 rejects duplicate run IDs and documents safe phase-based diagnosis. All six
-API/mobile/Android jobs passed at `1f0f9ac` before merge. iOS and secondary native
-paths remain next.
+API/mobile/Android jobs passed at `1f0f9ac` before merge. The following Android secondary slice
+now passes direct cancellation, a manual admin dispute and catalog outage/retry.
+iOS remains the next platform gate; CI and merge for this slice are pending.
 Docker's ordinary restart limitation (#17) is mitigated by the
 guarded Windows startup helper; existing container data is preserved.

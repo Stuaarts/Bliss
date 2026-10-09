@@ -150,6 +150,8 @@ adb -s emulator-5554 shell am start -W -n com.bliss.bliss_mobile/.MainActivity
 The [native marketplace driver](ANDROID_MARKETPLACE.md) now covers the primary
 quote-booking lifecycle, chat, review and background/resume. Keep
 generated demo credentials private; use the existing customer/provider identities.
+The [secondary Android drivers](ANDROID_SECONDARY.md) exercise direct booking,
+cancellation, independent admin disputes and catalog connection recovery.
 Authentication steps 2–4 below are now covered by the real Android driver above;
 retain them when repeating the complete marketplace flow or testing iOS.
 

@@ -31,7 +31,7 @@ public abstract class NativeDemoDriver {
     }
 
     protected void beginSignIn() {
-        label("Sign in").click();
+        element(By.desc("Sign in").clickable(true).enabled(true), "Enabled sign in").click();
         assertTrue("Browser did not open", device.wait(
                 Until.hasObject(By.pkg("com.android.chrome")), TIMEOUT));
         UiObject2 welcome = device.wait(Until.findObject(By.res(
@@ -68,8 +68,8 @@ public abstract class NativeDemoDriver {
     }
 
     protected void logout() {
-        label("Sign out").click();
-        label("Sign in");
+        element(By.desc("Sign out").clickable(true).enabled(true), "Enabled sign out").click();
+        element(By.desc("Sign in").clickable(true).enabled(true), "Completed logout");
         assertTrue("Private profile remained after logout", findLabel("Sign out") == null);
     }
 
