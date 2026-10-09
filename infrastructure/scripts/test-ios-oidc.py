@@ -47,23 +47,52 @@ MARKETPLACE_SCREENSHOTS = ["marketplace-" + name for name in [
 ]]
 
 
+SECONDARY_CHECKPOINTS = [
+    "secondary cancellation and simulated void survive process restart",
+    "secondary direct booking created", "secondary provider completed scheduled work",
+    "secondary customer opened dispute without decision controls",
+    "secondary provider evidence awaits independent admin",
+    "secondary independent admin applied customer favored decision",
+    "secondary dispute settlement voided simulated authorization",
+    "secondary decision survives background and process restart", "secondary lifecycle finished signed out",
+]
+SECONDARY_SCREENSHOTS = ["secondary-" + name for name in [
+    "cancelled", "created", "provider-complete", "opened", "evidence", "resolved", "voided", "restored", "signed-out",
+]]
+CONNECTIVITY_CHECKPOINTS = ["connectivity catalog shows connection failure",
+                          "connectivity same screen retry loads real catalog"]
+CONNECTIVITY_SCREENSHOTS = ["connectivity-unavailable", "connectivity-recovered"]
+SCENARIOS = {
+    "auth": ("NativeOidcTests", "testRealBrowserOidcLifecycle", CHECKPOINTS, SCREENSHOTS),
+    "marketplace": ("NativeMarketplaceTests", "testRequestToReviewLifecycle", MARKETPLACE_CHECKPOINTS, MARKETPLACE_SCREENSHOTS),
+    "secondary": ("NativeSecondaryTests", "testDirectCancellationAndManualDispute", SECONDARY_CHECKPOINTS, SECONDARY_SCREENSHOTS),
+    "connectivity": ("NativeConnectivityTests", "testCatalogConnectionRecovery", CONNECTIVITY_CHECKPOINTS, CONNECTIVITY_SCREENSHOTS),
+}
+SECONDARY_PROOF_KEYS = {
+    "exactly_two_bookings", "direct_offering", "cancelled", "simulated_void",
+    "exact_authorize_and_void", "one_customer_dispute", "one_provider_evidence",
+    "independent_admin_applied_decision", "cancelled_booking_has_no_dispute",
+}
+
+
 class Runner:
     def __init__(self, scenario="auth"):
         self.scenario = scenario
         self.run_id = secrets.token_hex(6)
-        evidence_root = ROOT / (".work/ios-marketplace" if scenario == "marketplace" else ".work/ios-oidc")
+        evidence_root = ROOT / (".work/ios-oidc" if scenario == "auth" else f".work/ios-{scenario}")
         private_root = ROOT / ".work/ios-oidc-private"
         evidence_root.mkdir(parents=True, exist_ok=True)
         private_root.mkdir(parents=True, exist_ok=True)
         self.evidence = Path(tempfile.mkdtemp(prefix="run-", dir=evidence_root))
         self.private = Path(tempfile.mkdtemp(prefix="run-", dir=private_root))
         self.private.chmod(0o700)
-        self.passwords = {role: secrets.token_hex(18) for role in ("customer", "provider", "db")}
+        self.passwords = {role: secrets.token_hex(18) for role in ("customer", "provider", "admin", "db")}
         self.processes = []
         self.handles = []
         self.device = None
         self.pg_bin = None
         self.pg_started = False
+        self.network = None
         for password in self.passwords.values():
             if os.environ.get("GITHUB_ACTIONS") == "true":
                 print(f"::add-mask::{password}", flush=True)
@@ -175,11 +204,12 @@ class Runner:
         keycloak = self.private / f"keycloak-{KEYCLOAK}"
         realm = json.loads((ROOT / "infrastructure/local/keycloak/bliss-realm.template.json").read_text())
         realm["users"] = []
-        for index, role in enumerate(("customer", "provider"), start=1):
+        roles = ("customer", "provider", "admin") if self.scenario == "secondary" else ("customer", "provider")
+        for index, role in enumerate(roles, start=1):
             realm["users"].append({
                 "id": f"50000000-0000-0000-0000-{index:012d}", "username": role,
                 "enabled": True, "emailVerified": True, "firstName": role, "lastName": "Demo",
-                "email": f"{role}@example.test", "realmRoles": ["customer"] + (["provider"] if role == "provider" else []),
+                "email": f"{role}@example.test", "realmRoles": ["customer"] + ([role] if role in ("provider", "admin") else []),
                 "credentials": [{"type": "password", "value": self.passwords[role], "temporary": False}],
             })
         imports = keycloak / "data/import"
@@ -236,19 +266,29 @@ class Runner:
 
     def test(self):
         marketplace = self.scenario == "marketplace"
-        test_class = "NativeMarketplaceTests" if marketplace else "NativeOidcTests"
-        test_name = "testRequestToReviewLifecycle" if marketplace else "testRealBrowserOidcLifecycle"
-        checkpoints = MARKETPLACE_CHECKPOINTS if marketplace else CHECKPOINTS
-        expected_screenshots = MARKETPLACE_SCREENSHOTS if marketplace else SCREENSHOTS
+        test_class, test_name, checkpoints, expected_screenshots = SCENARIOS[self.scenario]
         mobile = ROOT / "apps/mobile"
         self.run(["flutter", "pub", "get"], "flutter-pub", 300, mobile)
+        api_url = "http://localhost:8088"
+        if self.scenario == "connectivity":
+            from ios_network_fixture import NetworkFixture
+            self.network = NetworkFixture()
+            self.passwords["network"] = self.network.secret
+            if os.environ.get("GITHUB_ACTIONS") == "true":
+                print(f"::add-mask::{self.network.secret}", flush=True)
+            self.network.start()
+            api_url = self.network.api_url
         self.run(["flutter", "build", "ios", "--config-only", "--simulator", "--debug", "--target", "lib/main.dart",
                   "--dart-define=OIDC_ISSUER=http://localhost:8180/realms/bliss",
-                  "--dart-define=API_BASE_URL=http://localhost:8088"], "flutter-config", 120, mobile)
+                  f"--dart-define=API_BASE_URL={api_url}"], "flutter-config", 120, mobile)
         env = dict(os.environ, TEST_RUNNER_BLISS_IOS_AUTH_OPT_IN="isolated-local",
                    TEST_RUNNER_BLISS_CUSTOMER_PASSWORD=self.passwords["customer"],
                    TEST_RUNNER_BLISS_PROVIDER_PASSWORD=self.passwords["provider"],
+                   TEST_RUNNER_BLISS_ADMIN_PASSWORD=self.passwords["admin"],
                    TEST_RUNNER_BLISS_IOS_MARKETPLACE_RUN_ID=self.run_id)
+        if self.network:
+            env.update(TEST_RUNNER_BLISS_IOS_NETWORK_CONTROL_URL=self.network.control_url,
+                       TEST_RUNNER_BLISS_IOS_NETWORK_SECRET=self.network.secret)
         (self.evidence / "scenario.txt").write_text(f"{self.scenario}\n{self.run_id}\n{test_class}/{test_name}\n")
         stop = threading.Event()
         self.workflow_checkpoint = None
@@ -261,7 +301,7 @@ class Runner:
                             "-configuration", "Debug", "-destination", f"platform=iOS Simulator,id={self.device}",
                             "-destination-timeout", "60", "-parallel-testing-enabled", "NO",
                             f"-only-testing:RunnerUITests/{test_class}/{test_name}",
-                            "-resultBundlePath", self.private / "auth.xcresult", "test"], "xctest", 900 if marketplace else 600, mobile, env)
+                            "-resultBundlePath", self.private / "auth.xcresult", "test"], "xctest", 900 if self.scenario in ("marketplace", "secondary") else 600, mobile, env)
         finally:
             stop.set()
             if observer:
@@ -296,10 +336,16 @@ class Runner:
             raise RuntimeError("Missing post-authentication screenshots")
         if marketplace:
             self.verify_marketplace()
+        if self.scenario == "secondary":
+            self.verify_secondary()
         result = ("PASS: real iOS request, quote, booking, two-way chat, scheduled work, simulated capture, "
                   "process recovery, saved review and logout.\n" if marketplace else
                   "PASS: real iOS Keycloak browser PKCE, callback, customer/provider "
                   "process recovery, background/resume, logout and account switching.\n")
+        if self.scenario == "secondary":
+            result = "PASS: real iOS direct cancellation, manual customer/provider/admin dispute, simulated void, process recovery and logout.\n"
+        elif self.scenario == "connectivity":
+            result = "PASS: real iOS catalog connection failure and same-screen retry against the packaged API.\n"
         (self.evidence / "result.txt").write_text(result)
         print((self.evidence / "result.txt").read_text(), flush=True)
 
@@ -335,6 +381,55 @@ class Runner:
         if not all(value is True for value in json.loads(proof).values()):
             raise RuntimeError("Native marketplace database corroboration failed")
 
+    def verify_secondary(self):
+        # These records must have been created by the native app UI. This query
+        # only reads the fresh database and never advances a business state.
+        sql = f"""WITH target AS (
+            SELECT b.*, p.status AS payment_status, p.simulated, p.amount, p.currency AS payment_currency
+            FROM booking b LEFT JOIN payment p ON p.booking_id = b.id
+            WHERE b.city IN ('Demo {self.run_id} cancel', 'Demo {self.run_id} dispute')
+        ) SELECT json_build_object(
+            'exactly_two_bookings', (SELECT count(*) = 2 AND count(DISTINCT city) = 2 FROM target),
+            'direct_offering', (SELECT bool_and(offering_id = '40000000-0000-0000-0000-000000000002'::uuid
+                AND request_id IS NULL AND quote_id IS NULL AND offering_version IS NOT NULL
+                AND provider_id = '30000000-0000-0000-0000-000000000001'::uuid
+                AND customer_id IN (SELECT id FROM bliss_user
+                    WHERE oidc_subject = '50000000-0000-0000-0000-000000000001')) FROM target),
+            'cancelled', (SELECT bool_and(status = 'CANCELLED') FROM target),
+            'simulated_void', (SELECT bool_and(COALESCE(payment_status = 'VOIDED' AND simulated AND amount = 65.50
+                AND price = 65.50 AND currency = 'CAD' AND payment_currency = 'CAD', false)) FROM target),
+            'exact_authorize_and_void', (SELECT bool_and(
+                (SELECT count(*) FROM payment_transaction t WHERE t.booking_id = b.id) = 2 AND
+                (SELECT count(*) FROM payment_transaction t WHERE t.booking_id = b.id AND t.operation = 'AUTHORIZE') = 1 AND
+                (SELECT count(*) FROM payment_transaction t WHERE t.booking_id = b.id AND t.operation = 'VOID') = 1) FROM target b),
+            'one_customer_dispute', (SELECT count(*) = 1 AND bool_and(d.status = 'RESOLVED_CUSTOMER'
+                AND d.resolved_at IS NOT NULL AND d.workflow_instance_id IS NOT NULL
+                AND d.reason = 'Local demo: unfinished garden cleanup for {self.run_id}'
+                AND d.opened_by = b.customer_id
+                AND u.oidc_subject = '50000000-0000-0000-0000-000000000001')
+                FROM dispute d JOIN target b ON b.id = d.booking_id JOIN bliss_user u ON u.id = d.opened_by
+                WHERE b.city = 'Demo {self.run_id} dispute'),
+            'one_provider_evidence', (SELECT count(*) = 1 AND bool_and(e.actor_role = 'PROVIDER'
+                AND e.body = 'Provider demo response: cleanup details for {self.run_id}'
+                AND u.oidc_subject = '50000000-0000-0000-0000-000000000002')
+                FROM dispute_evidence e JOIN dispute d ON d.id = e.dispute_id JOIN target b ON b.id = d.booking_id
+                JOIN bliss_user u ON u.id = e.actor_user_id WHERE b.city = 'Demo {self.run_id} dispute'),
+            'independent_admin_applied_decision', (SELECT count(*) = 1 AND bool_and(a.processed_at IS NOT NULL
+                AND a.outcome = 'CUSTOMER_FAVORED' AND a.actor_user_id <> b.customer_id
+                AND a.actor_user_id <> d.opened_by AND u.oidc_subject = '50000000-0000-0000-0000-000000000003'
+                AND a.rationale = 'Local demo decision: customer favored after reviewing both accounts for {self.run_id}')
+                FROM dispute_decision a JOIN dispute d ON d.id = a.dispute_id JOIN target b ON b.id = d.booking_id
+                JOIN bliss_user u ON u.id = a.actor_user_id WHERE b.city = 'Demo {self.run_id} dispute'),
+            'cancelled_booking_has_no_dispute', NOT EXISTS(SELECT 1 FROM dispute d JOIN target b ON b.id = d.booking_id
+                WHERE b.city = 'Demo {self.run_id} cancel')
+        )"""
+        proof = self.run([self.pg_bin / "psql", "-h", "127.0.0.1", "-p", "5439", "-U", "bliss_ci",
+                          "-d", "bliss", "-At", "-c", sql], "secondary-database", 30,
+                         env=dict(os.environ, PGPASSWORD=self.passwords["db"]))
+        assertions = json.loads(proof)
+        if set(assertions) != SECONDARY_PROOF_KEYS or not all(value is True for value in assertions.values()):
+            raise RuntimeError("Native secondary database corroboration failed")
+
     def observe_workflow(self, stop):
         # Flow removes active instance/task rows after completion. Observe the
         # real persisted human wait, then require the same correlation at finish.
@@ -369,6 +464,8 @@ class Runner:
             self.workflow_error = self.scrub(str(error))
 
     def cleanup(self):
+        if self.network:
+            self.network.close()
         if self.device:
             self.run(["xcrun", "simctl", "shutdown", self.device], "simulator-shutdown", 60, check=False)
             self.run(["xcrun", "simctl", "delete", self.device], "simulator-delete", 60, check=False)
@@ -392,7 +489,7 @@ class Runner:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--scenario", choices=("auth", "marketplace"), default="auth")
+    parser.add_argument("--scenario", choices=tuple(SCENARIOS), default="auth")
     args = parser.parse_args()
     if platform.system() != "Darwin":
         sys.exit("This check requires macOS, Xcode, PostgreSQL 17 (Homebrew), Java 21 and Flutter.")

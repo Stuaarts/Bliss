@@ -150,3 +150,12 @@ local timing rules are demo policy. Product-beta decisions remain #13–#16, as 
 master prompt requests. See [security](../architecture/SECURITY.md),
 [payment boundary](../architecture/ADR-004-payment-abstraction.md) and
 [pending decisions](../agent/DECISIONS_PENDING.md).
+
+
+Secondary iOS drivers are [prepared as a draft](../demo/IOS_SECONDARY.md).
+Seven Python fixture tests pass locally, but native compilation/execution and the
+native-produced database evidence remain unverified. The query itself now
+passes 28 real PostgreSQL cases using synthetic records in an isolated container. GitHub still rejects jobs for its account
+payment/spending-limit condition (main run 37957100805, retry attempt 2).
+Both new native scenarios and all regression gates must pass before this draft
+can merge or the secondary simulator acceptance items can be checked off.

@@ -976,3 +976,53 @@ attempted. All nine checks passed on `e8c7724` before merge; diff verification
 confirms main has identical app/API/test/runner/workflow source. Main execution
 remains unverified until the external account blocker is resolved and checks rerun.
 #7/#12 retain this blocker alongside the remaining secondary iOS acceptance.
+
+### iOS secondary draft prepared while Mac execution is blocked
+
+Continued on `7-ios-secondary` from main `f1421a3`. One retry of
+[main CI](https://github.com/Stuaarts/Bliss/actions/runs/37957100805) (attempt 2)
+was rejected before any steps ran, with the same account payment/spending-limit
+annotation. No billing change or further retry was attempted.
+
+Prepared normal-app XCTest drivers for direct cancellation and manual dispute
+(customer, provider, independent admin), app recovery/logout, and same-screen
+catalog connection retry. The shared driver preserves the primary marketplace
+method and extracted helper behavior; it adds explicit replacement for the
+prefilled direct-booking city. The shared runner adds a private admin fixture,
+strict nine-assertion read-only database proof, and a loopback-only GET proxy with
+separate authenticated outage control. A matrix workflow runs secondary
+and connectivity independently. Production Flutter/API/auth source is unchanged.
+
+Seven local Python tests passed, covering real socket outage/recovery, control
+rejection, route/mutation rejection, listener cleanup, strict complete database
+proof and secret redaction. Existing runner process-exit/redaction checks passed.
+Native source/marker wiring and primary-method preservation were checked locally.
+These checks do not compile Swift, validate native selectors or run the new SQL
+against PostgreSQL. See [draft reproduction and acceptance requirements](../demo/IOS_SECONDARY.md).
+The work remains unverified and must stay in a draft PR until both native scenarios
+and all existing regression gates pass on its final head. #7/#12 remain open and
+#12 retains the external blocker. Physical devices/signing remain separate.
+
+### Secondary iOS database evidence verified locally
+
+Continued draft [PR #39](https://github.com/Stuaarts/Bliss/pull/39) on
+`7-ios-secondary`. No new GitHub execution was available and no unchanged failed
+job was retried. Started Docker with the existing guarded helper; its engine
+became ready, preserving stale runtime directories and existing persistent data.
+
+Added an isolated, networkless PostgreSQL 17.6 evidence-query check. It applies
+all ten migrations and the local catalog seed, then evaluates the actual runner
+query and validator against one valid synthetic fixture and 27 incorrect cases.
+The first run reproduced a false acceptance for a booking assigned to the wrong
+customer. Tightened expected customer/provider identity, correlated the dispute
+opener to the booking customer, and made missing payments explicitly fail the
+simulated-void assertion instead of being ignored by bool_and's null handling.
+All 28 real PostgreSQL cases now pass. The harness uses no host ports or persistent
+volumes, rolls back every negative case, verifies its container's ownership label
+before cleanup and waits for the final database process rather than the image's
+temporary initialization server. Ordinary API CI now includes this check.
+
+The seven existing Python fixture tests still pass. This verifies the SQL against
+synthetic records, not the native app's lifecycle. Swift compilation, native
+selectors and both new XCTests remain unverified; the PR stays draft/unmerged
+until the new native and all existing regression gates pass. #7/#12 remain open.
