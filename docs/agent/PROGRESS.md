@@ -846,3 +846,21 @@ acceptance. Run these against isolated local services on a macOS host; do not in
 them from synthetic fixture tokens or expose the Windows development services.
 Physical devices and signed distribution remain separate. No live payments,
 public deployment, database reset or upstream Flow changes were introduced.
+
+## 2026-10-09 — real iOS browser authentication (#7/#12)
+
+Active branch: `7-ios-browser-auth`, from main `096ccd9`, without codex/.
+The next slice uses a separate RunnerUITests target and BlissAuth scheme to drive
+the normal app and Apple's authentication browser. A macOS runner creates fresh
+PostgreSQL 17, pinned/digest-checked Keycloak 26.7.4 and the packaged Bliss API on
+loopback, with generated disposable credentials. The existing Windows services
+are not exposed or modified. No password grant or token injection is introduced.
+
+The required native observations are customer/provider browser callbacks,
+authenticated profile/capability checks, process termination/relaunch recovery,
+background/resume, identity-provider logout and switching back without stale
+provider state. The runner checks the expected XCTest, test count, eight explicit
+checkpoints and post-authentication screenshots. Raw XCTest bundles and browser
+captures are private temporary files, excluded from uploaded evidence; retained
+text logs redact generated passwords and JWT-shaped values. Native execution
+and final CI remain pending. #7/#12 remain open for this gate and marketplace UI.
