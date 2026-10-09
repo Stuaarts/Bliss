@@ -132,6 +132,12 @@ the tracked-file hygiene scan. No additional UI run is claimed for this docs upd
 
 ## Remaining boundaries
 
+Post-merge main CI currently cannot start: GitHub reports an account payment or
+spending-limit problem ([rejected CI](https://github.com/Stuaarts/Bliss/actions/runs/37956907374)).
+All nine checks passed on PR #38's final code revision before merge; main's app,
+API, test, runner and workflow source is identical. Account-owner billing review
+and a successful main rerun remain required; no post-merge test pass is claimed.
+
 Docker's ordinary Windows restart issue (#17) is mitigated by a guarded helper
 that preserves stale runtime directories; no volume reset is needed. Flow's
 release-specific JPA adapter remains until verified upstream fixes (#22).

@@ -68,6 +68,13 @@ Selected original screenshots, visually reviewed before committing:
 Secondary cancellation/dispute/connection-recovery paths, physical devices and
 signed distribution remain separate acceptance gates.
 
+Post-merge rechecks on main were rejected before execution by GitHub's account
+payment/spending-limit restriction ([main CI](https://github.com/Stuaarts/Bliss/actions/runs/37956907374),
+[marketplace](https://github.com/Stuaarts/Bliss/actions/runs/37956907568)). The nine
+passing pre-merge checks above remain the verified execution; main has identical
+app/API/test/runner/workflow source. The account owner must check Billing & plans
+and rerun main checks before further sign-off. No billing changes were made.
+
 ## Execution history
 
 The first attempt (`37952486236`, `0bb9a85`) created the request and quote but

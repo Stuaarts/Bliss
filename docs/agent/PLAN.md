@@ -118,3 +118,8 @@ guarded Windows startup helper; existing container data is preserved.
 
 PR #38 verifies native iOS requests, quotes, booking/chat, scheduled work, simulated
 capture, saved reviews and process/background recovery. See [iOS marketplace evidence](../demo/IOS_MARKETPLACE.md).
+
+Post-merge main CI is currently blocked before job execution: GitHub reports an
+account payment or spending-limit problem. All nine pre-merge checks passed;
+main has identical app/API/test/runner/workflow source. The account owner must
+review GitHub Billing & plans, then rerun main checks before the next native slice.

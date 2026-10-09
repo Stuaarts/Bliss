@@ -961,3 +961,18 @@ secondary iOS cancellation/dispute/connection-recovery. Physical devices, signin
 public deployment and live payments remain separate. Existing data and upstream
 Flow were preserved. Completed Flow instances are intentionally not retained;
 the durable wait snapshot and final correlation supply the persistence proof.
+
+### Post-merge CI account blocker
+
+Main documentation checkpoint `0cfecde` was pushed with reviewed screenshots.
+The merge and documentation CI jobs were rejected before any steps ran.
+[Main CI 37956907374](https://github.com/Stuaarts/Bliss/actions/runs/37956907374)
+and [marketplace 37956907568](https://github.com/Stuaarts/Bliss/actions/runs/37956907568)
+annotations report that recent account payments failed or the spending limit
+needs increasing. Authentication and synthetic jobs were rejected likewise.
+This does not establish which billing condition applies; the account owner must
+check GitHub Billing & plans. No payment/settings changes or repeated reruns were
+attempted. All nine checks passed on `e8c7724` before merge; diff verification
+confirms main has identical app/API/test/runner/workflow source. Main execution
+remains unverified until the external account blocker is resolved and checks rerun.
+#7/#12 retain this blocker alongside the remaining secondary iOS acceptance.
