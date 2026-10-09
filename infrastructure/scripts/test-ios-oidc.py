@@ -391,10 +391,13 @@ class Runner:
         ) SELECT json_build_object(
             'exactly_two_bookings', (SELECT count(*) = 2 AND count(DISTINCT city) = 2 FROM target),
             'direct_offering', (SELECT bool_and(offering_id = '40000000-0000-0000-0000-000000000002'::uuid
-                AND request_id IS NULL AND quote_id IS NULL AND offering_version IS NOT NULL) FROM target),
+                AND request_id IS NULL AND quote_id IS NULL AND offering_version IS NOT NULL
+                AND provider_id = '30000000-0000-0000-0000-000000000001'::uuid
+                AND customer_id IN (SELECT id FROM bliss_user
+                    WHERE oidc_subject = '50000000-0000-0000-0000-000000000001')) FROM target),
             'cancelled', (SELECT bool_and(status = 'CANCELLED') FROM target),
-            'simulated_void', (SELECT bool_and(payment_status = 'VOIDED' AND simulated AND amount = 65.50
-                AND price = 65.50 AND currency = 'CAD' AND payment_currency = 'CAD') FROM target),
+            'simulated_void', (SELECT bool_and(COALESCE(payment_status = 'VOIDED' AND simulated AND amount = 65.50
+                AND price = 65.50 AND currency = 'CAD' AND payment_currency = 'CAD', false)) FROM target),
             'exact_authorize_and_void', (SELECT bool_and(
                 (SELECT count(*) FROM payment_transaction t WHERE t.booking_id = b.id) = 2 AND
                 (SELECT count(*) FROM payment_transaction t WHERE t.booking_id = b.id AND t.operation = 'AUTHORIZE') = 1 AND
@@ -402,6 +405,7 @@ class Runner:
             'one_customer_dispute', (SELECT count(*) = 1 AND bool_and(d.status = 'RESOLVED_CUSTOMER'
                 AND d.resolved_at IS NOT NULL AND d.workflow_instance_id IS NOT NULL
                 AND d.reason = 'Local demo: unfinished garden cleanup for {self.run_id}'
+                AND d.opened_by = b.customer_id
                 AND u.oidc_subject = '50000000-0000-0000-0000-000000000001')
                 FROM dispute d JOIN target b ON b.id = d.booking_id JOIN bliss_user u ON u.id = d.opened_by
                 WHERE b.city = 'Demo {self.run_id} dispute'),

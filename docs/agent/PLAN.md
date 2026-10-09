@@ -131,3 +131,10 @@ covers cancellation, manual dispute and connection recovery, with local runner
 fixture checks. Mac compilation, native execution and new database corroboration
 remain pending. Keep this draft unmerged; after runner access is restored, verify
 main and run both new scenarios plus all existing gates at the final PR head.
+
+
+The evidence SQL now passes 28 real PostgreSQL cases with synthetic records in an
+owned disposable container. Expected booking participants, dispute/customer
+correlation and missing-payment handling were tightened. This advances local
+validation while Mac runners remain blocked; it does not establish native UI
+acceptance. See the updated [secondary runbook](../demo/IOS_SECONDARY.md).

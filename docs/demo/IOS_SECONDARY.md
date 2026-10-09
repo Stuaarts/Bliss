@@ -56,7 +56,8 @@ once, with nine named checkpoints and nine screenshots:
 9. The customer signs out.
 
 The runner also requires all nine named read-only database assertions: exactly
-two distinct direct bookings from the seeded offering, cancelled status, exact
+two distinct direct bookings from the seeded offering assigned to the expected
+customer/provider, a dispute opened by that booking customer, cancelled status, exact
 CAD 65.50 simulated voids, exactly one AUTHORIZE and one VOID per booking with no
 other payment operations, one customer-opened resolved dispute, one provider
 evidence row, one applied independent-admin decision with the exact rationale,
@@ -87,7 +88,31 @@ and malformed controls, route/mutation rejection, listener cleanup, complete
 boolean database-proof enforcement and secret redaction. Existing runner
 redaction and subprocess-exit checks also pass. Native source wiring and marker
 consistency are checked locally, but these checks do not compile Swift, execute
-XCTest, validate its selectors, or run the new SQL against the Mac database.
+XCTest, validate its selectors, or verify records produced by the new native UI flow.
+
+The evidence query also passes 28 cases against real PostgreSQL 17.6 with all ten
+repository migrations and the local catalog seed applied. These use synthetic SQL
+fixtures in a fresh networkless Docker container, with no published ports or
+persistent volumes. The valid fixture passes; 27 incorrect cases fail, covering
+missing/incorrect bookings and participants, payment amount/currency/status and
+transaction counts, dispute opener/reason/status, evidence and independent admin
+decision identity/outcome/rationale/application. Missing payment records explicitly
+fail their own assertion instead of being ignored by PostgreSQL's null aggregation.
+This check found and fixed acceptance of bookings assigned to the wrong customer
+or provider, and failure to correlate the dispute opener to the booking customer.
+
+To reproduce independently of a Mac, with a ready Linux Docker engine:
+
+```sh
+python3 -B infrastructure/scripts/check-ios-secondary-database.py --isolated-docker
+```
+
+The script checks a unique ownership label before removing its container and uses
+rollback transactions for each negative case. The ordinary API CI job runs this
+check separately from Maven. It validates the SQL/acceptance validator; it does
+not drive the app or establish native marketplace acceptance. Docker started
+successfully on Windows through the existing guarded helper on October 9; no
+existing containers, persistent volumes, or runtime backups were removed.
 
 Sanitized evidence belongs in `.work/ios-secondary/run-*` and
 `.work/ios-connectivity/run-*`; the workflow retains those private artifacts for
