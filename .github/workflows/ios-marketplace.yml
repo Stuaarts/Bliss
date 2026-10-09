@@ -1,0 +1,46 @@
+name: iOS marketplace
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'apps/mobile/**'
+      - 'services/api/**'
+      - 'infrastructure/local/keycloak/bliss-realm.template.json'
+      - 'infrastructure/scripts/test-ios-oidc.py'
+      - '.github/workflows/ios-marketplace.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ios-marketplace-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  ios-marketplace:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+      - name: Install PostgreSQL 17 tools
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+        run: brew list postgresql@17 || brew install postgresql@17
+      - name: Real request-to-review against isolated local services
+        timeout-minutes: 28
+        run: python3 infrastructure/scripts/test-ios-oidc.py --scenario marketplace
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: ios-marketplace-evidence
+          path: .work/ios-marketplace
+          retention-days: 7
+          if-no-files-found: ignore

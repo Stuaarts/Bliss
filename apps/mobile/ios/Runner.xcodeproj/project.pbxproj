@@ -17,6 +17,8 @@
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
 		B11552000000000000000001 /* NativeOidcTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11552000000000000000002 /* NativeOidcTests.swift */; };
+		B11553000000000000000001 /* NativeDemoTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11553000000000000000003 /* NativeDemoTest.swift */; };
+		B11553000000000000000002 /* NativeMarketplaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11553000000000000000004 /* NativeMarketplaceTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,6 +72,8 @@
 		B11551051000000000000001 /* Runner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
 		B11552000000000000000002 /* NativeOidcTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeOidcTests.swift; sourceTree = "<group>"; };
 		B11552000000000000000003 /* RunnerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B11553000000000000000003 /* NativeDemoTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeDemoTest.swift; sourceTree = "<group>"; };
+		B11553000000000000000004 /* NativeMarketplaceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeMarketplaceTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -150,7 +154,7 @@
 		};
 		B11552000000000000000004 /* RunnerUITests */ = {
             isa = PBXGroup;
-            children = (B11552000000000000000002 /* NativeOidcTests.swift */,);
+            children = (B11552000000000000000002 /* NativeOidcTests.swift */, B11553000000000000000004 /* NativeMarketplaceTests.swift */, B11553000000000000000003 /* NativeDemoTest.swift */,);
             path = RunnerUITests;
             sourceTree = "<group>";
         };
@@ -343,7 +347,7 @@
         B11552000000000000000005 /* Sources */ = {
             isa = PBXSourcesBuildPhase;
             buildActionMask = 2147483647;
-            files = (B11552000000000000000001 /* NativeOidcTests.swift in Sources */,);
+            files = (B11552000000000000000001 /* NativeOidcTests.swift in Sources */, B11553000000000000000002 /* NativeMarketplaceTests.swift in Sources */, B11553000000000000000001 /* NativeDemoTest.swift in Sources */,);
             runOnlyForDeploymentPostprocessing = 0;
         };
 /* End PBXSourcesBuildPhase section */

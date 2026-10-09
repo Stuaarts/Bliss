@@ -905,3 +905,15 @@ The isolated macOS services and native UI target now provide the foundation for
 that next slice. Physical devices and signed distribution remain separate.
 Branch names continue to omit codex/. Existing Windows service data, legacy
 inputs and upstream Flow are preserved; no live payments or public deployment.
+
+## 2026-10-09 — iOS request-to-review marketplace (#7/#12)
+
+Active branch: `7-ios-marketplace`, from main `59a9795`, without codex/.
+The separate native UI target now includes a request/quote/booking/chat/scheduled
+work/simulated-capture/review scenario. Browser/session controls are extracted
+without changing production app auth. The existing isolated macOS runner selects
+one explicit XCTest per scenario and adds read-only database corroboration for
+marketplace results. Both real auth and synthetic native gates remain required.
+Local Python/scheme checks pass; native execution and final validation are pending.
+See [required iOS marketplace scenario](../demo/IOS_MARKETPLACE.md). Secondary
+cancellation/dispute/connection-recovery, physical devices and signing remain open.
