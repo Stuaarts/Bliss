@@ -976,3 +976,29 @@ attempted. All nine checks passed on `e8c7724` before merge; diff verification
 confirms main has identical app/API/test/runner/workflow source. Main execution
 remains unverified until the external account blocker is resolved and checks rerun.
 #7/#12 retain this blocker alongside the remaining secondary iOS acceptance.
+
+### iOS secondary draft prepared while Mac execution is blocked
+
+Continued on `7-ios-secondary` from main `f1421a3`. One retry of
+[main CI](https://github.com/Stuaarts/Bliss/actions/runs/37957100805) (attempt 2)
+was rejected before any steps ran, with the same account payment/spending-limit
+annotation. No billing change or further retry was attempted.
+
+Prepared normal-app XCTest drivers for direct cancellation and manual dispute
+(customer, provider, independent admin), app recovery/logout, and same-screen
+catalog connection retry. The shared driver preserves the primary marketplace
+method and extracted helper behavior; it adds explicit replacement for the
+prefilled direct-booking city. The shared runner adds a private admin fixture,
+strict nine-assertion read-only database proof, and a loopback-only GET proxy with
+separate authenticated outage control. A matrix workflow runs secondary
+and connectivity independently. Production Flutter/API/auth source is unchanged.
+
+Seven local Python tests passed, covering real socket outage/recovery, control
+rejection, route/mutation rejection, listener cleanup, strict complete database
+proof and secret redaction. Existing runner process-exit/redaction checks passed.
+Native source/marker wiring and primary-method preservation were checked locally.
+These checks do not compile Swift, validate native selectors or run the new SQL
+against PostgreSQL. See [draft reproduction and acceptance requirements](../demo/IOS_SECONDARY.md).
+The work remains unverified and must stay in a draft PR until both native scenarios
+and all existing regression gates pass on its final head. #7/#12 remain open and
+#12 retains the external blocker. Physical devices/signing remain separate.

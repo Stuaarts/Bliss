@@ -113,3 +113,9 @@ python3 infrastructure/scripts/test-ios-oidc.py --scenario marketplace
 
 See [iOS marketplace evidence](../../docs/demo/IOS_MARKETPLACE.md) for the verified
 checkpoints, saved screenshots and remaining cancellation/dispute/connection-recovery work.
+
+Draft iOS cancellation, manual dispute and connection-retry drivers are documented
+in [iOS secondary acceptance](../../docs/demo/IOS_SECONDARY.md). They have not yet
+compiled or executed on a Mac; local Python fixture checks do not establish native
+acceptance. Once runners are available, use `--scenario secondary` and
+`--scenario connectivity`, then rerun all existing gates on the same head.

@@ -145,6 +145,7 @@ the synthetic fixture above.
 The [real marketplace gate](IOS_MARKETPLACE.md) also passes request-to-review,
 two-way chat, scheduled work, simulated capture and saved-review/process recovery.
 
-- Direct cancellation, dispute and connection recovery remain separate iOS checks.
+- Direct cancellation, dispute and connection recovery have [draft native drivers](IOS_SECONDARY.md);
+  Mac compilation/execution remains blocked and these paths are unverified.
 - Physical-device and signed-distribution validation are separate from simulator
   acceptance; neither is implied by a successful simulator job.
