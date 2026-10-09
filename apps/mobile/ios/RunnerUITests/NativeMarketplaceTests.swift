@@ -133,9 +133,16 @@ final class NativeMarketplaceTests: NativeDemoTest {
     }
 
     private func expectContaining(_ label: String) {
-        XCTAssertTrue(app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label CONTAINS %@", label)).firstMatch
-            .waitForExistence(timeout: 30), "Missing content: \(label)")
+        // Flutter SelectableText exposes message bodies as accessibility values
+        // on iOS. Only displayed text/rows count; never an unsent composer value.
+        let predicate = NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@", label, label)
+        let deadline = Date().addingTimeInterval(30)
+        repeat {
+            if app.staticTexts.matching(predicate).firstMatch.exists ||
+                app.otherElements.matching(predicate).firstMatch.exists { return }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+        } while Date() < deadline
+        XCTFail("Missing displayed content: \(label)")
     }
 
     private func button(_ label: String) {

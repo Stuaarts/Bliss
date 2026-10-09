@@ -917,3 +917,11 @@ marketplace results. Both real auth and synthetic native gates remain required.
 Local Python/scheme checks pass; native execution and final validation are pending.
 See [required iOS marketplace scenario](../demo/IOS_MARKETPLACE.md). Secondary
 cancellation/dispute/connection-recovery, physical devices and signing remain open.
+
+First native marketplace run `37952486236` at `0bb9a85` compiled and created the
+request/quote through real browser-authenticated UI. The sent customer chat row
+appeared in the failure accessibility tree, with its body in the row's value;
+the test searched only labels. Displayed-content lookup now accepts static text
+or noneditable row labels/values, excluding the editable composer. This attempt
+is not full acceptance. All eight other ordinary/auth/synthetic checks passed;
+the real auth recheck ran one XCTest in 120.205 seconds with eight checkpoints.
