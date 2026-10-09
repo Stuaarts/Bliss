@@ -97,12 +97,18 @@ CLI launch channel reliable.
 The current runner instead uses Flutter's official
 [native XCTest bridge](https://github.com/flutter/flutter/blob/3.47.5/packages/integration_test/README.md#ios-device-testing),
 implemented in [RunnerTests.m](../../apps/mobile/ios/RunnerTests/RunnerTests.m).
-It replaces the template's empty test, links the Swift package plugins to the
-test target, and obtains the same Dart assertions directly through XCTest,
+It replaces the template's empty test, uses the app host's static plugin linkage
+and obtains the same Dart assertions directly through XCTest,
 without waiting for Flutter CLI VM-service discovery. This revision needs its
 own complete native pass before merge. The original successful run above used
 three `flutter test --no-uninstall` invocations; its evidence is preserved,
 separately from the subsequent launch failures and native-bridge result.
+
+The first XCTest build at `49a4915` (run 37887805680) failed before tests because
+the generated static plugin package had been linked to both Runner and RunnerTests.
+The test target now uses Runner's existing static linkage, following
+[Flutter's Swift package test guidance](https://docs.flutter.dev/packages-and-plugins/swift-package-manager/for-plugin-authors#how-to-update-unit-tests-in-a-plugins-example-app).
+This build failure is not counted as native test evidence.
 
 ## Remaining acceptance under #7/#12
 

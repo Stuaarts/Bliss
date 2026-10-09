@@ -798,10 +798,16 @@ then the five-minute watchdog failed signed-out before its test started. Verbose
 logs show the app launch PID and a wait for Flutter's VM service; no signed-out
 assertion ran. Reboots alone were insufficient. The iOS gate now uses Flutter's
 official native XCTest integration bridge, replacing the empty RunnerTests
-template and linking its Swift package plugins. It runs the same Dart fixture
+template and using the app host's Swift package plugins. It runs the same Dart fixture
 through Xcode without Flutter CLI debug-service discovery. The runner requires
 the expected phase and exactly one successful XCTest per invocation. Fresh CI
 must validate this revision; no failing or empty test is accepted as success.
 The isolated Linux-container watchdog check passed normal/nonzero exit
 propagation, timeout status 124, killing a TERM-ignoring descendant and preserving
 an unrelated process. All six ordinary jobs also passed at `0e7d2b4`.
+
+The first XCTest attempt, run 37887805680 at `49a4915`, failed in build planning:
+Xcode rejected linking the generated static plugin package into both the app
+and its test bundle. The redundant RunnerTests dependency is removed; the test
+bundle uses its app host's existing static plugin linkage, as Flutter's Swift
+package testing guidance specifies. No XCTest was executed by that failed build.
