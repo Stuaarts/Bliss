@@ -66,6 +66,7 @@ backend routes or migrations.
 This September 22–23 evidence covers Flutter web. Later
 [Android authentication](ANDROID.md) verifies real browser login/recovery/logout;
 the separate [Android marketplace run](ANDROID_MARKETPLACE.md) records native
-lifecycle verification. iOS requires macOS and remains unverified. No production
+lifecycle verification. The [iOS simulator marketplace run](IOS_MARKETPLACE.md)
+now also passes request-to-review with real local services. No production
 release is claimed. [Chat](CHAT.md) and [reviews](REVIEWS.md) have separate
 demo evidence; [disputes](DISPUTES.md) now include the manual admin/refund path.

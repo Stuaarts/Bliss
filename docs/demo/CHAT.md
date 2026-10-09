@@ -41,4 +41,5 @@ while the route is visible. Unconfirmed sends retain their original key/text in
 memory; after reloading the app, read history before deciding to resend.
 Later [Android authentication](ANDROID.md) verifies real login/recovery/logout;
 [native marketplace evidence](ANDROID_MARKETPLACE.md) records the Android booking
-chat check. This page's backend-restart demonstration is web-only. iOS remains unverified.
+chat check. The [iOS marketplace run](IOS_MARKETPLACE.md) also verifies two-way
+chat and app-process recovery. This page's backend-restart demonstration remains web-only.

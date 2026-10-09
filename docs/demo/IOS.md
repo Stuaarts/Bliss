@@ -142,7 +142,9 @@ recovery, customer background/resume, identity-provider logout and account
 switching. These results come from real UI/service execution, independently of
 the synthetic fixture above.
 
-- The actual request-to-review marketplace UI, chat and simulated settlement
-  against the real API, plus direct cancellation, dispute and connection recovery.
+The [real marketplace gate](IOS_MARKETPLACE.md) also passes request-to-review,
+two-way chat, scheduled work, simulated capture and saved-review/process recovery.
+
+- Direct cancellation, dispute and connection recovery remain separate iOS checks.
 - Physical-device and signed-distribution validation are separate from simulator
   acceptance; neither is implied by a successful simulator job.

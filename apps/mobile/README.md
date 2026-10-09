@@ -26,7 +26,9 @@ HTTPS. Physical devices require an explicitly reachable development API address;
 the default backend binds loopback. The [iOS simulator gate](../../docs/demo/IOS.md)
 compiles on macOS and verifies native storage/refresh with a synthetic fixture.
 The separate [iOS browser gate](../../docs/demo/IOS_AUTH.md) passes real Keycloak
-login, recovery, logout and account switching. iOS marketplace validation remains open.
+login, recovery, logout and account switching. The
+[iOS marketplace gate](../../docs/demo/IOS_MARKETPLACE.md) also passes request-to-review
+with chat, simulated capture and process recovery; secondary native paths remain open.
 
 Configure a real HTTPS identity provider using `--dart-define=OIDC_ISSUER=...`
 and API using `--dart-define=API_BASE_URL=...`; register the matching redirect URLs.
@@ -98,7 +100,16 @@ root on a Mac with Xcode and an iOS Simulator runtime. It uses a disposable
 simulator and synthetic credentials. The real browser gate runs with
 `python3 infrastructure/scripts/test-ios-oidc.py` from the repository root on macOS
 with Java 21 and Homebrew PostgreSQL 17 tools. It creates its own loopback services
-and simulator. iOS marketplace acceptance, physical-device coverage and signed
+and simulator. Secondary iOS acceptance, physical-device coverage and signed
 distribution remain unverified.
 Android command-line tools are still missing; Gradle used existing SDK license
 acceptance for build dependencies. iOS requires a macOS host.
+
+Run the isolated native marketplace scenario on macOS with the same prerequisites:
+
+```sh
+python3 infrastructure/scripts/test-ios-oidc.py --scenario marketplace
+```
+
+See [iOS marketplace evidence](../../docs/demo/IOS_MARKETPLACE.md) for the verified
+checkpoints, saved screenshots and remaining cancellation/dispute/connection-recovery work.

@@ -22,7 +22,7 @@ the separate verified runs; no narrated video is claimed.
 | Backend quality gates | 63 scenarios: 55 ordinary + 8 migration/packaged-process scenarios |
 | Flutter quality gates | Analysis, formatting, 46 tests; release web build and Android app/test-driver compilation are checked for each PR |
 | Operations and docs | Swagger/OpenAPI, health/metrics, action catalog, ADRs, workflow diagrams and setup/demo instructions |
-| Native device validation | Real Android Keycloak login/recovery/logout, request-to-review, direct cancellation, customer/provider/admin dispute and catalog outage/retry pass. iOS app build, native session fixture and real customer/provider Keycloak browser login/recovery/logout/account switching pass. **Open #7:** iOS marketplace acceptance; other settlement branches retain API/web evidence |
+| Native device validation | Real Android Keycloak login/recovery/logout, request-to-review, direct cancellation, customer/provider/admin dispute and catalog outage/retry pass. iOS app build, native session fixture and real customer/provider Keycloak browser login/recovery/logout/account switching pass. iOS request-to-review/chat/simulated capture/review recovery also pass. **Open #7:** secondary iOS cancellation/dispute/connection-recovery acceptance; other settlement branches retain API/web evidence |
 | Full portfolio sign-off | **Open #12:** retain until the remaining native platform gate is resolved or an explicit web-only scope is agreed |
 
 ## Evidence index
@@ -113,6 +113,22 @@ readiness was UP; Swagger, metrics, Dev UI and OpenAPI returned HTTP 200. The
 OpenAPI document included booking and dispute routes, and startup warmed both
 workflow definitions. Local documentation checks passed all 68 file links and
 the tracked-file hygiene scan. No additional UI run is claimed for this docs update.
+
+- Real iOS request-to-review marketplace: see [reproduction and evidence](../demo/IOS_MARKETPLACE.md).
+  [Marketplace CI](https://github.com/Stuaarts/Bliss/actions/runs/37955297119)
+  passed at `e8c7724d0e82d21f18884393db7464f33bf4d445`: one XCTest, zero failures, 356.597 seconds,
+  nine checkpoints/screenshots and all nine database assertions. The observer
+  recorded a scheduled human wait with three persisted task checkpoints; the
+  completed booking retained the same workflow correlation. All nine checks passed
+  before [PR #38](https://github.com/Stuaarts/Bliss/pull/38) merged as `9c81af7`,
+  including [real browser auth](https://github.com/Stuaarts/Bliss/actions/runs/37955297128),
+  the separately dispatched [synthetic iOS gate](https://github.com/Stuaarts/Bliss/actions/runs/37955296677),
+  [push CI](https://github.com/Stuaarts/Bliss/actions/runs/37955297169) and
+  [PR CI](https://github.com/Stuaarts/Bliss/actions/runs/37955302085).
+  Manual dispatch is outside the PR rollup; its exact head was checked separately.
+  Backend CI passed 63 scenarios; Flutter passed 46 tests, analysis/formatting/web
+  build; Android app and native drivers compiled.
+  Secondary iOS paths, physical devices and signing remain open under #7/#12.
 
 ## Remaining boundaries
 

@@ -95,7 +95,8 @@ videos, realm imports, database contents and credentials are excluded. Generated
 passwords and token-shaped values are redacted from retained text logs; CI masks
 the generated passwords as well.
 
-Real marketplace UI acceptance remains a following slice under #7/#12. Physical
+The [real marketplace UI scenario](IOS_MARKETPLACE.md) now also passes. Secondary
+cancellation/dispute/connection-recovery acceptance remains under #7/#12. Physical
 devices, release signing and distribution are separate. A successful browser
 test does not establish those results.
 

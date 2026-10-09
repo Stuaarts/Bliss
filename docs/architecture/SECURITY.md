@@ -33,8 +33,9 @@ verifies browser PKCE, customer/provider recovery after process death, identity-
 logout and account switching. The separate [iOS native fixture](../demo/IOS.md)
 and [real iOS browser test](../demo/IOS_AUTH.md) now verify simulator Keychain/
 refresh behavior and customer/provider browser callbacks, process recovery,
-logout and account switching. iOS marketplace UI and physical-device validation
-remain open. See also [Android evidence](../demo/ANDROID.md).
+logout and account switching. The [iOS marketplace scenario](../demo/IOS_MARKETPLACE.md)
+also verifies request-to-review with real services. Secondary iOS paths and
+physical-device validation remain open. See also [Android evidence](../demo/ANDROID.md).
 
 Opportunity reads expose only job scope, category, city and budget to providers;
 no customer identity/contact fields. Quote submission requires provider OWNER

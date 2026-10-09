@@ -83,7 +83,7 @@ task affinity fixes the reproduced callback failure. A guarded PowerShell runner
 reproduces the local check; Android app/driver compilation is added to CI.
 PR #32 merged as `a892dd9` after all six API/mobile/Android jobs passed at `aae6927`.
 Main CI also passed (run 36347290131).
-Current branch: `main`, synchronized through PR #37 merge `080a11f`.
+Current checkpoint: `main`, synchronized through PR #38 merge `9c81af7`.
 The real Android request-to-review run passed on September 28 in 375.264 seconds,
 including two-way chat, actual schedule enforcement, simulated capture, process
 recovery, saved review reopening and background/resume. Authentication recheck
@@ -91,15 +91,15 @@ passed in 48.438 seconds after extracting shared driver controls. The runner
 rejects duplicate run IDs and documents safe phase-based diagnosis. All six
 API/mobile/Android jobs passed at `1f0f9ac` before merge. The following Android secondary slice
 now passes direct cancellation, a manual admin dispute and catalog outage/retry.
-iOS marketplace acceptance remains the next platform gate; the normal
+Secondary iOS cancellation/dispute/connection-recovery remains the next platform gate; the normal
 iOS app build and three-process native storage/refresh/logout fixture now pass
 on macOS CI. PR #36 adds the disposable simulator gate and required Keychain
 entitlements. Later Flutter CLI attempts stalled during debug-service discovery
 before tests began; the final runner uses Flutter's native XCTest bridge for the
 same fixture. All three phases passed at `4da6f18` (run 37888748649), with all
 six API/mobile/Android checks green before merge. Real iOS Keycloak browser
-authentication now also passes. The next slice is the marketplace lifecycle
-against isolated local services on macOS. #7/#12 stay open;
+authentication now also passes. The request-to-review marketplace lifecycle
+also passes against isolated local services on macOS; secondary paths are next. #7/#12 stay open;
 physical-device coverage and signed distribution remain separate.
 
 PR #37 adds a separate XCUITest target for the normal app and a disposable macOS
@@ -115,3 +115,6 @@ preserving commits and updating tracking. Use issue-linked branch names without
 that prefix for future Bliss work.
 Docker's ordinary restart limitation (#17) is mitigated by the
 guarded Windows startup helper; existing container data is preserved.
+
+PR #38 verifies native iOS requests, quotes, booking/chat, scheduled work, simulated
+capture, saved reviews and process/background recovery. See [iOS marketplace evidence](../demo/IOS_MARKETPLACE.md).

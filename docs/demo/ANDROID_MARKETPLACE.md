@@ -83,7 +83,8 @@ all native scenarios; local live-service execution is not represented as a CI em
 
 This checks the primary quote-booking lifecycle. Direct booking/cancellation,
 native admin/dispute screens and catalog outage/retry have
-[separate drivers and evidence](ANDROID_SECONDARY.md). iOS, physical-device
-coverage and signed distribution builds remain unverified. The app-process
+[separate drivers and evidence](ANDROID_SECONDARY.md). The [iOS simulator
+marketplace run](IOS_MARKETPLACE.md) now passes the primary quote lifecycle.
+Secondary iOS paths, physical-device coverage and signed distribution remain unverified. The app-process
 restart does not restart the backend; backend workflow restoration is covered by
 the separate packaged-process tests and browser demonstration.

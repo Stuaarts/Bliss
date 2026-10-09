@@ -6,7 +6,7 @@ Keycloak browser login, session recovery after process death, logout and account
 switching on the dedicated Bliss_Test emulator. The later
 [native request-to-review run](ANDROID_MARKETPLACE.md) verifies the primary
 marketplace lifecycle. The [secondary checks](ANDROID_SECONDARY.md) also pass;
-remaining iOS marketplace acceptance is tracked under #7. The separate
+remaining secondary iOS acceptance is tracked under #7. The separate
 [iOS simulator fixture](IOS.md) verifies compilation and storage/refresh, and
 [real iOS browser authentication](IOS_AUTH.md) now passes.
 
@@ -168,7 +168,8 @@ retain them when repeating the complete marketplace flow or testing iOS.
 5. Complete the customer/provider booking flow, including return from the browser,
    status refresh, chat and a review. Check background/resume and back navigation.
 6. Reproduce the verified [iOS authentication gate](IOS_AUTH.md) on macOS;
-   complete the real iOS marketplace lifecycle as the remaining platform slice.
+   the [iOS marketplace lifecycle](IOS_MARKETPLACE.md) also passes. Secondary
+   cancellation/dispute/connection-recovery checks remain the next platform slice.
 
 Record actual outcomes before closing #7. Callback registration alone does not
 prove PKCE exchange, secure-storage recovery or identity-provider logout. Android

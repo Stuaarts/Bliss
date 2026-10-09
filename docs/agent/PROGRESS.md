@@ -935,3 +935,29 @@ when a terminal booking has no active row. The runner now observes the scheduled
 human wait with three persisted task checkpoints and checks that the final booking
 retains the same correlation. All other eight checks passed at this revision;
 the failed overall job is not full marketplace acceptance.
+
+### iOS marketplace merge checkpoint
+
+[Marketplace CI](https://github.com/Stuaarts/Bliss/actions/runs/37955297119)
+passed at `e8c7724d0e82d21f18884393db7464f33bf4d445`: one XCTest, zero failures, 356.597 seconds,
+nine checkpoints/screenshots and all nine database assertions. The observer
+recorded a scheduled human wait with three persisted task checkpoints; the
+completed booking retained the same workflow correlation. All nine checks passed
+before [PR #38](https://github.com/Stuaarts/Bliss/pull/38) merged as `9c81af7`,
+including [real browser auth](https://github.com/Stuaarts/Bliss/actions/runs/37955297128),
+the separately dispatched [synthetic iOS gate](https://github.com/Stuaarts/Bliss/actions/runs/37955296677),
+[push CI](https://github.com/Stuaarts/Bliss/actions/runs/37955297169) and
+[PR CI](https://github.com/Stuaarts/Bliss/actions/runs/37955302085).
+Manual dispatch is outside the PR rollup; its exact head was checked separately.
+Backend CI passed 63 scenarios; Flutter passed 46 tests, analysis/formatting/web
+build; Android app and native drivers compiled.
+
+The downloaded evidence matches the full head, all markers, original screenshots
+and database results. Selected chat/completed/review images were visually reviewed
+and retained. Local observer capture, identifier guarding and stop behavior also
+passed, alongside redaction/process-exit and docs/hygiene checks. Current branch
+is main; completed work is pushed without a codex/ prefix. #7/#12 stay open for
+secondary iOS cancellation/dispute/connection-recovery. Physical devices, signing,
+public deployment and live payments remain separate. Existing data and upstream
+Flow were preserved. Completed Flow instances are intentionally not retained;
+the durable wait snapshot and final correlation supply the persistence proof.

@@ -29,6 +29,10 @@ one completed booking with accepted request/quote, agreed CAD 85.50 price,
 the same workflow correlation observed with three persisted task checkpoints
 during the scheduled human wait, simulated captured payment with one capture transaction,
 the five-star saved review and the expected chat from two distinct senders.
+The wait snapshot is retained as `workflow-wait.json`. Flow removes active
+instance/task rows after completion; the final booking keeps the observed ID.
+App-process recovery here restarts Bliss only. Backend workflow restart recovery
+is covered by the separate packaged-process tests and web demonstration.
 
 The [workflow](../../.github/workflows/ios-marketplace.yml) retains sanitized logs
 and named screenshots in the private `ios-marketplace-evidence` artifact for
@@ -38,8 +42,29 @@ and synthetic session gates remain separate and must continue passing.
 
 ## Status
 
-First native execution pending. This document describes the required scenario;
-it is not yet evidence of a passing iOS marketplace flow. #7/#12 remain open.
+[Marketplace CI](https://github.com/Stuaarts/Bliss/actions/runs/37955297119)
+passed at `e8c7724d0e82d21f18884393db7464f33bf4d445`: one XCTest, zero failures, 356.597 seconds,
+nine checkpoints/screenshots and all nine database assertions. The observer
+recorded a scheduled human wait with three persisted task checkpoints; the
+completed booking retained the same workflow correlation. All nine checks passed
+before [PR #38](https://github.com/Stuaarts/Bliss/pull/38) merged as `9c81af7`,
+including [real browser auth](https://github.com/Stuaarts/Bliss/actions/runs/37955297128),
+the separately dispatched [synthetic iOS gate](https://github.com/Stuaarts/Bliss/actions/runs/37955296677),
+[push CI](https://github.com/Stuaarts/Bliss/actions/runs/37955297169) and
+[PR CI](https://github.com/Stuaarts/Bliss/actions/runs/37955302085).
+Manual dispatch is outside the PR rollup; its exact head was checked separately.
+Backend CI passed 63 scenarios; Flutter passed 46 tests, analysis/formatting/web
+build; Android app and native drivers compiled.
+
+The downloaded evidence identifies Xcode 16.4, Flutter 3.47.5, PostgreSQL 17.11,
+Keycloak 26.7.4 and iPhone 11 / iOS 26.2. #7/#12 remain open for secondary paths.
+
+Selected original screenshots, visually reviewed before committing:
+
+| Two-way chat | Completed booking and capture | Saved review |
+| --- | --- | --- |
+| [Chat](ios-marketplace-chat.png) | [Completed](ios-marketplace-completed.png) | [Review](ios-marketplace-review.png) |
+
 Secondary cancellation/dispute/connection-recovery paths, physical devices and
 signed distribution remain separate acceptance gates.
 

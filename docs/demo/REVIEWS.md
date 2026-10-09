@@ -43,5 +43,6 @@ The “Verified customer” label means a completed booking, not identity verifi
 Review editing/deletion, provider replies, moderation/reporting and retention are
 not implemented. Production abuse/privacy policies remain #15.
 [Android authentication](ANDROID.md) and [native marketplace verification](ANDROID_MARKETPLACE.md)
-have separate evidence; iOS remains unverified. Manual-admin disputes are documented
+have separate evidence; [iOS marketplace verification](IOS_MARKETPLACE.md) now
+also covers publishing and reopening the saved review after process recovery. Manual-admin disputes are documented
 in [the dispute demo](DISPUTES.md).

@@ -17,7 +17,8 @@ capabilities, edit the display name and sign out. Credentials are in ignored
 `.work/demo-accounts.json`. This flow has been verified against live Keycloak and
 PostgreSQL. [Android native authentication and marketplace flows](../demo/ANDROID.md)
 are verified, and [iOS simulator browser authentication](../demo/IOS_AUTH.md)
-now passes. iOS marketplace UI, physical devices and signed distribution remain separate gates.
+now passes. The [iOS request-to-review marketplace](../demo/IOS_MARKETPLACE.md)
+also passes. Secondary native paths, physical devices and signed distribution remain separate gates.
 
 ## Booking API and restart demo
 
