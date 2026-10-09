@@ -102,17 +102,34 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 printf 'device=%s\ntype=%s\nruntime=%s\n' "$device" "$device_type" "$runtime" | tee "$evidence/device.txt"
 for phase in seed restore signed-out; do
+  run_bounded 120 flutter build ios --config-only --simulator --debug \
+    --target integration_test/native_session_test.dart \
+    --dart-define=OIDC_ISSUER=http://localhost:18180 \
+    --dart-define=NATIVE_TEST_PHASE="$phase" 2>&1 | tee "$evidence/$phase-config.log"
   run_bounded 60 xcrun simctl boot "$device"
   run_bounded 180 xcrun simctl bootstatus "$device" -b
   # The same app data and Keychain must survive all three independent processes.
-  if ! run_bounded 300 flutter --verbose test integration_test/native_session_test.dart -d "$device" \
-    --no-uninstall --reporter expanded \
-    --dart-define=OIDC_ISSUER=http://localhost:18180 \
-    --dart-define=NATIVE_TEST_PHASE="$phase" 2>&1 | tee "$evidence/$phase.log"; then
+  # XCTest reads integration_test results natively, without VM-service discovery.
+  if ! run_bounded 300 xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner \
+    -configuration Debug -destination "platform=iOS Simulator,id=$device" \
+    -destination-timeout 60 -parallel-testing-enabled NO -only-testing:RunnerTests \
+    -resultBundlePath "$evidence/$phase.xcresult" test 2>&1 | tee "$evidence/$phase.log"; then
     run_bounded 30 xcrun simctl spawn "$device" log show --last 2m \
       --predicate 'process == "Runner"' > "$evidence/$phase-simulator.log" 2>&1 || true
     exit 1
   fi
+  python3 - "$phase" "$evidence/$phase.log" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+phase = {'seed': 'Seed', 'restore': 'Restore', 'signed-out': 'SignedOut'}[sys.argv[1]]
+log = Path(sys.argv[2]).read_text()
+name = 'testNativeSessionProcessPhase' + phase
+assert re.search(r'Test Case .*' + name + r'.* passed', log), 'Expected native phase did not pass'
+assert 'Executed 1 test, with 0 failures' in log, 'Expected exactly one successful native test'
+print(f'Verified XCTest result: {name}')
+PY
   # Reboot this same simulator to avoid carrying launch state into the next run.
   # This preserves the installed app and Keychain; no uninstall/reset is allowed.
   run_bounded 60 xcrun simctl shutdown "$device"

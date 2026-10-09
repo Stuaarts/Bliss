@@ -22,8 +22,10 @@ It never selects, erases or deletes an existing simulator. Its exit handler shut
 down and deletes only the UUID it created, including when a test fails.
 
 The test entry point is [native_session_test.dart](../../apps/mobile/integration_test/native_session_test.dart).
-Each invocation uses the same installed bundle and `--no-uninstall` to preserve
-app data between processes:
+The runner configures the fixture's phase-specific Dart defines, then executes
+the same installed bundle through Flutter's native XCTest bridge in a new app
+process. Test parallelization is disabled so Xcode uses the supplied simulator,
+with no explicit uninstall or reset between phases:
 
 1. `seed` refuses to overwrite an existing session, writes a synthetic refresh
    token to real secure storage and reads it back.
@@ -35,10 +37,12 @@ app data between processes:
 
 The same simulator is shut down and booted between phases, retaining the
 installed app and Keychain. This also isolates simulator launch state between
-the independent Flutter invocations. Each invocation has a five-minute command
-deadline, including Flutter's pre-test launch/VM-service wait. A deadline or test
-failure fails the gate without an automatic retry, preserving verbose Flutter
-and recent Runner simulator logs for diagnosis. Build, boot and cleanup commands
+the independent XCTest invocations. Each test command has a five-minute deadline.
+A deadline or test failure fails the gate without an automatic retry, preserving
+Xcode logs, result bundles and recent Runner simulator logs for diagnosis.
+The script requires the expected phase's XCTest to pass and exactly one test
+with zero failures, so an empty test bundle cannot satisfy the gate.
+Build, configuration, boot and cleanup commands
 also have deadlines; the native CI step has a 25-minute limit within its
 30-minute job limit so artifact upload has time to run.
 
@@ -59,7 +63,7 @@ obsolete run, and the job has a 30-minute limit.
 Each invocation writes a new directory under `.work/ios-session` so old phase
 logs cannot be mistaken for evidence from a later failed run. Private CI
 artifacts retain the commit, tool versions, selected simulator/runtime,
-normal app build and three fixture-phase logs for seven days. No real account
+normal app build, three fixture-phase logs and XCTest result bundles for seven days. No real account
 tokens, credentials or signed application archive belong in those artifacts.
 The Windows workstation can check formatting, analysis and script syntax; only
 the macOS execution supplies native iOS evidence.
@@ -81,8 +85,24 @@ The next execution at `e3afdfd`, [run 37885539835](https://github.com/Stuaarts/B
 compiled the app in 36.4 seconds and passed `seed`, then stalled after the restore
 build (18.8 seconds), before the restore test started. It was cancelled to recover
 logs and is **not a passing fixture run**. The runner now reboots the same simulator
-between phases, adds bounded command waits and retains verbose launch diagnostics.
-This revision needs its own complete native pass before merge.
+between phases, adds bounded command waits and retains launch diagnostics.
+
+[Run 37886765697](https://github.com/Stuaarts/Bliss/actions/runs/37886765697)
+at `0e7d2b4` passed seed and restore (including actual native refresh/rotation),
+then timed out before signed-out's test body started. Verbose output shows a
+launched app PID followed by an indefinite VM-service wait. The watchdog correctly
+failed the job and retained diagnostics. Reboots alone did not make the Flutter
+CLI launch channel reliable.
+
+The current runner instead uses Flutter's official
+[native XCTest bridge](https://github.com/flutter/flutter/blob/3.47.5/packages/integration_test/README.md#ios-device-testing),
+implemented in [RunnerTests.m](../../apps/mobile/ios/RunnerTests/RunnerTests.m).
+It replaces the template's empty test, links the Swift package plugins to the
+test target, and obtains the same Dart assertions directly through XCTest,
+without waiting for Flutter CLI VM-service discovery. This revision needs its
+own complete native pass before merge. The original successful run above used
+three `flutter test --no-uninstall` invocations; its evidence is preserved,
+separately from the subsequent launch failures and native-bridge result.
 
 ## Remaining acceptance under #7/#12
 

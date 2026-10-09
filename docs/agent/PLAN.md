@@ -95,7 +95,9 @@ iOS browser/marketplace acceptance remains the next platform gate; the normal
 iOS app build and three-process native storage/refresh/logout fixture now pass
 on macOS CI at `8cce162` (run 37884919565). PR #36 adds the repeatable disposable
 simulator gate and required Keychain entitlements. Current work branch:
-`7-ios-simulator-verification`; final runner CI and merge are pending.
+`7-ios-simulator-verification`; final runner CI and merge are pending. Later
+Flutter CLI attempts stalled during debug-service discovery before tests began;
+the current runner uses Flutter's native XCTest bridge for the same fixture.
 PR #35 merged after all six checks passed
 at `c3556e3`, including 63 backend scenarios and 46 Flutter tests. The user-requested
 branch rename removed codex/ from 14 remote and 14 local branches,

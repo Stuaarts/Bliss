@@ -792,3 +792,16 @@ scenarios and 46 Flutter tests. The runner now reboots the same simulator betwee
 phases, preserving app/Keychain data, and bounds command groups including Flutter's
 otherwise unbounded pre-test launch wait. Verbose phase logs and recent Runner
 logs on failure make a repeat stall diagnosable. There is no automatic test retry.
+
+Run 37886765697 at `0e7d2b4` passed seed and restore (real refresh/rotation),
+then the five-minute watchdog failed signed-out before its test started. Verbose
+logs show the app launch PID and a wait for Flutter's VM service; no signed-out
+assertion ran. Reboots alone were insufficient. The iOS gate now uses Flutter's
+official native XCTest integration bridge, replacing the empty RunnerTests
+template and linking its Swift package plugins. It runs the same Dart fixture
+through Xcode without Flutter CLI debug-service discovery. The runner requires
+the expected phase and exactly one successful XCTest per invocation. Fresh CI
+must validate this revision; no failing or empty test is accepted as success.
+The isolated Linux-container watchdog check passed normal/nonzero exit
+propagation, timeout status 124, killing a TERM-ignoring descendant and preserving
+an unrelated process. All six ordinary jobs also passed at `0e7d2b4`.
