@@ -9,6 +9,37 @@ for tool in flutter xcrun python3; do
   command -v "$tool" >/dev/null || { echo "Missing tool: $tool" >&2; exit 1; }
 done
 
+# Flutter can wait indefinitely for a simulator launch/VM-service connection.
+# Bound the whole command, including that pre-test wait, and kill only its group.
+run_bounded() {
+  python3 - "$@" <<'PY'
+import os
+import signal
+import subprocess
+import sys
+
+process = subprocess.Popen(sys.argv[2:], start_new_session=True)
+try:
+    result = process.wait(timeout=int(sys.argv[1]))
+except subprocess.TimeoutExpired:
+    print(f'Command exceeded {sys.argv[1]} seconds: {sys.argv[2]}', file=sys.stderr, flush=True)
+    try:
+        os.killpg(process.pid, signal.SIGTERM)
+        process.wait(timeout=10)
+    except (ProcessLookupError, subprocess.TimeoutExpired):
+        pass
+    finally:
+        # A child may ignore TERM even if its parent already exited.
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        process.wait()
+    sys.exit(124)
+sys.exit(result if result >= 0 else 128 - result)
+PY
+}
+
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 mkdir -p "$root/.work/ios-session"
 evidence="$(mktemp -d "$root/.work/ios-session/run-XXXXXX")"
@@ -17,10 +48,10 @@ cd "$root/apps/mobile"
 xcodebuild -version | tee "$evidence/xcode.txt"
 flutter --version | tee "$evidence/flutter.txt"
 git rev-parse HEAD | tee "$evidence/commit.txt"
-flutter pub get
+run_bounded 300 flutter pub get
 
 # Compile the actual app before building the separate synthetic test entry point.
-flutter build ios --simulator --debug 2>&1 | tee "$evidence/app-build.log"
+run_bounded 600 flutter build ios --simulator --debug 2>&1 | tee "$evidence/app-build.log"
 python3 - <<'PY'
 import plistlib
 from pathlib import Path
@@ -63,22 +94,28 @@ read -r device_type runtime <<< "$selection"
 device="$(xcrun simctl create "Bliss_Test_iOS_$$" "$device_type" "$runtime")"
 [[ "$device" =~ ^[A-Fa-f0-9-]{36}$ ]] || { echo "Invalid created simulator UUID" >&2; exit 1; }
 cleanup() {
-  xcrun simctl shutdown "$device" >/dev/null 2>&1 || true
-  xcrun simctl delete "$device" || true
+  run_bounded 60 xcrun simctl shutdown "$device" >/dev/null 2>&1 || true
+  run_bounded 60 xcrun simctl delete "$device" || true
 }
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 printf 'device=%s\ntype=%s\nruntime=%s\n' "$device" "$device_type" "$runtime" | tee "$evidence/device.txt"
-xcrun simctl boot "$device"
-xcrun simctl bootstatus "$device" -b
-
 for phase in seed restore signed-out; do
+  run_bounded 60 xcrun simctl boot "$device"
+  run_bounded 180 xcrun simctl bootstatus "$device" -b
   # The same app data and Keychain must survive all three independent processes.
-  flutter test integration_test/native_session_test.dart -d "$device" \
+  if ! run_bounded 300 flutter --verbose test integration_test/native_session_test.dart -d "$device" \
     --no-uninstall --reporter expanded \
     --dart-define=OIDC_ISSUER=http://localhost:18180 \
-    --dart-define=NATIVE_TEST_PHASE="$phase" 2>&1 | tee "$evidence/$phase.log"
+    --dart-define=NATIVE_TEST_PHASE="$phase" 2>&1 | tee "$evidence/$phase.log"; then
+    run_bounded 30 xcrun simctl spawn "$device" log show --last 2m \
+      --predicate 'process == "Runner"' > "$evidence/$phase-simulator.log" 2>&1 || true
+    exit 1
+  fi
+  # Reboot this same simulator to avoid carrying launch state into the next run.
+  # This preserves the installed app and Keychain; no uninstall/reset is allowed.
+  run_bounded 60 xcrun simctl shutdown "$device"
 done
 echo "PASS: iOS app compile, callback registration, Keychain persistence, AppAuth refresh/rotation and logout." | tee "$evidence/result.txt"
 echo "Real browser PKCE, identity-provider logout and marketplace UI are separate checks."

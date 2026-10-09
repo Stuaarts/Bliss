@@ -33,6 +33,15 @@ app data between processes:
 3. `signed-out` starts another process, confirms the token was removed and
    checks that restoring a session produces no access token.
 
+The same simulator is shut down and booted between phases, retaining the
+installed app and Keychain. This also isolates simulator launch state between
+the independent Flutter invocations. Each invocation has a five-minute command
+deadline, including Flutter's pre-test launch/VM-service wait. A deadline or test
+failure fails the gate without an automatic retry, preserving verbose Flutter
+and recent Runner simulator logs for diagnosis. Build, boot and cleanup commands
+also have deadlines; the native CI step has a 25-minute limit within its
+30-minute job limit so artifact upload has time to run.
+
 Runner's Debug, Profile and Release configurations use the same Keychain
 [entitlements](../../apps/mobile/ios/Runner/Runner.entitlements). The empty
 `keychain-access-groups` array follows the pinned
@@ -68,8 +77,12 @@ comes from that run's downloaded artifact and job log:
 | `restore`, second process | One test passed: persisted seed, native refresh, rotation and local logout |
 | `signed-out`, third process | One test passed: token absent and no restored access token |
 
-The final runner revision also adds separate evidence directories and explicit
-interruption handling; its own CI result remains pending at this checkpoint.
+The next execution at `e3afdfd`, [run 37885539835](https://github.com/Stuaarts/Bliss/actions/runs/37885539835),
+compiled the app in 36.4 seconds and passed `seed`, then stalled after the restore
+build (18.8 seconds), before the restore test started. It was cancelled to recover
+logs and is **not a passing fixture run**. The runner now reboots the same simulator
+between phases, adds bounded command waits and retains verbose launch diagnostics.
+This revision needs its own complete native pass before merge.
 
 ## Remaining acceptance under #7/#12
 

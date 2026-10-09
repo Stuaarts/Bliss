@@ -24,6 +24,7 @@ jobs:
           channel: stable
           cache: true
       - name: Compile app and verify session across simulator processes
+        timeout-minutes: 25
         run: bash infrastructure/scripts/test-ios-session.sh
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()

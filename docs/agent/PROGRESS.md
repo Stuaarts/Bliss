@@ -782,3 +782,13 @@ passed. The final runner revision adds separate evidence directories and explici
 interruption cleanup; its native and ordinary CI still need to pass before merge.
 See [iOS validation](../demo/IOS.md) for commands, evidence boundaries and the
 remaining real browser/marketplace acceptance checks. #7/#12 remain open.
+
+The next native attempt at `e3afdfd` (run 37885539835) compiled the actual app
+and passed seed, then stalled after restore's Xcode build, before the test body
+started. Normal cancellation did not complete promptly; force-cancellation
+recovered job logs and fixture artifacts. This attempt is not counted as a pass.
+All six ordinary API/mobile/Android jobs passed at that head, including 63 backend
+scenarios and 46 Flutter tests. The runner now reboots the same simulator between
+phases, preserving app/Keychain data, and bounds command groups including Flutter's
+otherwise unbounded pre-test launch wait. Verbose phase logs and recent Runner
+logs on failure make a repeat stall diagnosable. There is no automatic test retry.
