@@ -15,7 +15,9 @@ readiness and metrics, and run catalog/Flutter tests. This is not the full relea
 Open **Your account**, sign in as the generated local `provider` user, show both
 capabilities, edit the display name and sign out. Credentials are in ignored
 `.work/demo-accounts.json`. This flow has been verified against live Keycloak and
-PostgreSQL. Android/iOS device validation is still pending.
+PostgreSQL. [Android native authentication and marketplace flows](../demo/ANDROID.md)
+are verified, and [iOS simulator browser authentication](../demo/IOS_AUTH.md)
+now passes. iOS marketplace UI, physical devices and signed distribution remain separate gates.
 
 ## Booking API and restart demo
 

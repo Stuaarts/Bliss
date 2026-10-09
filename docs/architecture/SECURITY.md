@@ -30,7 +30,11 @@ finish after logout's deletion. Storage failures are reported, not treated as
 successful persistence. Android fixture tests verify storage across process death,
 native refresh/rotation and local logout. A separate real Keycloak Android test
 verifies browser PKCE, customer/provider recovery after process death, identity-provider
-logout and account switching. iOS validation remains open. See [Android evidence](../demo/ANDROID.md).
+logout and account switching. The separate [iOS native fixture](../demo/IOS.md)
+and [real iOS browser test](../demo/IOS_AUTH.md) now verify simulator Keychain/
+refresh behavior and customer/provider browser callbacks, process recovery,
+logout and account switching. iOS marketplace UI and physical-device validation
+remain open. See also [Android evidence](../demo/ANDROID.md).
 
 Opportunity reads expose only job scope, category, city and budget to providers;
 no customer identity/contact fields. Quote submission requires provider OWNER

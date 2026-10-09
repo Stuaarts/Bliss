@@ -35,4 +35,6 @@ not production infrastructure. Client redirects are exact, not wildcard URLs.
 API production startup requires `BLISS_OIDC_URL`; real deployments require HTTPS.
 Real Android browser login, customer/provider session recovery after process death,
 logout and account switching are verified in [the Android evidence](../demo/ANDROID.md).
-iOS device validation and production session hardening remain tracked work.
+The same browser/recovery/logout/switching checks now pass on the iOS simulator
+in [the iOS browser evidence](../demo/IOS_AUTH.md). Physical-device validation
+and production session hardening remain tracked work.
