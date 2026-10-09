@@ -693,3 +693,46 @@ documentation checkpoint following it changes no runtime or test behavior.
 Issues #7/#12 remain open for the explicitly listed native platform/secondary-path
 checks. No iOS or production release is claimed. The emulator remains stopped;
 the successful local UI evidence and generated demo data are preserved.
+
+## 2026-10-09 — Android secondary flows and connection recovery (#7/#12)
+
+The fresh native-20261009-d full run passed in 303.93 seconds, using native
+UI mutations for two direct bookings: cancellation/void and a real scheduled
+service followed by customer filing, provider evidence and an independent admin
+customer-favored decision. The customer reopened the voided payment and applied
+decision after background/resume and process restart, then signed out. Read-only
+database verification found exactly one AUTHORIZE and VOID per booking, one
+provider evidence item and one processed decision; no capture/refund occurred.
+Reviewed screenshots and commands are in docs/demo/ANDROID_SECONDARY.md.
+
+An interrupted October 5 run lacked a final result; its final read/check phase
+passed in 45.269 seconds after inspecting the applied database state. A fresh run
+then exposed an immediate-selector race while opening the admin form; waiting for
+Outcome fixes the driver. Those partial runs are not full-flow evidence. The
+earlier account-switch failure was fixed by waiting for enabled Sign in after
+logout. No marketplace product code was changed.
+
+Catalog outage/retry passed in 3.589/1.533 seconds by removing and
+restoring only the dedicated emulator's API reverse mapping. Retry returned real
+data on the same failed screen, without an app restart. The backend stayed UP.
+Real Android Keycloak login, recovery, logout and switching passed again in 51.846
+seconds. Host/device credential staging was removed, including the interrupted
+run's leftover input. Existing demo data and the personal emulator were preserved.
+
+Inspection also found main checkpoint 009a44e's API CI failure (run 37398060266),
+tracked in [#34](https://github.com/Stuaarts/Bliss/issues/34):
+BookingWorkflowTest submitted a future schedule only one rounded second ahead,
+which could expire before reaching the API. The test now allows five seconds and
+still waits for the actual start time; production schedule validation is unchanged.
+New clean-checkout API/mobile/Android gates are required before merging.
+CI push checks now include every branch, preparing for the user's requested
+removal of codex/ from branch names. Renaming will preserve commits and tracking
+after this slice is merged. Current branch: codex/7-native-secondary-flows.
+iOS, physical-device coverage and signed distribution remain unverified; captured
+refunds/provider-favored/timeouts retain their separate API/web evidence.
+
+The corrected workflow scenario passed locally (one test, zero failures/errors/skips,
+elapsed 28.41 seconds) using isolated Testcontainers PostgreSQL after stopping the
+API dev process. Spotless completed; document/hygiene checks passed 107 local links
+and 268 tracked/new paths. The secondary duplicate-run guard rejected the existing
+run before build or mutations. Clean-checkout CI remains the merge gate.

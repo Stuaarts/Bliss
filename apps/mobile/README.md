@@ -87,6 +87,9 @@ CI compiles the Android app and drivers. The separate
 [native marketplace run](../../docs/demo/ANDROID_MARKETPLACE.md) passes request,
 quote, scheduled booking, completion/capture, chat, review reopening and
 background/resume against real local services. Add `-Scenario marketplace` to the
-runner command for that check. iOS and secondary native paths remain unverified.
+runner command for that check. The [secondary native checks](../../docs/demo/ANDROID_SECONDARY.md)
+pass direct booking/cancellation, a customer-favored manual dispute and catalog
+outage/retry. Use `-Scenario secondary` or `-Scenario connectivity` respectively.
+iOS, physical-device coverage and signed distribution remain unverified.
 Android command-line tools are still missing; Gradle used existing SDK license
 acceptance for build dependencies. iOS requires a macOS host.

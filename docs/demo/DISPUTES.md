@@ -40,7 +40,8 @@ An admin related to either side cannot decide. Text evidence is shared with both
 parties and admins, with no uploads or automated adjudication. Evidence closes
 when both parties have submitted or the deadline passes. No appeals/reopening,
 editing/deletion or moderation is implemented. A previously published review
-remains public after a refund. Native device authentication remains unverified (#7).
+remains public after a refund. Android authentication and a pre-capture manual dispute now have
+[separate native evidence](ANDROID_SECONDARY.md); iOS remains unverified (#7).
 Migration V9 preserves existing data but new booking states require a forward
 migration plan if reverting application versions.
 
