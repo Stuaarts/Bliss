@@ -136,12 +136,12 @@ fixture results do not replace the real iOS acceptance below.
 
 ## Remaining acceptance under #7/#12
 
-The separate [real browser authentication gate](IOS_AUTH.md) is the active next
-slice. Its native execution must pass before the browser checks below are signed off.
+The separate [real browser authentication gate](IOS_AUTH.md) passed in PR #37.
+It verifies customer/provider Keycloak browser sign-in/callback, stopped-process
+recovery, customer background/resume, identity-provider logout and account
+switching. These results come from real UI/service execution, independently of
+the synthetic fixture above.
 
-- Real Keycloak browser sign-in and callback return for customer and provider.
-- Process-death session recovery, background/resume, identity-provider logout
-  and account switching with the expected capabilities and no stale private data.
 - The actual request-to-review marketplace UI, chat and simulated settlement
   against the real API, plus direct cancellation, dispute and connection recovery.
 - Physical-device and signed-distribution validation are separate from simulator

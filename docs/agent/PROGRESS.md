@@ -874,3 +874,34 @@ The runner now builds and starts the API with the same local profile and checks
 the seeded provider row before UI execution. No assertion was weakened. All
 seven other API/mobile/Android/synthetic-iOS checks passed at the first head.
 Local log-redaction and subprocess normal/nonzero exit checks also passed.
+
+### Real iOS browser authentication merge checkpoint
+
+The corrected runner passed at `5685e9e` in
+[native browser CI 37945058779](https://github.com/Stuaarts/Bliss/actions/runs/37945058779).
+The downloaded evidence matches the full commit and records the Alex Demo seed,
+healthy real API, Xcode 16.4, Flutter 3.47.5, PostgreSQL 17.11, Keycloak 26.7.4 and
+iPhone 11 / iOS 26.2. One XCTest passed in 92.921 seconds with zero failures,
+all eight checkpoints and all eight named post-authentication screenshots.
+Customer/provider browser callbacks and refresh recovery, customer background/
+resume, local/identity-provider logout and switching back without stale provider
+state now pass. Three original screenshots were visually reviewed and retained
+in the documentation. Raw browser captures/credentials were not uploaded.
+
+All six ordinary checks passed in
+[push CI](https://github.com/Stuaarts/Bliss/actions/runs/37945058709) and
+[PR CI](https://github.com/Stuaarts/Bliss/actions/runs/37945065853), including
+63 backend scenarios and 46 Flutter tests, analysis/formatting/web build and
+Android app/native-driver compilation. The separate manually dispatched
+[synthetic iOS run 37945150445](https://github.com/Stuaarts/Bliss/actions/runs/37945150445)
+also passed on the exact head; manual dispatch is outside the seven-check PR
+rollup. All eight checks and current-main ancestry were verified before
+[PR #37](https://github.com/Stuaarts/Bliss/pull/37) merged as `080a11f`.
+Current branch: `main`, fast-forwarded to that merge for this release-doc checkpoint.
+
+#7/#12 remain open for real iOS request-to-review marketplace UI, chat, simulated
+settlement and the secondary cancellation/dispute/connection-recovery scenarios.
+The isolated macOS services and native UI target now provide the foundation for
+that next slice. Physical devices and signed distribution remain separate.
+Branch names continue to omit codex/. Existing Windows service data, legacy
+inputs and upstream Flow are preserved; no live payments or public deployment.

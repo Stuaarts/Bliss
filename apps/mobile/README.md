@@ -25,7 +25,8 @@ Local HTTP is allowed only in the Android debug manifest. Release builds require
 HTTPS. Physical devices require an explicitly reachable development API address;
 the default backend binds loopback. The [iOS simulator gate](../../docs/demo/IOS.md)
 compiles on macOS and verifies native storage/refresh with a synthetic fixture.
-Real iOS browser and marketplace validation remain open.
+The separate [iOS browser gate](../../docs/demo/IOS_AUTH.md) passes real Keycloak
+login, recovery, logout and account switching. iOS marketplace validation remains open.
 
 Configure a real HTTPS identity provider using `--dart-define=OIDC_ISSUER=...`
 and API using `--dart-define=API_BASE_URL=...`; register the matching redirect URLs.
@@ -34,7 +35,7 @@ may still have an SSO session). Only the PKCE transaction is temporarily stored 
 sessionStorage; it expires after ten minutes and is removed on callback. Native
 refresh tokens use platform secure storage; access tokens stay in memory. Native
 Android browser login, recovery and logout are verified on the dedicated emulator;
-iOS device login remains unverified.
+iOS simulator browser authentication is also verified; physical devices remain unverified.
 
 HTTP clients and typed mappings live under `core`, `features/discovery` and
 `features/marketplace`, `features/conversation`, `features/reviews` and `features/dispute`.
@@ -94,7 +95,10 @@ outage/retry. Use `-Scenario secondary` or `-Scenario connectivity` respectively
 iOS app compilation and the three-process native session fixture now pass on
 macOS CI. Run `bash infrastructure/scripts/test-ios-session.sh` from the repository
 root on a Mac with Xcode and an iOS Simulator runtime. It uses a disposable
-simulator and synthetic credentials. Real iOS browser/marketplace acceptance,
-physical-device coverage and signed distribution remain unverified.
+simulator and synthetic credentials. The real browser gate runs with
+`python3 infrastructure/scripts/test-ios-oidc.py` from the repository root on macOS
+with Java 21 and Homebrew PostgreSQL 17 tools. It creates its own loopback services
+and simulator. iOS marketplace acceptance, physical-device coverage and signed
+distribution remain unverified.
 Android command-line tools are still missing; Gradle used existing SDK license
 acceptance for build dependencies. iOS requires a macOS host.

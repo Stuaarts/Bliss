@@ -83,7 +83,7 @@ task affinity fixes the reproduced callback failure. A guarded PowerShell runner
 reproduces the local check; Android app/driver compilation is added to CI.
 PR #32 merged as `a892dd9` after all six API/mobile/Android jobs passed at `aae6927`.
 Main CI also passed (run 36347290131).
-Current branch: `main`, synchronized through PR #36 merge `60b23fd`.
+Current branch: `main`, synchronized through PR #37 merge `080a11f`.
 The real Android request-to-review run passed on September 28 in 375.264 seconds,
 including two-way chat, actual schedule enforcement, simulated capture, process
 recovery, saved review reopening and background/resume. Authentication recheck
@@ -91,23 +91,23 @@ passed in 48.438 seconds after extracting shared driver controls. The runner
 rejects duplicate run IDs and documents safe phase-based diagnosis. All six
 API/mobile/Android jobs passed at `1f0f9ac` before merge. The following Android secondary slice
 now passes direct cancellation, a manual admin dispute and catalog outage/retry.
-iOS browser/marketplace acceptance remains the next platform gate; the normal
+iOS marketplace acceptance remains the next platform gate; the normal
 iOS app build and three-process native storage/refresh/logout fixture now pass
 on macOS CI. PR #36 adds the disposable simulator gate and required Keychain
 entitlements. Later Flutter CLI attempts stalled during debug-service discovery
 before tests began; the final runner uses Flutter's native XCTest bridge for the
 same fixture. All three phases passed at `4da6f18` (run 37888748649), with all
-six API/mobile/Android checks green before merge. The next platform slice is real
-iOS Keycloak browser sign-in/callback, account recovery/logout/switching, then the
-marketplace lifecycle against isolated local services on macOS. #7/#12 stay open;
+six API/mobile/Android checks green before merge. Real iOS Keycloak browser
+authentication now also passes. The next slice is the marketplace lifecycle
+against isolated local services on macOS. #7/#12 stay open;
 physical-device coverage and signed distribution remain separate.
 
-The active `7-ios-browser-auth` slice adds a separate XCUITest target for the
-normal app and a disposable macOS PostgreSQL/Keycloak/API stack. Real browser
-credentials, callback, stopped-process recovery, background/resume, logout and
-customer/provider account switching must pass native CI before merge. See
-[iOS browser authentication](../demo/IOS_AUTH.md). No passing result is claimed
-for this new gate until execution completes.
+PR #37 adds a separate XCUITest target for the normal app and a disposable macOS
+PostgreSQL/Keycloak/API stack. Real browser credentials/callback, stopped-process
+recovery for both accounts, customer background/resume, logout and account
+switching passed in 92.921 seconds at `5685e9e` (run 37945058779). All eight
+checks passed before merge, including a separate synthetic native dispatch on
+that exact head. See [iOS browser authentication](../demo/IOS_AUTH.md).
 PR #35 merged after all six checks passed
 at `c3556e3`, including 63 backend scenarios and 46 Flutter tests. The user-requested
 branch rename removed codex/ from 14 remote and 14 local branches,

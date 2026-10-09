@@ -6,8 +6,9 @@ Keycloak browser login, session recovery after process death, logout and account
 switching on the dedicated Bliss_Test emulator. The later
 [native request-to-review run](ANDROID_MARKETPLACE.md) verifies the primary
 marketplace lifecycle. The [secondary checks](ANDROID_SECONDARY.md) also pass;
-remaining iOS browser/marketplace acceptance is tracked under #7. The separate
-[iOS simulator fixture](IOS.md) now verifies compilation and storage/refresh.
+remaining iOS marketplace acceptance is tracked under #7. The separate
+[iOS simulator fixture](IOS.md) verifies compilation and storage/refresh, and
+[real iOS browser authentication](IOS_AUTH.md) now passes.
 
 ## Real Keycloak browser regression
 
@@ -159,14 +160,15 @@ retain them when repeating the complete marketplace flow or testing iOS.
 
 1. Browse the real catalog; verify loading and retry behavior if the API stops.
 2. Sign in through the system browser and return through the AppAuth callback.
-   Confirm the correct account and capabilities appear (verified on Android).
+   Confirm the correct account and capabilities appear (verified on Android and iOS simulators).
 3. Force-stop and reopen Bliss without clearing app data. Confirm the stored
    refresh token restores the session and the API accepts refreshed credentials.
 4. Sign out, force-stop and reopen. Confirm private activity is unavailable and
    another account can sign in without inheriting the previous account's data.
 5. Complete the customer/provider booking flow, including return from the browser,
    status refresh, chat and a review. Check background/resume and back navigation.
-6. Repeat native authentication checks on iOS from a macOS host.
+6. Reproduce the verified [iOS authentication gate](IOS_AUTH.md) on macOS;
+   complete the real iOS marketplace lifecycle as the remaining platform slice.
 
 Record actual outcomes before closing #7. Callback registration alone does not
 prove PKCE exchange, secure-storage recovery or identity-provider logout. Android

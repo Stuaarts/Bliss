@@ -3,7 +3,7 @@
 This gate drives the normal Flutter app through Apple's authentication browser
 using a separate XCUITest process. It requires real Keycloak browser credentials
 and an authenticated Bliss API profile; synthetic storage tokens cannot satisfy it.
-Native execution is pending until the new macOS CI run passes.
+The full scenario passed in 92.921 seconds on an iPhone 11 / iOS 26.2 simulator.
 
 ## Reproduce on macOS
 
@@ -51,6 +51,38 @@ checkpoints and their post-authentication screenshots. Commands have deadlines;
 failures are not automatically retried. Cleanup stops only the services and
 simulator created by this invocation and removes its private credential/state
 directory. Existing databases and simulators are never reset.
+
+## Verified result
+
+[Native browser run 37945058779](https://github.com/Stuaarts/Bliss/actions/runs/37945058779)
+passed at `5685e9e4110ab5be0f09f9a7100abb0487a29a78`. Downloaded artifacts identify
+that commit, Xcode 16.4 / 16F6, Flutter 3.47.5, PostgreSQL 17.11 (Homebrew),
+Keycloak 26.7.4 and the fresh iPhone 11 / iOS 26.2 simulator. The provider seed
+check returned Alex Demo; the real API was healthy with its local migrations.
+One `testRealBrowserOidcLifecycle` XCTest passed with zero failures in 92.921
+seconds. All eight checkpoints and named screenshots were present.
+
+Selected original screenshots, reviewed before committing:
+
+| Customer after process recovery | Provider after fresh browser login | Signed out after final restart |
+| --- | --- | --- |
+| [Customer](ios-customer-restored.png) | [Provider](ios-provider-signed-in.png) | [Signed out](ios-signed-out.png) |
+
+The app uses the pinned AppAuth plugin's normal shared ASWebAuthenticationSession,
+without ephemeral mode or forced-login prompts. No browser data is cleared
+between accounts. Fresh credential forms after logout and correct profile/
+capability checks therefore exercise identity-provider logout and switching.
+
+[PR #37](https://github.com/Stuaarts/Bliss/pull/37) merged as `080a11f` after all
+eight checks passed at that head: six ordinary API/mobile/Android checks in
+[push CI](https://github.com/Stuaarts/Bliss/actions/runs/37945058709) and
+[PR CI](https://github.com/Stuaarts/Bliss/actions/runs/37945065853), the browser
+job above and the manually dispatched
+[synthetic native gate](https://github.com/Stuaarts/Bliss/actions/runs/37945150445).
+Manual dispatch does not appear in the PR check rollup; its exact head and
+successful conclusion were verified separately. API CI passed 63 scenarios;
+Flutter passed 46 tests, analysis/formatting and web compilation; Android app
+and native drivers compiled. #7/#12 remain open for marketplace acceptance.
 
 ## Evidence and boundaries
 

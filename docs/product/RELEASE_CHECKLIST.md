@@ -22,7 +22,7 @@ the separate verified runs; no narrated video is claimed.
 | Backend quality gates | 63 scenarios: 55 ordinary + 8 migration/packaged-process scenarios |
 | Flutter quality gates | Analysis, formatting, 46 tests; release web build and Android app/test-driver compilation are checked for each PR |
 | Operations and docs | Swagger/OpenAPI, health/metrics, action catalog, ADRs, workflow diagrams and setup/demo instructions |
-| Native device validation | Real Android Keycloak login/recovery/logout, request-to-review, direct cancellation, customer/provider/admin dispute and catalog outage/retry pass. iOS simulator app build, callback registration and three-process storage/refresh/logout fixture pass. **Open #7:** real iOS browser and marketplace acceptance; other settlement branches retain API/web evidence |
+| Native device validation | Real Android Keycloak login/recovery/logout, request-to-review, direct cancellation, customer/provider/admin dispute and catalog outage/retry pass. iOS app build, native session fixture and real customer/provider Keycloak browser login/recovery/logout/account switching pass. **Open #7:** iOS marketplace acceptance; other settlement branches retain API/web evidence |
 | Full portfolio sign-off | **Open #12:** retain until the remaining native platform gate is resolved or an explicit web-only scope is agreed |
 
 ## Evidence index
@@ -48,6 +48,9 @@ the separate verified runs; no narrated video is claimed.
 - [iOS simulator](../demo/IOS.md): normal app compilation, built callback scheme
   and real Keychain/AppAuth refresh/rotation/local logout across three processes.
   Synthetic fixture execution is distinct from real browser/marketplace acceptance.
+- [iOS browser authentication](../demo/IOS_AUTH.md): real Keycloak forms/callback,
+  customer/provider refresh recovery, customer background/resume, identity-provider
+  logout and account switching; full UI scenario passed in 92.921 seconds.
 - [Workflow design](../architecture/WORKFLOWS.md): durable waits, local JPA adapter,
   admission/processing boundaries and forced-restart verification.
 - Dispute implementation: [PR #28](https://github.com/Stuaarts/Bliss/pull/28), merged
@@ -91,8 +94,18 @@ the separate verified runs; no narrated video is claimed.
   [PR CI](https://github.com/Stuaarts/Bliss/actions/runs/37888752272). The normal
   app/callback and all three synthetic Keychain/AppAuth fixture phases passed.
   Each API run passed 63 scenarios; Flutter passed 46 tests and web quality gates;
-  Android app/native drivers compiled. Real iOS browser and marketplace acceptance
-  remain open under #7/#12.
+  Android app/native drivers compiled. Browser acceptance was still open at this
+  checkpoint and is verified by PR #37 below; marketplace acceptance remains open.
+
+- Real iOS browser authentication: [PR #37](https://github.com/Stuaarts/Bliss/pull/37),
+  merged as `080a11f` after all eight checks passed at `5685e9e`: the
+  [real browser run](https://github.com/Stuaarts/Bliss/actions/runs/37945058779),
+  [synthetic native dispatch](https://github.com/Stuaarts/Bliss/actions/runs/37945150445),
+  [push CI](https://github.com/Stuaarts/Bliss/actions/runs/37945058709) and
+  [PR CI](https://github.com/Stuaarts/Bliss/actions/runs/37945065853). The browser
+  XCTest passed in 92.921 seconds with all eight checkpoints/screenshots. Each
+  API run passed 63 scenarios; Flutter passed 46 tests and web quality gates;
+  Android app/native drivers compiled. #7/#12 retain iOS marketplace acceptance.
 
 On September 27, the documented Windows backend helper started Docker and the
 API against the existing V10 database. PostgreSQL and Keycloak were healthy;
