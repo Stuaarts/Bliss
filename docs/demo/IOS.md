@@ -99,8 +99,8 @@ The current runner instead uses Flutter's official
 implemented in [RunnerTests.m](../../apps/mobile/ios/RunnerTests/RunnerTests.m).
 It replaces the template's empty test, uses the app host's static plugin linkage
 and obtains the same Dart assertions directly through XCTest,
-without waiting for Flutter CLI VM-service discovery. This revision needs its
-own complete native pass before merge. The original successful run above used
+without waiting for Flutter CLI VM-service discovery. Its complete native pass
+is recorded below. The original successful run above used
 three `flutter test --no-uninstall` invocations; its evidence is preserved,
 separately from the subsequent launch failures and native-bridge result.
 
@@ -116,6 +116,23 @@ accessibility during the test. For the native XCTest runner only, setup now wait
 up to 30 seconds for platform semantics before the tester records its handle
 baseline. The listener is removed in finally, and normal leak checks remain
 enabled. Storage and auth assertions are unchanged; a timeout still fails the gate.
+
+The final native XCTest revision at `4da6f18` passed in
+[run 37888748649](https://github.com/Stuaarts/Bliss/actions/runs/37888748649).
+Downloaded evidence identifies that exact commit and the same Xcode/Flutter and
+iPhone 11 / iOS 26.2 configuration as above. The normal app compiled in 39.4
+seconds and its callback registration passed. Each phase reported its expected
+native test name and exactly one test with zero failures; the runner wrote its
+final PASS marker only after all three invocations completed. No automatic retry,
+uninstall, Keychain reset or disabled leak check was used.
+
+[PR #36](https://github.com/Stuaarts/Bliss/pull/36) merged as `60b23fd` after all
+seven checks passed at `4da6f18`: the native job plus all six API/mobile/Android
+checks in [push CI](https://github.com/Stuaarts/Bliss/actions/runs/37888748623)
+and [PR CI](https://github.com/Stuaarts/Bliss/actions/runs/37888752272). Each API
+run passed 63 scenarios; Flutter passed 46 tests, analysis/formatting and release
+web compilation; the Android app and native drivers compiled. These compile and
+fixture results do not replace the real iOS acceptance below.
 
 ## Remaining acceptance under #7/#12
 

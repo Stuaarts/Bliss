@@ -83,7 +83,7 @@ task affinity fixes the reproduced callback failure. A guarded PowerShell runner
 reproduces the local check; Android app/driver compilation is added to CI.
 PR #32 merged as `a892dd9` after all six API/mobile/Android jobs passed at `aae6927`.
 Main CI also passed (run 36347290131).
-Current branch: `main`, synchronized through PR #35 merge `03a5437`.
+Current branch: `main`, synchronized through PR #36 merge `60b23fd`.
 The real Android request-to-review run passed on September 28 in 375.264 seconds,
 including two-way chat, actual schedule enforcement, simulated capture, process
 recovery, saved review reopening and background/resume. Authentication recheck
@@ -93,11 +93,14 @@ API/mobile/Android jobs passed at `1f0f9ac` before merge. The following Android 
 now passes direct cancellation, a manual admin dispute and catalog outage/retry.
 iOS browser/marketplace acceptance remains the next platform gate; the normal
 iOS app build and three-process native storage/refresh/logout fixture now pass
-on macOS CI at `8cce162` (run 37884919565). PR #36 adds the repeatable disposable
-simulator gate and required Keychain entitlements. Current work branch:
-`7-ios-simulator-verification`; final runner CI and merge are pending. Later
-Flutter CLI attempts stalled during debug-service discovery before tests began;
-the current runner uses Flutter's native XCTest bridge for the same fixture.
+on macOS CI. PR #36 adds the disposable simulator gate and required Keychain
+entitlements. Later Flutter CLI attempts stalled during debug-service discovery
+before tests began; the final runner uses Flutter's native XCTest bridge for the
+same fixture. All three phases passed at `4da6f18` (run 37888748649), with all
+six API/mobile/Android checks green before merge. The next platform slice is real
+iOS Keycloak browser sign-in/callback, account recovery/logout/switching, then the
+marketplace lifecycle against isolated local services on macOS. #7/#12 stay open;
+physical-device coverage and signed distribution remain separate.
 PR #35 merged after all six checks passed
 at `c3556e3`, including 63 backend scenarios and 46 Flutter tests. The user-requested
 branch rename removed codex/ from 14 remote and 14 local branches,

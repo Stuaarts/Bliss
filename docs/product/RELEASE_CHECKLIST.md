@@ -84,6 +84,16 @@ the separate verified runs; no narrated video is claimed.
   remain separate from compilation. The user-requested branch renames preserve
   commits and tracking; CI supports the names without the codex/ prefix.
 
+- iOS simulator build and native session fixture: [PR #36](https://github.com/Stuaarts/Bliss/pull/36),
+  merged as `60b23fd` after all seven checks passed at `4da6f18` in
+  [native XCTest CI](https://github.com/Stuaarts/Bliss/actions/runs/37888748649),
+  [push CI](https://github.com/Stuaarts/Bliss/actions/runs/37888748623) and
+  [PR CI](https://github.com/Stuaarts/Bliss/actions/runs/37888752272). The normal
+  app/callback and all three synthetic Keychain/AppAuth fixture phases passed.
+  Each API run passed 63 scenarios; Flutter passed 46 tests and web quality gates;
+  Android app/native drivers compiled. Real iOS browser and marketplace acceptance
+  remain open under #7/#12.
+
 On September 27, the documented Windows backend helper started Docker and the
 API against the existing V10 database. PostgreSQL and Keycloak were healthy;
 readiness was UP; Swagger, metrics, Dev UI and OpenAPI returned HTTP 200. The

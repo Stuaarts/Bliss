@@ -819,3 +819,30 @@ platform semantics before WidgetTester records its baseline, with a 30-second
 deadline and listener removal in finally. Normal leak checks and all storage/auth
 assertions are retained. The native bridge demonstrably propagates Dart failures
 as a failed XCTest/job; this attempt is not counted as a passing fixture.
+
+### iOS native gate merge checkpoint
+
+The final XCTest revision `4da6f18` passed in
+[native CI 37888748649](https://github.com/Stuaarts/Bliss/actions/runs/37888748649).
+Downloaded artifacts match the full commit and record Xcode 16.4, Flutter 3.47.5,
+an iPhone 11 / iOS 26.2 simulator, the normal app build (39.4 seconds) and callback
+registration. Seed, restore and signed-out each ran the expected XCTest with
+exactly one test and zero failures. Keychain persistence, native AppAuth refresh,
+rotation and local logout are verified across separate processes. The accessibility
+startup wait resolved the baseline race while retaining normal leak checks.
+
+All seven checks passed on that head, including all six ordinary checks in
+[push CI](https://github.com/Stuaarts/Bliss/actions/runs/37888748623) and
+[PR CI](https://github.com/Stuaarts/Bliss/actions/runs/37888752272): 63 backend
+scenarios, 46 Flutter tests, analysis/formatting, release web build and Android
+app/native-driver compilation. The branch was checked against current main before
+[PR #36](https://github.com/Stuaarts/Bliss/pull/36) merged as `60b23fd`.
+Current branch: `main`, fast-forwarded to that merge for this documentation checkpoint.
+Completed work is pushed; branch names continue to omit codex/ as requested.
+
+#7/#12 remain open for real iOS browser PKCE/callback, process recovery,
+background/resume, identity-provider logout/account switching and marketplace UI
+acceptance. Run these against isolated local services on a macOS host; do not infer
+them from synthetic fixture tokens or expose the Windows development services.
+Physical devices and signed distribution remain separate. No live payments,
+public deployment, database reset or upstream Flow changes were introduced.
