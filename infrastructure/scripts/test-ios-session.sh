@@ -105,6 +105,7 @@ for phase in seed restore signed-out; do
   run_bounded 120 flutter build ios --config-only --simulator --debug \
     --target integration_test/native_session_test.dart \
     --dart-define=OIDC_ISSUER=http://localhost:18180 \
+    --dart-define=NATIVE_XCTEST=true \
     --dart-define=NATIVE_TEST_PHASE="$phase" 2>&1 | tee "$evidence/$phase-config.log"
   run_bounded 60 xcrun simctl boot "$device"
   run_bounded 180 xcrun simctl bootstatus "$device" -b

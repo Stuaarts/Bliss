@@ -110,6 +110,13 @@ The test target now uses Runner's existing static linkage, following
 [Flutter's Swift package test guidance](https://docs.flutter.dev/packages-and-plugins/swift-package-manager/for-plugin-authors#how-to-update-unit-tests-in-a-plugins-example-app).
 This build failure is not counted as native test evidence.
 
+The corrected host linkage at `1d197d8` (run 37888126778) built and executed the
+seed XCTest, which failed Flutter's semantics-handle invariant when iOS enabled
+accessibility during the test. For the native XCTest runner only, setup now waits
+up to 30 seconds for platform semantics before the tester records its handle
+baseline. The listener is removed in finally, and normal leak checks remain
+enabled. Storage and auth assertions are unchanged; a timeout still fails the gate.
+
 ## Remaining acceptance under #7/#12
 
 - Real Keycloak browser sign-in and callback return for customer and provider.

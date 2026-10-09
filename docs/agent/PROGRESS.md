@@ -811,3 +811,11 @@ Xcode rejected linking the generated static plugin package into both the app
 and its test bundle. The redundant RunnerTests dependency is removed; the test
 bundle uses its app host's existing static plugin linkage, as Flutter's Swift
 package testing guidance specifies. No XCTest was executed by that failed build.
+
+Run 37888126778 at `1d197d8` compiled and ran the native seed XCTest, failing
+Flutter's semantics-handle invariant because iOS enabled platform accessibility
+mid-test. The fixture owns no semantics handles. XCTest-only setup now waits for
+platform semantics before WidgetTester records its baseline, with a 30-second
+deadline and listener removal in finally. Normal leak checks and all storage/auth
+assertions are retained. The native bridge demonstrably propagates Dart failures
+as a failed XCTest/job; this attempt is not counted as a passing fixture.
