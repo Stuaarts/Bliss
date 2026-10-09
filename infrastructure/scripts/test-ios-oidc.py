@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Real browser OIDC acceptance against a disposable, loopback-only Mac stack."""
 import hashlib
+import argparse
 import json
 import os
 from pathlib import Path
@@ -13,6 +14,7 @@ import socket
 import subprocess
 import sys
 import tarfile
+import threading
 import tempfile
 import time
 import urllib.error
@@ -33,11 +35,23 @@ CHECKPOINTS = [
 ]
 SCREENSHOTS = ["customer-signed-in", "customer-restored", "customer-resumed", "signed-out",
                "provider-signed-in", "provider-restored", "customer-switched", "final-signed-out"]
+MARKETPLACE_CHECKPOINTS = [
+    "marketplace customer request created", "marketplace provider quote submitted",
+    "marketplace quote accepted and customer message sent", "marketplace two-way chat delivered",
+    "marketplace scheduled work completed by provider", "marketplace customer confirmation and simulated capture",
+    "marketplace restored booking chat and saved review", "marketplace review survives background and process restart",
+    "marketplace lifecycle finished signed out",
+]
+MARKETPLACE_SCREENSHOTS = ["marketplace-" + name for name in [
+    "request", "quote", "customer-chat", "chat", "provider-complete", "completed", "review", "restored", "signed-out",
+]]
 
 
 class Runner:
-    def __init__(self):
-        evidence_root = ROOT / ".work/ios-oidc"
+    def __init__(self, scenario="auth"):
+        self.scenario = scenario
+        self.run_id = secrets.token_hex(6)
+        evidence_root = ROOT / (".work/ios-marketplace" if scenario == "marketplace" else ".work/ios-oidc")
         private_root = ROOT / ".work/ios-oidc-private"
         evidence_root.mkdir(parents=True, exist_ok=True)
         private_root.mkdir(parents=True, exist_ok=True)
@@ -221,6 +235,11 @@ class Runner:
         self.run(["xcrun", "simctl", "bootstatus", device, "-b"], "simulator-ready", 180)
 
     def test(self):
+        marketplace = self.scenario == "marketplace"
+        test_class = "NativeMarketplaceTests" if marketplace else "NativeOidcTests"
+        test_name = "testRequestToReviewLifecycle" if marketplace else "testRealBrowserOidcLifecycle"
+        checkpoints = MARKETPLACE_CHECKPOINTS if marketplace else CHECKPOINTS
+        expected_screenshots = MARKETPLACE_SCREENSHOTS if marketplace else SCREENSHOTS
         mobile = ROOT / "apps/mobile"
         self.run(["flutter", "pub", "get"], "flutter-pub", 300, mobile)
         self.run(["flutter", "build", "ios", "--config-only", "--simulator", "--debug", "--target", "lib/main.dart",
@@ -228,16 +247,32 @@ class Runner:
                   "--dart-define=API_BASE_URL=http://localhost:8088"], "flutter-config", 120, mobile)
         env = dict(os.environ, TEST_RUNNER_BLISS_IOS_AUTH_OPT_IN="isolated-local",
                    TEST_RUNNER_BLISS_CUSTOMER_PASSWORD=self.passwords["customer"],
-                   TEST_RUNNER_BLISS_PROVIDER_PASSWORD=self.passwords["provider"])
-        log = self.run(["xcodebuild", "-workspace", "ios/Runner.xcworkspace", "-scheme", "BlissAuth",
-                        "-configuration", "Debug", "-destination", f"platform=iOS Simulator,id={self.device}",
-                        "-destination-timeout", "60", "-parallel-testing-enabled", "NO", "-only-testing:RunnerUITests",
-                        "-resultBundlePath", self.private / "auth.xcresult", "test"], "xctest", 600, mobile, env)
-        if not re.search(r"Test Case .*testRealBrowserOidcLifecycle.* passed", log):
-            raise RuntimeError("Expected real browser XCTest did not pass")
+                   TEST_RUNNER_BLISS_PROVIDER_PASSWORD=self.passwords["provider"],
+                   TEST_RUNNER_BLISS_IOS_MARKETPLACE_RUN_ID=self.run_id)
+        (self.evidence / "scenario.txt").write_text(f"{self.scenario}\n{self.run_id}\n{test_class}/{test_name}\n")
+        stop = threading.Event()
+        self.workflow_checkpoint = None
+        self.workflow_error = None
+        observer = threading.Thread(target=self.observe_workflow, args=(stop,)) if marketplace else None
+        if observer:
+            observer.start()
+        try:
+            log = self.run(["xcodebuild", "-workspace", "ios/Runner.xcworkspace", "-scheme", "BlissAuth",
+                            "-configuration", "Debug", "-destination", f"platform=iOS Simulator,id={self.device}",
+                            "-destination-timeout", "60", "-parallel-testing-enabled", "NO",
+                            f"-only-testing:RunnerUITests/{test_class}/{test_name}",
+                            "-resultBundlePath", self.private / "auth.xcresult", "test"], "xctest", 900 if marketplace else 600, mobile, env)
+        finally:
+            stop.set()
+            if observer:
+                observer.join(timeout=10)
+                if observer.is_alive():
+                    raise RuntimeError("Workflow observer did not stop")
+        if not re.search(r"Test Case .*" + test_name + r".* passed", log):
+            raise RuntimeError("Expected native XCTest did not pass")
         if "Executed 1 test, with 0 failures" not in log:
             raise RuntimeError("Expected exactly one successful browser XCTest")
-        for checkpoint in CHECKPOINTS:
+        for checkpoint in checkpoints:
             if f"Verified iOS: {checkpoint}" not in log:
                 raise RuntimeError(f"Missing acceptance checkpoint: {checkpoint}")
         exports = self.private / "attachments"
@@ -249,7 +284,7 @@ class Runner:
         for test in manifest:
             for attachment in test.get("attachments", []):
                 suggested = attachment["suggestedHumanReadableName"]
-                for name in SCREENSHOTS:
+                for name in expected_screenshots:
                     base = "bliss-ios-" + name
                     if not suggested.startswith((base + "_", base + ".")):
                         continue
@@ -257,11 +292,81 @@ class Runner:
                     if source.parent != exports.resolve() or source.suffix.lower() != ".png":
                         raise RuntimeError("Unexpected screenshot export path/type")
                     shutil.copyfile(source, screenshots / f"{base}.png")
-        if len(list(screenshots.glob("*.png"))) != len(SCREENSHOTS):
+        if len(list(screenshots.glob("*.png"))) != len(expected_screenshots):
             raise RuntimeError("Missing post-authentication screenshots")
-        (self.evidence / "result.txt").write_text("PASS: real iOS Keycloak browser PKCE, callback, customer/provider "
-                                                  "process recovery, background/resume, logout and account switching.\n")
+        if marketplace:
+            self.verify_marketplace()
+        result = ("PASS: real iOS request, quote, booking, two-way chat, scheduled work, simulated capture, "
+                  "process recovery, saved review and logout.\n" if marketplace else
+                  "PASS: real iOS Keycloak browser PKCE, callback, customer/provider "
+                  "process recovery, background/resume, logout and account switching.\n")
+        (self.evidence / "result.txt").write_text(result)
         print((self.evidence / "result.txt").read_text(), flush=True)
+
+    def verify_marketplace(self):
+        if self.workflow_error:
+            raise RuntimeError(f"Workflow observer failed: {self.workflow_error}")
+        if not self.workflow_checkpoint:
+            raise RuntimeError("No persisted workflow checkpoint observed during scheduled human wait")
+        # Read-only corroboration of the records created through the native UI.
+        # The title suffix is generated here, never read from untrusted SQL input.
+        sql = f"""SELECT json_build_object(
+            'single_booking', count(*) = 1,
+            'completed', bool_and(b.status = 'COMPLETED'),
+            'agreed_price', bool_and(b.price = 85.50 AND b.currency = 'CAD'),
+            'accepted_request_quote', bool_and(r.status = 'ACCEPTED' AND q.status = 'ACCEPTED'),
+            'persisted_workflow', bool_and(b.id = '{self.workflow_checkpoint['booking_id']}'::uuid
+                AND b.workflow_instance_id = '{self.workflow_checkpoint['workflow_instance_id']}'),
+            'simulated_capture', bool_and(p.status = 'CAPTURED' AND p.simulated AND p.amount = 85.50),
+            'single_capture', bool_and((SELECT count(*) FROM payment_transaction t
+                WHERE t.booking_id = b.id AND t.operation = 'CAPTURE') = 1),
+            'saved_review', bool_and((SELECT count(*) FROM booking_review v WHERE v.booking_id = b.id
+                AND v.rating = 5 AND v.comment = 'iOS demo: careful garden work and clear communication.') = 1),
+            'two_way_chat', bool_and((SELECT count(DISTINCT m.sender_id) FROM conversation c
+                JOIN conversation_message m ON m.conversation_id = c.id WHERE c.booking_id = b.id
+                AND m.body IN ('Customer ready for the garden visit {self.run_id}',
+                               'Provider confirmed the garden visit {self.run_id}')) = 2)
+            ) FROM booking b JOIN service_request r ON r.id = b.request_id
+            JOIN quote q ON q.id = b.quote_id JOIN payment p ON p.booking_id = b.id
+            WHERE b.title = 'iOS garden {self.run_id}'"""
+        proof = self.run([self.pg_bin / "psql", "-h", "127.0.0.1", "-p", "5439", "-U", "bliss_ci",
+                          "-d", "bliss", "-At", "-c", sql], "marketplace-database", 30,
+                         env=dict(os.environ, PGPASSWORD=self.passwords["db"]))
+        if not all(value is True for value in json.loads(proof).values()):
+            raise RuntimeError("Native marketplace database corroboration failed")
+
+    def observe_workflow(self, stop):
+        # Flow removes active instance/task rows after completion. Observe the
+        # real persisted human wait, then require the same correlation at finish.
+        sql = f"""SELECT json_build_object('booking_id', b.id,
+            'workflow_instance_id', b.workflow_instance_id, 'status', b.status,
+            'checkpoint_count', (SELECT count(*) FROM task_info_entity t
+                WHERE t.application_id = 'bliss-api' AND t.workflow_instance_id = b.workflow_instance_id))
+            FROM booking b JOIN workflow_instance_entity w
+                ON w.instance_id = b.workflow_instance_id AND w.application_id = 'bliss-api'
+            WHERE b.title = 'iOS garden {self.run_id}' AND b.status = 'SCHEDULED'
+                AND (SELECT count(*) FROM task_info_entity t WHERE t.application_id = 'bliss-api'
+                    AND t.workflow_instance_id = b.workflow_instance_id) = 3"""
+        try:
+            while not stop.is_set():
+                result = subprocess.run([str(self.pg_bin / "psql"), "-h", "127.0.0.1", "-p", "5439",
+                                         "-U", "bliss_ci", "-d", "bliss", "-At", "-c", sql],
+                                        env=dict(os.environ, PGPASSWORD=self.passwords["db"]),
+                                        capture_output=True, text=True, timeout=5, check=True)
+                if result.stdout.strip():
+                    checkpoint = json.loads(result.stdout)
+                    # Bound SQL interpolation below to the persisted UUIDs this
+                    # application generates, even though this DB is disposable.
+                    if not re.fullmatch(r"[a-fA-F0-9-]{36}", checkpoint["booking_id"]) or not re.fullmatch(
+                            r"[A-Za-z0-9_-]{1,255}", checkpoint["workflow_instance_id"]):
+                        raise RuntimeError("Unexpected workflow correlation identifier")
+                    self.workflow_checkpoint = checkpoint
+                    (self.evidence / "workflow-wait.json").write_text(json.dumps(checkpoint, indent=2))
+                    print("Verified persisted scheduled workflow with three task checkpoints", flush=True)
+                    return
+                stop.wait(1)
+        except Exception as error:
+            self.workflow_error = self.scrub(str(error))
 
     def cleanup(self):
         if self.device:
@@ -286,12 +391,15 @@ class Runner:
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--scenario", choices=("auth", "marketplace"), default="auth")
+    args = parser.parse_args()
     if platform.system() != "Darwin":
         sys.exit("This check requires macOS, Xcode, PostgreSQL 17 (Homebrew), Java 21 and Flutter.")
     for tool in ("brew", "java", "flutter", "xcrun", "xcodebuild"):
         if not shutil.which(tool):
             sys.exit(f"Missing required tool: {tool}")
-    runner = Runner()
+    runner = Runner(args.scenario)
     for sig in (signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, lambda number, _: sys.exit(128 + number))
     try:
