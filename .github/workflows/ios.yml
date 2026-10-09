@@ -1,0 +1,35 @@
+name: iOS simulator
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'apps/mobile/**'
+      - 'infrastructure/scripts/test-ios-session.sh'
+      - '.github/workflows/ios.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+      - name: Compile app and verify session across simulator processes
+        timeout-minutes: 25
+        run: bash infrastructure/scripts/test-ios-session.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: ios-session-evidence
+          path: .work/ios-session
+          retention-days: 7
+          if-no-files-found: ignore

@@ -5,7 +5,9 @@ installed Android API 36 Google Play x86_64 image. The debug app passes real
 Keycloak browser login, session recovery after process death, logout and account
 switching on the dedicated Bliss_Test emulator. The later
 [native request-to-review run](ANDROID_MARKETPLACE.md) verifies the primary
-marketplace lifecycle. iOS and secondary native paths remain open under #7.
+marketplace lifecycle. The [secondary checks](ANDROID_SECONDARY.md) also pass;
+remaining iOS browser/marketplace acceptance is tracked under #7. The separate
+[iOS simulator fixture](IOS.md) now verifies compilation and storage/refresh.
 
 ## Real Keycloak browser regression
 

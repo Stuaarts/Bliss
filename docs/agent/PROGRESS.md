@@ -759,3 +759,63 @@ Current branch: main, synchronized to the merge above before this documentation
 checkpoint. The local API is healthy, Docker data is preserved and the dedicated
 emulator is stopped with its data intact. Staged credentials are absent. No iOS,
 physical-device or signed-distribution result is inferred from these checks.
+
+## 2026-10-09 — iOS simulator build and native session fixture (#7/#12)
+
+Current branch: `7-ios-simulator-verification`, using the user's requested naming
+without codex/. The Windows workstation has no Xcode; standard macOS CI now
+builds the normal iOS app and runs three isolated native session processes.
+The pinned secure-storage plugin requires Keychain entitlements that were missing
+from Runner. All three configurations now reference Runner.entitlements with the
+documented empty keychain-access-groups array. Existing AppAuth callback/scene
+registration is retained for compilation and subsequent native verification.
+
+The guarded macOS script creates and deletes only its own disposable simulator;
+synthetic fixture tokens never use personal/demo accounts. Initial code checkpoint
+`8cce162` is pushed; [native run](https://github.com/Stuaarts/Bliss/actions/runs/37884919565)
+passed. It reported Xcode 16.4 / 16F6, Flutter 3.47.5 and an iPhone 11 / iOS 26.2
+simulator. The normal app compiled in 42.0 seconds; the built callback scheme
+check and each seed/restore/signed-out process passed. Downloaded artifacts and
+the job log confirm actual native plugin execution. Local Flutter analysis,
+integration-test formatting, Bash syntax and entitlement XML/configuration checks
+passed. The final runner revision adds separate evidence directories and explicit
+interruption cleanup; its native and ordinary CI still need to pass before merge.
+See [iOS validation](../demo/IOS.md) for commands, evidence boundaries and the
+remaining real browser/marketplace acceptance checks. #7/#12 remain open.
+
+The next native attempt at `e3afdfd` (run 37885539835) compiled the actual app
+and passed seed, then stalled after restore's Xcode build, before the test body
+started. Normal cancellation did not complete promptly; force-cancellation
+recovered job logs and fixture artifacts. This attempt is not counted as a pass.
+All six ordinary API/mobile/Android jobs passed at that head, including 63 backend
+scenarios and 46 Flutter tests. The runner now reboots the same simulator between
+phases, preserving app/Keychain data, and bounds command groups including Flutter's
+otherwise unbounded pre-test launch wait. Verbose phase logs and recent Runner
+logs on failure make a repeat stall diagnosable. There is no automatic test retry.
+
+Run 37886765697 at `0e7d2b4` passed seed and restore (real refresh/rotation),
+then the five-minute watchdog failed signed-out before its test started. Verbose
+logs show the app launch PID and a wait for Flutter's VM service; no signed-out
+assertion ran. Reboots alone were insufficient. The iOS gate now uses Flutter's
+official native XCTest integration bridge, replacing the empty RunnerTests
+template and using the app host's Swift package plugins. It runs the same Dart fixture
+through Xcode without Flutter CLI debug-service discovery. The runner requires
+the expected phase and exactly one successful XCTest per invocation. Fresh CI
+must validate this revision; no failing or empty test is accepted as success.
+The isolated Linux-container watchdog check passed normal/nonzero exit
+propagation, timeout status 124, killing a TERM-ignoring descendant and preserving
+an unrelated process. All six ordinary jobs also passed at `0e7d2b4`.
+
+The first XCTest attempt, run 37887805680 at `49a4915`, failed in build planning:
+Xcode rejected linking the generated static plugin package into both the app
+and its test bundle. The redundant RunnerTests dependency is removed; the test
+bundle uses its app host's existing static plugin linkage, as Flutter's Swift
+package testing guidance specifies. No XCTest was executed by that failed build.
+
+Run 37888126778 at `1d197d8` compiled and ran the native seed XCTest, failing
+Flutter's semantics-handle invariant because iOS enabled platform accessibility
+mid-test. The fixture owns no semantics handles. XCTest-only setup now waits for
+platform semantics before WidgetTester records its baseline, with a 30-second
+deadline and listener removal in finally. Normal leak checks and all storage/auth
+assertions are retained. The native bridge demonstrably propagates Dart failures
+as a failed XCTest/job; this attempt is not counted as a passing fixture.

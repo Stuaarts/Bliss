@@ -22,7 +22,7 @@ the separate verified runs; no narrated video is claimed.
 | Backend quality gates | 63 scenarios: 55 ordinary + 8 migration/packaged-process scenarios |
 | Flutter quality gates | Analysis, formatting, 46 tests; release web build and Android app/test-driver compilation are checked for each PR |
 | Operations and docs | Swagger/OpenAPI, health/metrics, action catalog, ADRs, workflow diagrams and setup/demo instructions |
-| Native device validation | Real Android Keycloak login/recovery/logout, request-to-review, direct cancellation, customer/provider/admin dispute and catalog outage/retry pass. **Open #7:** iOS verification; other settlement branches retain API/web evidence |
+| Native device validation | Real Android Keycloak login/recovery/logout, request-to-review, direct cancellation, customer/provider/admin dispute and catalog outage/retry pass. iOS simulator app build, callback registration and three-process storage/refresh/logout fixture pass. **Open #7:** real iOS browser and marketplace acceptance; other settlement branches retain API/web evidence |
 | Full portfolio sign-off | **Open #12:** retain until the remaining native platform gate is resolved or an explicit web-only scope is agreed |
 
 ## Evidence index
@@ -45,6 +45,9 @@ the separate verified runs; no narrated video is claimed.
   full run passed in 303.93 seconds; authentication was rechecked separately.
 - [Database matrix](../architecture/DATABASE_INVARIANTS.md): constraints, migration
   preservation, invalid-data rollback, preflight and operator recovery.
+- [iOS simulator](../demo/IOS.md): normal app compilation, built callback scheme
+  and real Keychain/AppAuth refresh/rotation/local logout across three processes.
+  Synthetic fixture execution is distinct from real browser/marketplace acceptance.
 - [Workflow design](../architecture/WORKFLOWS.md): durable waits, local JPA adapter,
   admission/processing boundaries and forced-restart verification.
 - Dispute implementation: [PR #28](https://github.com/Stuaarts/Bliss/pull/28), merged

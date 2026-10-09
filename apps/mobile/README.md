@@ -23,8 +23,9 @@ the issuer URL from Keycloak discovery. Native login uses the system browser via
 AppAuth and the registered `com.bliss.mobile:/oauthredirect` callback.
 Local HTTP is allowed only in the Android debug manifest. Release builds require
 HTTPS. Physical devices require an explicitly reachable development API address;
-the default backend binds loopback. iOS device validation requires macOS and is
-not yet performed. Web is the first cross-platform demo target.
+the default backend binds loopback. The [iOS simulator gate](../../docs/demo/IOS.md)
+compiles on macOS and verifies native storage/refresh with a synthetic fixture.
+Real iOS browser and marketplace validation remain open.
 
 Configure a real HTTPS identity provider using `--dart-define=OIDC_ISSUER=...`
 and API using `--dart-define=API_BASE_URL=...`; register the matching redirect URLs.
@@ -90,6 +91,10 @@ background/resume against real local services. Add `-Scenario marketplace` to th
 runner command for that check. The [secondary native checks](../../docs/demo/ANDROID_SECONDARY.md)
 pass direct booking/cancellation, a customer-favored manual dispute and catalog
 outage/retry. Use `-Scenario secondary` or `-Scenario connectivity` respectively.
-iOS, physical-device coverage and signed distribution remain unverified.
+iOS app compilation and the three-process native session fixture now pass on
+macOS CI. Run `bash infrastructure/scripts/test-ios-session.sh` from the repository
+root on a Mac with Xcode and an iOS Simulator runtime. It uses a disposable
+simulator and synthetic credentials. Real iOS browser/marketplace acceptance,
+physical-device coverage and signed distribution remain unverified.
 Android command-line tools are still missing; Gradle used existing SDK license
 acceptance for build dependencies. iOS requires a macOS host.

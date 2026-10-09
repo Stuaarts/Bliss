@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -7,16 +8,37 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-// Run only on an isolated test emulator. Three separate invocations verify
+// Run only on an isolated test emulator/simulator. Three invocations verify
 // persistence across process death, using synthetic credentials and a local
 // OIDC fixture. No browser sign-in or real Keycloak session is claimed.
 void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   const phase = String.fromEnvironment('NATIVE_TEST_PHASE');
   const fixtureIssuer = 'http://localhost:18180';
   const key = 'bliss.refresh-token';
   const seed = 'bliss-integration-refresh-fixture';
   const storage = FlutterSecureStorage();
+
+  if (Platform.isIOS && const bool.fromEnvironment('NATIVE_XCTEST')) {
+    setUpAll(() async {
+      // XCTest enables platform accessibility during launch. Wait before the
+      // tester records its handle baseline, so this OS-owned handle is stable.
+      final ready = Completer<void>();
+      void onSemanticsChanged() {
+        if (binding.platformDispatcher.semanticsEnabled && !ready.isCompleted) {
+          ready.complete();
+        }
+      }
+
+      binding.addSemanticsEnabledListener(onSemanticsChanged);
+      try {
+        onSemanticsChanged();
+        await ready.future.timeout(const Duration(seconds: 30));
+      } finally {
+        binding.removeSemanticsEnabledListener(onSemanticsChanged);
+      }
+    });
+  }
 
   testWidgets('native session process phase: $phase', (tester) async {
     expect(issuerUrl, fixtureIssuer, reason: 'Use the isolated OIDC fixture.');

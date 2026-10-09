@@ -4,7 +4,7 @@ A local-services marketplace connecting customers with individual professionals
 and companies. Rebuilding the preserved prototype as a Java 21 / Quarkus modular
 monolith with PostgreSQL and a Flutter client.
 
-**Status: local web and Android marketplace flows verified; iOS remains unverified.**
+**Status: web and Android marketplace flows verified; iOS build/session fixture passes, browser and marketplace acceptance pending.**
 
 Implemented: public category/provider/offering discovery backed by Flyway and
 PostgreSQL, a Flutter HTTP catalog client, bounded pagination, health/metrics,
@@ -24,12 +24,16 @@ older-message pagination and safe send retries. Completed bookings support one
 customer review, with public provider ratings and comments. Disputes now collect
 private evidence and wait for an independent admin decision before simulated
 refund, void or capture. Real Android browser login, process-death session recovery,
-logout and account switching are verified; iOS remains unverified.
+logout and account switching are verified. The iOS simulator build and native
+session fixture pass; real iOS browser and marketplace acceptance remain open.
 See the [marketplace demo](docs/demo/MARKETPLACE.md) for steps and evidence.
 The [Android marketplace run](docs/demo/ANDROID_MARKETPLACE.md) verifies the native
 request, quote, booking, chat, completion and review flow with real local services.
 The [secondary Android checks](docs/demo/ANDROID_SECONDARY.md) verify direct booking
 cancellation, customer/provider/admin disputes and catalog connection recovery.
+The [iOS simulator gate](docs/demo/IOS.md) verifies compilation, callback
+registration, Keychain persistence, refresh/rotation and local logout using
+synthetic tokens in three app processes.
 The [chat demo](docs/demo/CHAT.md) records both participants and restart persistence.
 See the [reviews demo](docs/demo/REVIEWS.md) for eligibility and public-rating checks.
 See the [dispute demo](docs/demo/DISPUTES.md) for manual decisions and recovery checks.
