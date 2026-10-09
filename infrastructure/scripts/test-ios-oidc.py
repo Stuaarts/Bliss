@@ -14,6 +14,7 @@ import socket
 import subprocess
 import sys
 import tarfile
+import threading
 import tempfile
 import time
 import urllib.error
@@ -249,11 +250,24 @@ class Runner:
                    TEST_RUNNER_BLISS_PROVIDER_PASSWORD=self.passwords["provider"],
                    TEST_RUNNER_BLISS_IOS_MARKETPLACE_RUN_ID=self.run_id)
         (self.evidence / "scenario.txt").write_text(f"{self.scenario}\n{self.run_id}\n{test_class}/{test_name}\n")
-        log = self.run(["xcodebuild", "-workspace", "ios/Runner.xcworkspace", "-scheme", "BlissAuth",
-                        "-configuration", "Debug", "-destination", f"platform=iOS Simulator,id={self.device}",
-                        "-destination-timeout", "60", "-parallel-testing-enabled", "NO",
-                        f"-only-testing:RunnerUITests/{test_class}/{test_name}",
-                        "-resultBundlePath", self.private / "auth.xcresult", "test"], "xctest", 900 if marketplace else 600, mobile, env)
+        stop = threading.Event()
+        self.workflow_checkpoint = None
+        self.workflow_error = None
+        observer = threading.Thread(target=self.observe_workflow, args=(stop,)) if marketplace else None
+        if observer:
+            observer.start()
+        try:
+            log = self.run(["xcodebuild", "-workspace", "ios/Runner.xcworkspace", "-scheme", "BlissAuth",
+                            "-configuration", "Debug", "-destination", f"platform=iOS Simulator,id={self.device}",
+                            "-destination-timeout", "60", "-parallel-testing-enabled", "NO",
+                            f"-only-testing:RunnerUITests/{test_class}/{test_name}",
+                            "-resultBundlePath", self.private / "auth.xcresult", "test"], "xctest", 900 if marketplace else 600, mobile, env)
+        finally:
+            stop.set()
+            if observer:
+                observer.join(timeout=10)
+                if observer.is_alive():
+                    raise RuntimeError("Workflow observer did not stop")
         if not re.search(r"Test Case .*" + test_name + r".* passed", log):
             raise RuntimeError("Expected native XCTest did not pass")
         if "Executed 1 test, with 0 failures" not in log:
@@ -290,6 +304,10 @@ class Runner:
         print((self.evidence / "result.txt").read_text(), flush=True)
 
     def verify_marketplace(self):
+        if self.workflow_error:
+            raise RuntimeError(f"Workflow observer failed: {self.workflow_error}")
+        if not self.workflow_checkpoint:
+            raise RuntimeError("No persisted workflow checkpoint observed during scheduled human wait")
         # Read-only corroboration of the records created through the native UI.
         # The title suffix is generated here, never read from untrusted SQL input.
         sql = f"""SELECT json_build_object(
@@ -297,8 +315,8 @@ class Runner:
             'completed', bool_and(b.status = 'COMPLETED'),
             'agreed_price', bool_and(b.price = 85.50 AND b.currency = 'CAD'),
             'accepted_request_quote', bool_and(r.status = 'ACCEPTED' AND q.status = 'ACCEPTED'),
-            'persisted_workflow', bool_and(b.workflow_instance_id IS NOT NULL AND EXISTS (
-                SELECT 1 FROM workflow_instance_entity w WHERE w.instance_id = b.workflow_instance_id)),
+            'persisted_workflow', bool_and(b.id = '{self.workflow_checkpoint['booking_id']}'::uuid
+                AND b.workflow_instance_id = '{self.workflow_checkpoint['workflow_instance_id']}'),
             'simulated_capture', bool_and(p.status = 'CAPTURED' AND p.simulated AND p.amount = 85.50),
             'single_capture', bool_and((SELECT count(*) FROM payment_transaction t
                 WHERE t.booking_id = b.id AND t.operation = 'CAPTURE') = 1),
@@ -316,6 +334,39 @@ class Runner:
                          env=dict(os.environ, PGPASSWORD=self.passwords["db"]))
         if not all(value is True for value in json.loads(proof).values()):
             raise RuntimeError("Native marketplace database corroboration failed")
+
+    def observe_workflow(self, stop):
+        # Flow removes active instance/task rows after completion. Observe the
+        # real persisted human wait, then require the same correlation at finish.
+        sql = f"""SELECT json_build_object('booking_id', b.id,
+            'workflow_instance_id', b.workflow_instance_id, 'status', b.status,
+            'checkpoint_count', (SELECT count(*) FROM task_info_entity t
+                WHERE t.application_id = 'bliss-api' AND t.workflow_instance_id = b.workflow_instance_id))
+            FROM booking b JOIN workflow_instance_entity w
+                ON w.instance_id = b.workflow_instance_id AND w.application_id = 'bliss-api'
+            WHERE b.title = 'iOS garden {self.run_id}' AND b.status = 'SCHEDULED'
+                AND (SELECT count(*) FROM task_info_entity t WHERE t.application_id = 'bliss-api'
+                    AND t.workflow_instance_id = b.workflow_instance_id) = 3"""
+        try:
+            while not stop.is_set():
+                result = subprocess.run([str(self.pg_bin / "psql"), "-h", "127.0.0.1", "-p", "5439",
+                                         "-U", "bliss_ci", "-d", "bliss", "-At", "-c", sql],
+                                        env=dict(os.environ, PGPASSWORD=self.passwords["db"]),
+                                        capture_output=True, text=True, timeout=5, check=True)
+                if result.stdout.strip():
+                    checkpoint = json.loads(result.stdout)
+                    # Bound SQL interpolation below to the persisted UUIDs this
+                    # application generates, even though this DB is disposable.
+                    if not re.fullmatch(r"[a-fA-F0-9-]{36}", checkpoint["booking_id"]) or not re.fullmatch(
+                            r"[A-Za-z0-9_-]{1,255}", checkpoint["workflow_instance_id"]):
+                        raise RuntimeError("Unexpected workflow correlation identifier")
+                    self.workflow_checkpoint = checkpoint
+                    (self.evidence / "workflow-wait.json").write_text(json.dumps(checkpoint, indent=2))
+                    print("Verified persisted scheduled workflow with three task checkpoints", flush=True)
+                    return
+                stop.wait(1)
+        except Exception as error:
+            self.workflow_error = self.scrub(str(error))
 
     def cleanup(self):
         if self.device:

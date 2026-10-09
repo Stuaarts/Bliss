@@ -925,3 +925,13 @@ the test searched only labels. Displayed-content lookup now accepts static text
 or noneditable row labels/values, excluding the editable composer. This attempt
 is not full acceptance. All eight other ordinary/auth/synthetic checks passed;
 the real auth recheck ran one XCTest in 120.205 seconds with eight checkpoints.
+
+The second run `37953684385` at `4c39f93` passed all nine native UI checkpoints
+in 359.194 seconds, including chat, real schedule, capture, saved review and
+process recovery. Its final database assertion incorrectly required an active
+Flow instance after completion. The local upstream persistence implementation
+removes terminal instances; Bliss's execution endpoint explicitly reports FINISHED
+when a terminal booking has no active row. The runner now observes the scheduled
+human wait with three persisted task checkpoints and checks that the final booking
+retains the same correlation. All other eight checks passed at this revision;
+the failed overall job is not full marketplace acceptance.
