@@ -180,14 +180,22 @@ class Runner:
             raise RuntimeError("Unexpected local issuer")
         print("Real local Keycloak discovery ready", flush=True)
 
-        self.run(["./mvnw", "-B", "-ntp", "package", "-DskipTests"], "api-package", 600, ROOT / "services/api")
         api_env = dict(os.environ, BLISS_DB_URL="jdbc:postgresql://localhost:5439/bliss", BLISS_DB_USER="bliss_ci",
                        BLISS_DB_PASSWORD=self.passwords["db"], BLISS_OIDC_URL=discovery["issuer"], BLISS_API_PORT="8088")
+        # Flyway locations are fixed during Quarkus augmentation. Build and run
+        # with the same local profile so the real demo migrations are included.
+        self.run(["./mvnw", "-B", "-ntp", "package", "-DskipTests", "-Dquarkus.profile=local"],
+                 "api-package", 600, ROOT / "services/api", api_env)
         api = self.start(["java", "-Dquarkus.profile=local", "-jar", ROOT / "services/api/target/quarkus-app/quarkus-run.jar"],
                          "api", api_env)
         readiness = self.wait_url("http://localhost:8088/q/health/ready", api)
         if readiness["status"] != "UP":
             raise RuntimeError("API did not become healthy")
+        seeded = self.run([self.pg_bin / "psql", "-h", "127.0.0.1", "-p", "5439", "-U", "bliss_ci", "-d", "bliss",
+                           "-At", "-c", "SELECT display_name FROM bliss_user WHERE oidc_subject = '50000000-0000-0000-0000-000000000002'"],
+                          "provider-seed", 30, env=db_env).strip()
+        if seeded != "Alex Demo":
+            raise RuntimeError("Expected local demo provider seed is missing")
         (self.evidence / "services.txt").write_text(
             f"PostgreSQL 17, fresh cluster, loopback:5439\nKeycloak {KEYCLOAK}, fresh realm, loopback:8180\n"
             "Bliss packaged API, local profile, loopback:8088, readiness UP\n")

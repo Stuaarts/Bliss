@@ -21,6 +21,9 @@ the existing Bliss realm template with generated disposable customer/provider
 credentials. It packages and starts the actual Quarkus API with its local demo
 profile, migrations and seed data. All services bind loopback; the Windows
 development stack is neither contacted nor exposed. No Docker daemon is required.
+Both packaging and runtime use the local profile because Quarkus fixes Flyway
+locations at build time. A database read verifies the expected provider seed
+before any browser test starts.
 
 The test uses only a newly created `Bliss_Auth_iOS_*` simulator. It builds
 `lib/main.dart` with the loopback API/issuer defines and the separate `BlissAuth`
@@ -63,3 +66,15 @@ the generated passwords as well.
 Real marketplace UI acceptance remains a following slice under #7/#12. Physical
 devices, release signing and distribution are separate. A successful browser
 test does not establish those results.
+
+## Execution history
+
+The first native run at `a51b530`,
+[37943867260](https://github.com/Stuaarts/Bliss/actions/runs/37943867260), compiled
+the new XCUITest target and ran real browser authentication. Customer login,
+process recovery, background/resume and logout/restart checkpoints passed. Provider
+login returned a valid profile named `provider`, failing the expected seeded
+`Alex Demo` assertion. API logs confirmed the cause: packaging used the default
+profile, so the runtime local profile could not add the build-time Flyway demo
+location. This is a failing attempt, not full browser acceptance. The runner now
+packages with the local profile and verifies the seed before native execution.

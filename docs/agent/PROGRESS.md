@@ -864,3 +864,13 @@ checkpoints and post-authentication screenshots. Raw XCTest bundles and browser
 captures are private temporary files, excluded from uploaded evidence; retained
 text logs redact generated passwords and JWT-shaped values. Native execution
 and final CI remain pending. #7/#12 remain open for this gate and marketplace UI.
+
+Initial native execution at `a51b530` (run 37943867260) built the XCUITest target
+and passed the first four customer checkpoints with real browser authentication.
+Provider browser login returned `Hello, provider`, failing the expected seeded
+Alex Demo profile. API logs explicitly report Flyway locations fixed to
+db/migration at build time, excluding db/demo despite the runtime local profile.
+The runner now builds and starts the API with the same local profile and checks
+the seeded provider row before UI execution. No assertion was weakened. All
+seven other API/mobile/Android/synthetic-iOS checks passed at the first head.
+Local log-redaction and subprocess normal/nonzero exit checks also passed.
