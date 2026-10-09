@@ -846,3 +846,31 @@ acceptance. Run these against isolated local services on a macOS host; do not in
 them from synthetic fixture tokens or expose the Windows development services.
 Physical devices and signed distribution remain separate. No live payments,
 public deployment, database reset or upstream Flow changes were introduced.
+
+## 2026-10-09 — real iOS browser authentication (#7/#12)
+
+Active branch: `7-ios-browser-auth`, from main `096ccd9`, without codex/.
+The next slice uses a separate RunnerUITests target and BlissAuth scheme to drive
+the normal app and Apple's authentication browser. A macOS runner creates fresh
+PostgreSQL 17, pinned/digest-checked Keycloak 26.7.4 and the packaged Bliss API on
+loopback, with generated disposable credentials. The existing Windows services
+are not exposed or modified. No password grant or token injection is introduced.
+
+The required native observations are customer/provider browser callbacks,
+authenticated profile/capability checks, process termination/relaunch recovery,
+background/resume, identity-provider logout and switching back without stale
+provider state. The runner checks the expected XCTest, test count, eight explicit
+checkpoints and post-authentication screenshots. Raw XCTest bundles and browser
+captures are private temporary files, excluded from uploaded evidence; retained
+text logs redact generated passwords and JWT-shaped values. Native execution
+and final CI remain pending. #7/#12 remain open for this gate and marketplace UI.
+
+Initial native execution at `a51b530` (run 37943867260) built the XCUITest target
+and passed the first four customer checkpoints with real browser authentication.
+Provider browser login returned `Hello, provider`, failing the expected seeded
+Alex Demo profile. API logs explicitly report Flyway locations fixed to
+db/migration at build time, excluding db/demo despite the runtime local profile.
+The runner now builds and starts the API with the same local profile and checks
+the seeded provider row before UI execution. No assertion was weakened. All
+seven other API/mobile/Android/synthetic-iOS checks passed at the first head.
+Local log-redaction and subprocess normal/nonzero exit checks also passed.

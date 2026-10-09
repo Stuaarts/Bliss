@@ -136,6 +136,9 @@ fixture results do not replace the real iOS acceptance below.
 
 ## Remaining acceptance under #7/#12
 
+The separate [real browser authentication gate](IOS_AUTH.md) is the active next
+slice. Its native execution must pass before the browser checks below are signed off.
+
 - Real Keycloak browser sign-in and callback return for customer and provider.
 - Process-death session recovery, background/resume, identity-provider logout
   and account switching with the expected capabilities and no stale private data.

@@ -101,6 +101,13 @@ six API/mobile/Android checks green before merge. The next platform slice is rea
 iOS Keycloak browser sign-in/callback, account recovery/logout/switching, then the
 marketplace lifecycle against isolated local services on macOS. #7/#12 stay open;
 physical-device coverage and signed distribution remain separate.
+
+The active `7-ios-browser-auth` slice adds a separate XCUITest target for the
+normal app and a disposable macOS PostgreSQL/Keycloak/API stack. Real browser
+credentials, callback, stopped-process recovery, background/resume, logout and
+customer/provider account switching must pass native CI before merge. See
+[iOS browser authentication](../demo/IOS_AUTH.md). No passing result is claimed
+for this new gate until execution completes.
 PR #35 merged after all six checks passed
 at `c3556e3`, including 63 backend scenarios and 46 Flutter tests. The user-requested
 branch rename removed codex/ from 14 remote and 14 local branches,
