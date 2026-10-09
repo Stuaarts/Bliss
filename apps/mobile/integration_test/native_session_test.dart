@@ -7,7 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-// Run only on an isolated test emulator. Three separate invocations verify
+// Run only on an isolated test emulator/simulator. Three invocations verify
 // persistence across process death, using synthetic credentials and a local
 // OIDC fixture. No browser sign-in or real Keycloak session is claimed.
 void main() {
