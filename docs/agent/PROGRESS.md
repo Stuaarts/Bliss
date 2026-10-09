@@ -736,3 +736,26 @@ elapsed 28.41 seconds) using isolated Testcontainers PostgreSQL after stopping t
 API dev process. Spotless completed; document/hygiene checks passed 107 local links
 and 268 tracked/new paths. The secondary duplicate-run guard rejected the existing
 run before build or mutations. Clean-checkout CI remains the merge gate.
+
+### Secondary flows merge and branch naming checkpoint
+
+[PR #35](https://github.com/Stuaarts/Bliss/pull/35) merged as `03a5437` after
+all six API/mobile/Android jobs passed at `c3556e3`: [push CI](https://github.com/Stuaarts/Bliss/actions/runs/37883184012)
+and [PR CI](https://github.com/Stuaarts/Bliss/actions/runs/37883188349). Each API run
+passed 55 ordinary plus eight migration/packaged-process scenarios (63 total).
+Flutter passed all 46 tests, analysis, formatting and release web compilation.
+The normal Android app and all native scenarios compiled on clean Linux runners.
+Issue #34 is resolved; #7/#12 retain the remaining iOS/platform gate.
+
+After merging, the user's requested branch rename removed codex/ from all
+14 existing GitHub branches and 14 local branches. There were
+no open PRs or name collisions. Every branch's commit identity was checked before
+and after renaming, and local tracking was updated. Default main and its history
+are preserved. The ignored .work/branch-rename-map.json records the exact mapping.
+Historical progress entries retain the branch names used at those checkpoints.
+Future Bliss work should use issue-linked names without the codex/ prefix.
+
+Current branch: main, synchronized to the merge above before this documentation
+checkpoint. The local API is healthy, Docker data is preserved and the dedicated
+emulator is stopped with its data intact. Staged credentials are absent. No iOS,
+physical-device or signed-distribution result is inferred from these checks.

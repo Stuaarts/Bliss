@@ -72,6 +72,15 @@ the separate verified runs; no narrated video is claimed.
   passed 63 scenarios; Flutter passed 46 tests, analysis/formatting/web build;
   Android app and both instrumented scenarios compiled on clean Linux runners.
 
+- Native Android secondary flows and workflow test timing: [PR #35](https://github.com/Stuaarts/Bliss/pull/35),
+  merged as `03a5437` after all six checks passed at `c3556e3` in
+  [push CI](https://github.com/Stuaarts/Bliss/actions/runs/37883184012) and
+  [PR CI](https://github.com/Stuaarts/Bliss/actions/runs/37883188349). Each API run
+  passed all 63 scenarios; Flutter passed 46 tests, analysis/formatting/web build;
+  all native scenarios compiled with the normal Android APK. Live emulator checks
+  remain separate from compilation. The user-requested branch renames preserve
+  commits and tracking; CI supports the names without the codex/ prefix.
+
 On September 27, the documented Windows backend helper started Docker and the
 API against the existing V10 database. PostgreSQL and Keycloak were healthy;
 readiness was UP; Swagger, metrics, Dev UI and OpenAPI returned HTTP 200. The
