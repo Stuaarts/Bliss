@@ -13,7 +13,7 @@ assign, not staffed services. Track delivery in [issue #15](https://github.com/S
 | Deployment | Loopback API, PostgreSQL/Flyway, one API worker, durable BookingLifecycleFlow and DisputeFlow | Private database networking, TLS, release/rollback rehearsal, health-based deployment, resource sizing and assigned operator |
 | Identity and secrets | One OIDC issuer, audience/subject and server-side role/ownership checks; explicit packaged DB and issuer configuration | Managed identity availability, least-privilege runtime/migration credentials, secret storage, rotation and revocation drill |
 | Diagnostics | JSON console logging in packaged default profile; operator-gated production health/metrics/documentation; server-generated REST request IDs and generic problem responses | Private management ingress, credential operations, collection/dashboards/alerts, log access/retention/redaction review and end-to-end tracing |
-| Recovery | Packaged-process crash/restart scenarios; migrations and relational constraints tested | Managed backup scheduling, encrypted storage, access/retention, restore of a real paused workflow, agreed RPO/RTO and operator rehearsal |
+| Recovery | Packaged-process crash/restart scenarios; isolated database outage/readiness recovery; migrations and relational constraints tested | Managed backup scheduling, encrypted storage, access/retention, restore of a real paused workflow, agreed RPO/RTO and operator rehearsal |
 | Capacity | Bounded concurrent public category reads and request correlation smoke | Representative authenticated workload, durable write contention, long waits/restarts, saturation and soak tests with agreed SLOs |
 | Abuse and moderation | Authentication, participant/owner checks, validation and bounded pagination | Enforced rate limits, reporting/review/removal workflow, escalation/appeal policy and tested abuse controls |
 | Privacy | Scoped private reads; public review DTO excludes customer/booking identity | Approved inventory/retention rules, authenticated export/deletion, backup expiry and deletion/hold rehearsal |
@@ -42,7 +42,8 @@ create their own isolated PostgreSQL containers. Existing volumes are not reset.
 `OperationsSmokeTest` verifies five operational boundaries:
 
 1. Liveness and readiness return UP and OpenAPI includes the dispute route in
-   the test profile. A dependency outage/readiness transition is not covered.
+   the test profile. This smoke does not cover dependency outages; the separate
+   [packaged database outage drill](DATABASE_OUTAGE.md) checks readiness transitions.
 2. Invalid catalog pagination returns a generic problem with the same generated
    UUID in its header/body, without echoing the supplied correlation value or
    exception class.
@@ -91,8 +92,10 @@ for the access matrix, authenticated probes, profile boundaries and tests.
 Before public ingress, configure private management access, TLS and credential
 operations. Probe liveness for process health and readiness for accepting traffic;
 record dependency/credential outage and recovery behavior. No separate management
-listener or hosted network is implemented here. Background workflow backlog/age
-is not proven by an UP health result.
+listener or hosted network is implemented here. The [database outage drill](DATABASE_OUTAGE.md)
+verifies database readiness DOWN/UP while liveness remains UP, preserves the API
+process, and checks saved records and a successful update after recovery.
+Background workflow backlog/age is not proven by an UP health result.
 
 The operations owner should implement private metric collection and dashboards
 for route-template/status request counts, error rate, latency, JVM/DB saturation
@@ -114,8 +117,10 @@ Incident runbook acceptance: assign an operator and backup, record notification
 and escalation routes, distinguish identity/database/API failures, disable ingress
 or dispatch safely when necessary, preserve restricted diagnostic evidence and
 reconcile booking/ledger/workflow state before resuming. Never retry settlements
-by editing rows manually. Demonstrate one simulated outage and recovery, with
-measured detection/recovery time, before declaring the runbook operational.
+by editing rows manually. The automated database outage drill measures detection
+and recovery locally, without active workflows. Hosted ingress/dispatch controls,
+alert delivery, human acknowledgement, escalation and settlement reconciliation
+still need a supervised rehearsal before declaring the runbook operational.
 
 ## Abuse and moderation work
 
@@ -160,8 +165,10 @@ be erased and why after owner review. No export/deletion endpoint is implemented
 Continue independent local work while GitHub account jobs cannot start, as the
 user requested on October 10. Preserve drafts [#39](https://github.com/Stuaarts/Bliss/pull/39)
 (secondary iOS) and [#40](https://github.com/Stuaarts/Bliss/pull/40) (recovery).
-The management access slice builds on [draft #41](https://github.com/Stuaarts/Bliss/pull/41)
-(readiness and correlation); neither local tests nor this plan waive its CI gate.
+The management access slice, [draft #42](https://github.com/Stuaarts/Bliss/pull/42),
+builds on [draft #41](https://github.com/Stuaarts/Bliss/pull/41) (readiness and
+correlation). The database outage slice builds on #42; none of these local tests
+waive required CI gates.
 Next engineering slices can validate private management networking, safe structured
 diagnostics and a representative isolated workload. Managed infrastructure,
 retention/moderation policy and commercial payments need owner decisions first.
