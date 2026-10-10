@@ -122,4 +122,18 @@ capture, saved reviews and process/background recovery. See [iOS marketplace evi
 Post-merge main CI is currently blocked before job execution: GitHub reports an
 account payment or spending-limit problem. All nine pre-merge checks passed;
 main has identical app/API/test/runner/workflow source. The account owner must
-review GitHub Billing & plans, then rerun main checks before the next native slice.
+review GitHub Billing & plans, then rerun the required checks at the final release gate.
+
+## October 10 continuation — independent operations work
+
+The user moved the account blocker to the final gate so independent local work
+can continue. Preserve draft PR #39 (secondary iOS) and #40 (database recovery);
+neither is merged or native-signed-off. Branch `15-operations-readiness` starts
+from main `f1421a3` in an isolated managed checkout. This slice adds the
+[operations plan and bounded smoke](../operations/READINESS.md), including the
+validation-error correlation fix exposed by the smoke. Full local Maven verify
+passes 68 scenarios (60 ordinary + 8 migration/packaged restart), including the
+booking restart test's persistence-based snapshot wait. #15 remains open for
+managed operations, abuse/moderation, privacy lifecycle and representative load
+validation. Required CI and native iOS execution still precede green merges and
+final #7/#12 sign-off. Branch names continue without codex/.

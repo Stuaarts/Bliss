@@ -82,6 +82,11 @@ remain product-beta work; do not present this as a production moderation system.
 
 OpenAPI/health/metrics are local development endpoints. Scope management access,
 rate limiting, retention, backup/recovery and abuse controls before product beta (#15).
+The [operations readiness plan](../operations/READINESS.md) records acceptance
+criteria and distinguishes current controls from unimplemented production work.
+Endpoint constraint failures use a generic correlated problem; invalid server
+return contracts remain 500 errors. This does not establish telemetry redaction
+or tracing across async workflows.
 
 Disputes are private to the current customer/provider owner and authenticated
 admins. Identity and evidence role come from the token and database, never request

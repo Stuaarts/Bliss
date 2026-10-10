@@ -19,9 +19,9 @@ the separate verified runs; no narrated video is claimed.
 | Chat | Persisted participant-scoped messages, retry/pagination, browser restart evidence |
 | Reviews | Completed-customer eligibility, one review per booking, public rating/privacy tests |
 | Disputes | Private evidence, independent admin decision, manual review wait and simulated refund verified |
-| Backend quality gates | 63 scenarios: 55 ordinary + 8 migration/packaged-process scenarios |
+| Backend quality gates | Merged foundation: 63 scenarios. Operations branch locally passes 68: 60 ordinary + 8 migration/packaged-process scenarios; remote CI remains pending |
 | Flutter quality gates | Analysis, formatting, 46 tests; release web build and Android app/test-driver compilation are checked for each PR |
-| Operations and docs | Swagger/OpenAPI, health/metrics, action catalog, ADRs, workflow diagrams and setup/demo instructions |
+| Operations and docs | Swagger/OpenAPI, health/metrics, action catalog, ADRs, workflow diagrams and setup/demo instructions; [operations readiness plan](../operations/READINESS.md) tracks hosting/privacy/abuse controls separately |
 | Native device validation | Real Android Keycloak login/recovery/logout, request-to-review, direct cancellation, customer/provider/admin dispute and catalog outage/retry pass. iOS app build, native session fixture and real customer/provider Keycloak browser login/recovery/logout/account switching pass. iOS request-to-review/chat/simulated capture/review recovery also pass. **Open #7:** secondary iOS cancellation/dispute/connection-recovery acceptance; other settlement branches retain API/web evidence |
 | Full portfolio sign-off | **Open #12:** retain until the remaining native platform gate is resolved or an explicit web-only scope is agreed |
 
@@ -132,17 +132,15 @@ the tracked-file hygiene scan. No additional UI run is claimed for this docs upd
 
 ## Remaining boundaries
 
-Post-merge main CI currently cannot start: GitHub reports an account payment or
-spending-limit problem ([rejected CI](https://github.com/Stuaarts/Bliss/actions/runs/37956907374)).
-All nine checks passed on PR #38's final code revision before merge; main's app,
-API, test, runner and workflow source is identical. Account-owner billing review
-and a successful main rerun remain required; no post-merge test pass is claimed.
-
 Docker's ordinary Windows restart issue (#17) is mitigated by a guarded helper
 that preserves stale runtime directories; no volume reset is needed. Flow's
 release-specific JPA adapter remains until verified upstream fixes (#22).
 Run one API worker. Multi-replica ownership, operator recovery tooling, production
-rate limits, retention/moderation and backup-restore operations remain future work.
+rate limits and retention/moderation remain future work. The separate local
+synthetic backup/restore drill is prepared in draft [PR #40](https://github.com/Stuaarts/Bliss/pull/40);
+managed backup scheduling and real workflow restore still need acceptance.
+The [operations readiness plan](../operations/READINESS.md) records concrete
+evidence, gaps and delivery order under #15.
 
 No live payment gateway, government-ID verification, public hosting, license grant
 or approved commercial cancellation/refund policy is included. The configurable
@@ -150,3 +148,17 @@ local timing rules are demo policy. Product-beta decisions remain #13–#16, as 
 master prompt requests. See [security](../architecture/SECURITY.md),
 [payment boundary](../architecture/ADR-004-payment-abstraction.md) and
 [pending decisions](../agent/DECISIONS_PENDING.md).
+
+## Deferred final CI and native gate
+
+At the user's October 10 direction, continue independent verifiable work and
+resolve the external account blocker at the end. Post-merge main CI cannot start:
+GitHub reports an account payment or spending-limit problem
+([rejected CI](https://github.com/Stuaarts/Bliss/actions/runs/37956907374)). All nine
+checks passed on PR #38's final code revision before merge; no post-merge pass
+is claimed. Draft [PR #39](https://github.com/Stuaarts/Bliss/pull/39) prepares iOS
+cancellation/dispute/connection recovery; its actual macOS execution remains open.
+The account owner must resolve the GitHub condition, then all required checks
+must pass on current heads before merge and on main afterward. Preserve drafts
+#39/#40 and keep #7/#12 open until those gates are satisfied. Local operations
+evidence does not waive CI, native acceptance or the product-beta controls above.
