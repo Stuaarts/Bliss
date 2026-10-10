@@ -80,7 +80,11 @@ the text. Flutter explicitly explains public visibility before publishing. Revie
 are immutable in this slice. Moderation, reporting, retention and removal policies
 remain product-beta work; do not present this as a production moderation system.
 
-OpenAPI/health/metrics are local development endpoints. Scope management access,
+OpenAPI/health/metrics remain available in the loopback local demo. Default
+packaged production gates the non-application root with a dedicated OIDC operator
+role; customer/provider/admin roles do not imply access. See
+[management access and probe requirements](../operations/MANAGEMENT_ACCESS.md).
+Scope private management ingress, credential operations,
 rate limiting, retention, backup/recovery and abuse controls before product beta (#15).
 The [operations readiness plan](../operations/READINESS.md) records acceptance
 criteria and distinguishes current controls from unimplemented production work.

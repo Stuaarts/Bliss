@@ -95,6 +95,11 @@ For Android emulator networking, see [mobile setup](apps/mobile/README.md).
 - Operations: [readiness](http://localhost:8088/q/health/ready), [metrics](http://localhost:8088/q/metrics)
 - Documentation: [Swagger](http://localhost:8088/q/swagger-ui), [Dev UI](http://localhost:8088/q/dev-ui)
 
+These tools use the loopback `local` demo profile. Default packaged production
+management endpoints require a dedicated OIDC `operator` role, including health
+probes and metrics. See [management access](docs/operations/MANAGEMENT_ACCESS.md)
+before configuring probes or exposing an API listener.
+
 Stop infrastructure with `docker compose stop`; data stays in the named volume.
 No destructive reset is required for normal development.
 

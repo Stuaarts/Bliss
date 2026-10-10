@@ -313,6 +313,11 @@ class WorkflowRestartIT {
                         client.send(
                                 HttpRequest.newBuilder(uri("/q/health/ready"))
                                         .timeout(Duration.ofSeconds(2))
+                                        .header(
+                                                "Authorization",
+                                                "Bearer "
+                                                        + TestIdentityProvider.token(
+                                                                "restart-probe", "operator"))
                                         .GET()
                                         .build(),
                                 HttpResponse.BodyHandlers.ofString());
