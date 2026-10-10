@@ -1022,3 +1022,47 @@ At the user's request, GitHub account resolution and native iOS execution remain
 at the final release gate. #7/#12/#15 remain open; no paid services, public hosting,
 live payments, existing volumes or upstream Flow changes are authorized by this
 operations plan.
+
+## 2026-10-10 — production management role boundary (#15)
+
+Branch `15-management-access` builds on draft PR #41 (`90d6abb`) in the same
+isolated managed checkout. Default packaged production now gates the
+non-application root and children with a shared HTTP permission requiring an
+OIDC operator role. Marketplace customer/provider/admin roles do not imply that
+role; public discovery and business authorization keep their existing policies.
+Packaged restart probes now use ephemeral operator tokens. The local profile
+explicitly disables this permission and keeps its loopback tools. See
+[management access and probe instructions](../operations/MANAGEMENT_ACCESS.md).
+
+The initial packaged check passed the endpoint/role matrix, method/path variants,
+public catalog and provider authorization, but the missing-subject token returned
+403 rather than 401. The fixture had used Quarkus's offline public-key path, which
+does not apply the subject check in pinned 3.39.0. It now serves public JWKS on a
+random loopback port, signs with a key ID and uses normal OIDC JWT verification.
+Production issuer configuration and upstream sources are unchanged. The negative
+test now gives the subjectless token the operator role and labels each invalid
+case without logging tokens. A separate actual-local-profile test creates its
+own PostgreSQL container, overrides the local datasource and disables dispatch.
+
+That local-profile check initially caught an incomplete disabled permission entry:
+Quarkus requires its policy definition even when disabled. Definitions now exist
+consistently, with enforcement enabled only in prod and explicitly disabled for
+the local demo. The focused local/packaged verification passed all five new
+scenarios. Failsafe now initializes the same LogManager as Surefire before the
+loopback JWKS fixture starts. The final full run includes signature tampering
+as well as subject, issuer, audience, expiry and role checks.
+
+Full Java 21 verification passed: `mvnw.cmd -B -ntp spotless:apply verify
+-Dquarkus.http.test-port=0`, 73 scenarios (61 ordinary and 12 migration/packaged
+cases), zero failures/errors/skips, with Spotless clean. The packaged management
+matrix and all four booking/dispute recovery cases passed against fresh disposable
+PostgreSQL 17.6 containers. Logs and XML reports remain under `services/api/target`;
+the final log is `management-verify.log`. The initial failed checks are retained
+as `management-package.log` and `management-local-failure.log`, followed by
+`management-focused.log`. Documentation links, tracked/new-file hygiene and
+`git diff --check` pass. No Flutter/native rerun is claimed.
+
+No hosted networking, separate management listener, paid services, real operator
+account or native acceptance is claimed.
+PR #41 and drafts #39/#40 are preserved; the user-requested deferred account/CI
+and iOS gate remains at the end. #7/#12/#15 remain open.

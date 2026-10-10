@@ -12,7 +12,7 @@ assign, not staffed services. Track delivery in [issue #15](https://github.com/S
 | --- | --- | --- |
 | Deployment | Loopback API, PostgreSQL/Flyway, one API worker, durable BookingLifecycleFlow and DisputeFlow | Private database networking, TLS, release/rollback rehearsal, health-based deployment, resource sizing and assigned operator |
 | Identity and secrets | One OIDC issuer, audience/subject and server-side role/ownership checks; explicit packaged DB and issuer configuration | Managed identity availability, least-privilege runtime/migration credentials, secret storage, rotation and revocation drill |
-| Diagnostics | JSON console logging in packaged default profile; health, Prometheus and OpenAPI extensions; server-generated REST request IDs and generic problem responses | Protected management access, collection/dashboards/alerts, log access/retention/redaction review and end-to-end tracing |
+| Diagnostics | JSON console logging in packaged default profile; operator-gated production health/metrics/documentation; server-generated REST request IDs and generic problem responses | Private management ingress, credential operations, collection/dashboards/alerts, log access/retention/redaction review and end-to-end tracing |
 | Recovery | Packaged-process crash/restart scenarios; migrations and relational constraints tested | Managed backup scheduling, encrypted storage, access/retention, restore of a real paused workflow, agreed RPO/RTO and operator rehearsal |
 | Capacity | Bounded concurrent public category reads and request correlation smoke | Representative authenticated workload, durable write contention, long waits/restarts, saturation and soak tests with agreed SLOs |
 | Abuse and moderation | Authentication, participant/owner checks, validation and bounded pagination | Enforced rate limits, reporting/review/removal workflow, escalation/appeal policy and tested abuse controls |
@@ -83,13 +83,16 @@ stop rollout; never assume an older binary can read a changed schema. Rehearse
 rollback against the proposed schema and use a verified restore if incompatible.
 Do not run local/demo seeds or reuse generated demo credentials in a hosted tier.
 
-Health, metrics, Swagger and OpenAPI currently share the HTTP server. Loopback is
-the default, but changing its bind address does not protect these endpoints.
-Before public ingress, configure and verify private/operator-only management
-access and an intentional documentation exposure policy. Probe liveness for
-process health and readiness for accepting traffic; record dependency-outage and
-recovery behavior. No separate management listener or protection is implemented
-by this plan. Background workflow backlog/age is not proven by an UP health result.
+Health, metrics, Swagger and OpenAPI share the HTTP server. The default packaged
+production profile now requires the dedicated `operator` OIDC role on the
+non-application root and all children; marketplace roles do not imply access.
+The local demo keeps its tools on loopback. See [management access](MANAGEMENT_ACCESS.md)
+for the access matrix, authenticated probes, profile boundaries and tests.
+Before public ingress, configure private management access, TLS and credential
+operations. Probe liveness for process health and readiness for accepting traffic;
+record dependency/credential outage and recovery behavior. No separate management
+listener or hosted network is implemented here. Background workflow backlog/age
+is not proven by an UP health result.
 
 The operations owner should implement private metric collection and dashboards
 for route-template/status request counts, error rate, latency, JVM/DB saturation
@@ -157,7 +160,9 @@ be erased and why after owner review. No export/deletion endpoint is implemented
 Continue independent local work while GitHub account jobs cannot start, as the
 user requested on October 10. Preserve drafts [#39](https://github.com/Stuaarts/Bliss/pull/39)
 (secondary iOS) and [#40](https://github.com/Stuaarts/Bliss/pull/40) (recovery).
-Next engineering slices can validate management isolation, safe structured
+The management access slice builds on [draft #41](https://github.com/Stuaarts/Bliss/pull/41)
+(readiness and correlation); neither local tests nor this plan waive its CI gate.
+Next engineering slices can validate private management networking, safe structured
 diagnostics and a representative isolated workload. Managed infrastructure,
 retention/moderation policy and commercial payments need owner decisions first.
 

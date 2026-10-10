@@ -137,3 +137,14 @@ booking restart test's persistence-based snapshot wait. #15 remains open for
 managed operations, abuse/moderation, privacy lifecycle and representative load
 validation. Required CI and native iOS execution still precede green merges and
 final #7/#12 sign-off. Branch names continue without codex/.
+
+The next slice, `15-management-access`, is stacked on draft PR #41 at `90d6abb`.
+It gates packaged-production management/documentation with an independent OIDC
+operator role, authenticates packaged restart probes and checks that the local
+demo keeps its tools against an isolated database. Its test identity fixture uses
+normal JWKS validation after the first negative case exposed an offline-key
+subject-check limitation in the pinned Quarkus runtime. See
+[management access](../operations/MANAGEMENT_ACCESS.md). Private ingress, TLS,
+operator credentials/rotation, outage drills and final CI/native gates remain open.
+Full local Java 21 verification passes 73 scenarios (61 ordinary and 12
+migration/packaged cases), with no failures/errors/skips and clean formatting.
