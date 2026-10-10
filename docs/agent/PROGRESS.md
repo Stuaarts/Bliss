@@ -1066,3 +1066,45 @@ No hosted networking, separate management listener, paid services, real operator
 account or native acceptance is claimed.
 PR #41 and drafts #39/#40 are preserved; the user-requested deferred account/CI
 and iOS gate remains at the end. #7/#12/#15 remain open.
+
+## 2026-10-10 — database outage and readiness recovery (#15)
+
+Branch `15-database-outage` builds on draft PR #42 at `3cf3c33` in the existing
+isolated managed checkout. `DatabaseOutageIT` launches the actual packaged prod
+API, an ephemeral JWKS fixture and a new PostgreSQL 17.6 container. It checks the
+unique drill ownership label and Testcontainers label before stopping/starting
+that exact container. A random loopback binding preserves the JDBC address.
+No existing database, volume or API is used as the fault target.
+
+The scenario verifies initial liveness/readiness UP and saves a synthetic provider
+through HTTP. During the database outage, an actual 503/DOWN readiness response
+must name the database health check as DOWN; liveness stays 200/UP, metrics remain
+available to the operator, and anonymous/customer management requests stay
+401/403. The same API process must recover readiness after the same database
+container starts, retain the saved profile ID/data/version and public catalog,
+and successfully update/read the profile with its next version. Production pool
+and health configuration are unchanged; HTTP timeouts do not count as health
+evidence. See the [drill and operator response boundary](../operations/DATABASE_OUTAGE.md).
+
+The first focused Java 21 verify passed the local management check and outage
+scenario (two total), with Spotless clean. It observed detection in 335 ms and
+readiness recovery in 426 ms, including Docker commands; these are workstation
+observations, not service objectives. The final full run adds an explicit
+post-recovery update and checks the named database health result directly.
+Full Java 21 `mvnw.cmd -B -ntp spotless:apply verify -Dquarkus.http.test-port=0`
+passed all 74 scenarios (61 ordinary + 13 migration/packaged), with zero
+failures/errors/skips and Spotless clean, in 5:19. The updated outage scenario
+observed detection in 337 ms and readiness recovery in 421 ms, retaining the
+same API process and passing the post-recovery write. Migrations/invariants,
+management authorization, and all four booking/dispute restart cases pass.
+Logs remain under `services/api/target/outage-focused.log` and `outage-verify.log`,
+with XML reports in Surefire/Failsafe directories. Documentation links,
+tracked/new-file hygiene and `git diff --check` pass. Owned temporary resources
+were cleaned up; the existing PostgreSQL 16 container remains untouched.
+
+This exercises a stopped database and pool recovery, not hung queries, network
+partitions, failover, backup restore, active-workflow settlement, identity-provider
+outage, hosted ingress or alert delivery/human response. No Flutter/native rerun,
+public hosting, paid services, live payments, billing settings or upstream change
+is claimed. Preserve drafts #39–#42 and keep #7/#12/#15 open; the user-requested
+external CI/native gate remains deferred to the end.

@@ -148,3 +148,13 @@ subject-check limitation in the pinned Quarkus runtime. See
 operator credentials/rotation, outage drills and final CI/native gates remain open.
 Full local Java 21 verification passes 73 scenarios (61 ordinary and 12
 migration/packaged cases), with no failures/errors/skips and clean formatting.
+
+The database outage slice, `15-database-outage`, builds on draft PR #42 at
+`3cf3c33`. It uses an owned, labelled disposable PostgreSQL container to test
+production readiness DOWN/UP, continued liveness, the same API process, retained
+provider data and a successful write after recovery. See the
+[database outage drill](../operations/DATABASE_OUTAGE.md). Existing data and all
+earlier drafts are preserved. Hosted/operator rehearsal, active-workflow outage
+reconciliation, identity outages and the final CI/native gate remain open.
+Full local Java 21 verification passes 74 scenarios (61 ordinary + 13
+migration/packaged), zero failures/errors/skips, with Spotless clean.
