@@ -148,6 +148,9 @@ the relational domain remains authoritative for API reads.
 See [workflow design and the release-specific JPA compatibility fix](docs/architecture/WORKFLOWS.md).
 See [database invariants and upgrade preflight](docs/architecture/DATABASE_INVARIANTS.md)
 before applying schema changes to an existing database.
+See the [database recovery runbook and disposable drill](docs/operations/DATABASE_RECOVERY.md)
+for the next operations slice under #15. It verifies synthetic storage recovery;
+real-data backup policy and application cutover remain pending.
 Run one local API worker; this slice does not support distributed workflow ownership.
 
 ```mermaid

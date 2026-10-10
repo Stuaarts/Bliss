@@ -976,3 +976,32 @@ attempted. All nine checks passed on `e8c7724` before merge; diff verification
 confirms main has identical app/API/test/runner/workflow source. Main execution
 remains unverified until the external account blocker is resolved and checks rerun.
 #7/#12 retain this blocker alongside the remaining secondary iOS acceptance.
+
+
+### Independent database recovery rehearsal (#15)
+
+On October 10 the user explicitly requested deferring the GitHub account blocker
+to the final step and continuing independent work. PR #39 remains draft/unmerged;
+its `7-ios-secondary` branch is preserved. Started `15-backup-recovery` from main
+`f1421a3` for the next independent operations slice. Docker became ready through
+the existing guarded helper, preserving runtime backups and persistent data.
+
+Added a networkless PostgreSQL 17.6 dump/restore drill and operator runbook. The
+script applies V1–V10 SQL migrations plus the local seed, inserts explicit
+synthetic marketplace/binary workflow fixtures, then verifies a custom archive
+round trip across two owned disposable databases. All 15 checks passed locally:
+28 public tables / 65 rows, exact row hashes, columns/indexes/constraint metadata,
+backup boundary, checksum/truncation and nonempty-target rejection, and restored
+money/status/rating/outcome/unique/FK enforcement. Initial checks exposed equivalent
+CHECK array casts being reparsed differently; the comparator now uses structural
+metadata with representative behavior tests rather than raw CHECK text. No data
+loss was observed. This is database storage evidence, not executable Flow or app
+recovery. The fixtures never run under an API worker.
+
+The runbook covers trusted/encrypted backups, empty-target recovery, preserved
+migration/workflow/idempotency state, separate OIDC recovery, single-worker timer
+behavior and pending RPO/RTO/retention/key-custody decisions. No paid infrastructure,
+real-data backup, public exposure or live payment was introduced. Raw synthetic
+archives and owned databases are removed; only proof metadata is retained. #15
+stays open for broader operations/privacy/abuse work. GitHub billing and all
+required native/CI checks remain the final release gate under #7/#12.
