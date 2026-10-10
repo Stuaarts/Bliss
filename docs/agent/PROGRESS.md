@@ -1201,3 +1201,48 @@ multi-replica ownership or backup/dependency-fault settlement. No Flutter/native
 rerun, paid/public deployment, billing settings, upstream source or existing data
 change is claimed. Preserve drafts #39–#44 and keep #7/#12/#15 open; required
 CI/native acceptance remains the user-requested final gate.
+
+## 2026-10-10 — actual paused workflow backup/restore (#15)
+
+Branch `15-workflow-backup-restore` builds on draft PR #45 at `c8e20ea` in the
+existing managed checkout. `WorkflowBackupRestoreIT` creates an actual direct
+booking through one packaged production API against owned PostgreSQL 17.6/JWKS.
+It waits for WAIT_PROVIDER and three persisted task checkpoints, then stops the
+sole worker before custom-format `pg_dump`. A distinct empty owned PostgreSQL
+container receives `pg_restore --exit-on-error`; every public table's row count
+and sorted content digest must match before API startup. The same pinned artifact
+starts only against the restored database and retains the original workflow ID.
+
+Cancellation, two terminal action replays and original creation-key replay retain
+one cancelled booking, one processed event, one simulated AUTHORIZE/VOID and
+exactly CREATED/WAIT_PROVIDER/CANCELLED history. The frozen source's complete
+snapshot remains unchanged, still waiting with only AUTHORIZE. Temporary host
+archive and owned runtime resources are removed. See the
+[scope, fencing and reproduction](../operations/WORKFLOW_BACKUP_RESTORE.md).
+
+Focused Java 21 `mvnw.cmd -B -ntp spotless:apply verify -Dtest=OperationsSmokeTest
+-Dit.test=WorkflowBackupRestoreIT -Dquarkus.http.test-port=0` passed six scenarios
+(five ordinary smoke + one packaged restore), zero failures/errors/skips and clean
+Spotless, in 59.904 seconds. The restore case passed in 25.81 seconds and matched
+all 28 tables. Full Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dquarkus.http.test-port=0` passed all 80 scenarios (64 ordinary + 16
+migration/packaged), zero failures/errors/skips, with Spotless clean, in 6:25.
+The restore case passed again in 25.17 seconds with the same 28-table,
+same-instance, single-settlement and unchanged-source assertions. Existing
+migrations, management, database outage, JSON diagnostics, authenticated workload
+and all four booking/dispute process-restart cases also passed. The full log has
+no Flow trace-listener messages. The fixture is absent from the application jar;
+no temporary host backup remains. Documentation links, tracked/new-file hygiene
+and `git diff --check` pass; owned resources are cleaned up and existing services
+preserved. Logs remain in
+`services/api/target/workflow-backup-focused.log` and `workflow-backup-verify.log`.
+
+This extends PR #40's structural synthetic recovery evidence with actual restored
+Flow execution. No application/dependency/schema/workflow changes were needed.
+It is one offline synthetic WAIT_PROVIDER cancellation on the same versions;
+managed/online/PITR recovery, capture/refund/dispute/external reconciliation,
+multiple restored waits, changed-version compatibility and approved RPO/RTO are
+still open. No Flutter/native rerun, billing settings, public/paid hosting, live
+payment, upstream source or existing project database change. Preserve drafts
+#39–#45 and keep #7/#12/#15 open; CI/native acceptance remains the deferred final
+gate.

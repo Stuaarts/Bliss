@@ -79,6 +79,15 @@ The completion case starts from a direct offering booking and also crashes while
 waiting for the customer; the rejection case starts from a quote. This is a real
 process test, not a mock restoration call.
 
+`WorkflowBackupRestoreIT` separately stops the sole worker with a real
+WAIT_PROVIDER booking, dumps the source database, restores a distinct empty
+database and checks every public table's row count/content digest before startup.
+The same artifact resumes the original instance and cancels once, including
+action/creation replays, while the stopped source stays unchanged. See the
+[paused workflow backup/restore drill](../operations/WORKFLOW_BACKUP_RESTORE.md)
+for fencing, archive cleanup and limits. This offline synthetic case does not
+establish managed/PITR recovery or external payment reconciliation.
+
 Run one API worker against this local database. Multi-replica workflow ownership,
 distributed leases, dead-letter/operator tooling, retention and real payment
 outbox/reconciliation are outside this portfolio slice. Do not roll back V5 while

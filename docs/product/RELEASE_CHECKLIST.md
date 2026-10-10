@@ -19,7 +19,7 @@ the separate verified runs; no narrated video is claimed.
 | Chat | Persisted participant-scoped messages, retry/pagination, browser restart evidence |
 | Reviews | Completed-customer eligibility, one review per booking, public rating/privacy tests |
 | Disputes | Private evidence, independent admin decision, manual review wait and simulated refund verified |
-| Backend quality gates | Merged foundation: 63 scenarios. Authenticated workload branch locally passes 79: 64 ordinary + 15 migration/packaged-process scenarios; remote CI remains pending |
+| Backend quality gates | Merged foundation: 63 scenarios. Workflow backup/restore branch locally passes 80: 64 ordinary + 16 migration/packaged-process scenarios; remote CI remains pending |
 | Flutter quality gates | Analysis, formatting, 46 tests; release web build and Android app/test-driver compilation are checked for each PR |
 | Operations and docs | Production health/metrics/OpenAPI/Swagger require an independent operator role; local tools remain available. See [management access](../operations/MANAGEMENT_ACCESS.md), action catalog, ADRs, workflow diagrams and [operations readiness plan](../operations/READINESS.md) for remaining hosting/privacy/abuse controls |
 | Native device validation | Real Android Keycloak login/recovery/logout, request-to-review, direct cancellation, customer/provider/admin dispute and catalog outage/retry pass. iOS app build, native session fixture and real customer/provider Keycloak browser login/recovery/logout/account switching pass. iOS request-to-review/chat/simulated capture/review recovery also pass. **Open #7:** secondary iOS cancellation/dispute/connection-recovery acceptance; other settlement branches retain API/web evidence |
@@ -138,7 +138,10 @@ release-specific JPA adapter remains until verified upstream fixes (#22).
 Run one API worker. Multi-replica ownership, operator recovery tooling, production
 rate limits and retention/moderation remain future work. The separate local
 synthetic backup/restore drill is prepared in draft [PR #40](https://github.com/Stuaarts/Bliss/pull/40);
-managed backup scheduling and real workflow restore still need acceptance.
+the separate [paused workflow backup/restore drill](../operations/WORKFLOW_BACKUP_RESTORE.md)
+executes one restored WAIT_PROVIDER booking through idempotent simulated
+cancellation with the same workflow ID. Managed backup scheduling, broader
+workflow/external-effect recovery and operator acceptance remain open.
 The [operations readiness plan](../operations/READINESS.md) records concrete
 evidence, gaps and delivery order under #15.
 The [database outage drill](../operations/DATABASE_OUTAGE.md) verifies readiness
