@@ -168,3 +168,14 @@ log review, async/restart tracing, external collection/alerts and the final
 CI/native gate remain open. Earlier drafts and existing data are preserved.
 Full local Java 21 verification passes 78 scenarios (64 ordinary + 14
 migration/packaged), zero failures/errors/skips, with Spotless clean.
+
+Branch `15-authenticated-workload` builds on draft PR #44 at `a302532`.
+It adds an isolated production-profile, four-client direct-booking workload:
+eight customers retry concurrent writes, preserve eight waiting workflow IDs
+through an API crash, retain ownership boundaries, and cancel/replay with exactly
+one simulated AUTHORIZE/VOID and three history entries per booking. See the
+[workload and measurement limits](../operations/AUTHENTICATED_WORKLOAD.md).
+Broader endpoint mixes, long-duration/resource/saturation acceptance, hosted
+operations and the final CI/native gate remain open. Earlier drafts are preserved.
+Full local Java 21 verification passes 79 scenarios (64 ordinary + 15
+migration/packaged), zero failures/errors/skips, with Spotless clean.

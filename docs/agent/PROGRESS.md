@@ -1153,3 +1153,51 @@ failure resource and capture fixtures remain test-only. No Flutter/native rerun,
 public hosting, paid service, live payment, billing settings or existing data
 change is claimed. Preserve drafts #39–#43; #7/#12/#15 and the user-requested
 deferred final CI/native gate remain open.
+
+## 2026-10-10 — bounded authenticated write/retry/restart workload (#15)
+
+Branch `15-authenticated-workload` builds on draft PR #44 at `a302532` in the
+existing isolated managed checkout. `AuthenticatedWorkloadIT` creates its own
+PostgreSQL 17.6, ephemeral loopback JWKS and one packaged production API. Eight
+synthetic customers book one offering through four client threads, with two
+identical calls/keys per customer. The test requires eight 201/eight 200 responses
+and exactly eight booking IDs. It waits for all eight WAIT_PROVIDER states and
+three checkpoints each, force-kills only its API, checks persisted state, restarts
+against the same database, and requires the same eight workflow correlations.
+
+Concurrent customer/provider/outsider reads require 16 correct owner reads and
+eight 404 cross-account denials. Sixteen duplicate cancellation submissions must
+return their expected accepted event receipts. Terminal action replay and original
+creation-key replay must not add records. HTTP payment views and read-only SQL
+require eight VOIDED simulated payments at CAD 80.50, one AUTHORIZE and one VOID
+per booking, eight processed cancellation events, and exactly one each of the
+CREATED/WAIT_PROVIDER/CANCELLED history entries. Every recorded response has a
+distinct generated request ID. See [scope and reproduction](../operations/AUTHENTICATED_WORKLOAD.md).
+
+Focused Java 21 `mvnw.cmd -B -ntp spotless:apply verify -Dtest=OperationsSmokeTest
+-Dit.test=AuthenticatedWorkloadIT -Dquarkus.http.test-port=0` passed six scenarios
+(five smoke + one packaged workload), zero failures/errors/skips and clean
+Spotless. The workload passed in 36.22 seconds, recording 419 API requests:
+91 fixed + 328 status polls. Observed create p50/p95/max were
+16.575/52.990/52.990 ms and cancellation 10.875/79.985/79.985 ms. These are small
+local phase observations, not capacity or service objectives. Full Java 21
+`mvnw.cmd -B -ntp spotless:apply verify -Dquarkus.http.test-port=0` passed all
+79 scenarios (64 ordinary + 15 migration/packaged), zero failures/errors/skips,
+with Spotless clean, in 5:54. That workload run recorded 251 API requests
+(91 fixed + 160 polls); create p50/p95/max were 27.576/85.577/85.577 ms and
+cancellation 12.062/75.482/75.482 ms. Its eight restored waits, ownership denials
+and single-settlement assertions passed again. Existing migrations, management,
+database outage, JSON diagnostics and all four booking/dispute restart scenarios
+also passed, with no Flow trace-listener messages. Logs remain under
+`services/api/target/workload-focused.log` and `workload-verify.log`.
+The workload fixture is absent from the application jar. Documentation links,
+tracked/new-file hygiene and `git diff --check` pass; owned test resources are
+cleaned up and existing services/data preserved.
+
+No application/dependency/schema/workflow changes were required by the
+workload. It covers direct booking and simulated cancellation with eight restored
+waits, not full endpoint mixes, saturation/soak, live identity/payment services,
+multi-replica ownership or backup/dependency-fault settlement. No Flutter/native
+rerun, paid/public deployment, billing settings, upstream source or existing data
+change is claimed. Preserve drafts #39–#44 and keep #7/#12/#15 open; required
+CI/native acceptance remains the user-requested final gate.
