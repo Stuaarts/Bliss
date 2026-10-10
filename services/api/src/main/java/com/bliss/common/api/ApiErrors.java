@@ -42,7 +42,11 @@ public class ApiErrors implements ExceptionMapper<Exception> {
                     case 409 -> "This record changed. Refresh and try again.";
                     default -> "The request could not be completed.";
                 };
-        if (status >= 500) LOG.errorf(exception, "API failure requestId=%s", requestId);
+        // Exception messages/causes can include private submitted values or SQL details.
+        if (status >= 500)
+            LOG.errorf(
+                    "event=api_failure requestId=%s exceptionType=%s",
+                    requestId, exception.getClass().getName());
         var statusType = Response.Status.fromStatusCode(status);
         String title = statusType == null ? "Request failed" : statusType.getReasonPhrase();
         return Response.status(status)

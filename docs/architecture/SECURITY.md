@@ -89,8 +89,11 @@ rate limiting, retention, backup/recovery and abuse controls before product beta
 The [operations readiness plan](../operations/READINESS.md) records acceptance
 criteria and distinguishes current controls from unimplemented production work.
 Endpoint constraint failures use a generic correlated problem; invalid server
-return contracts remain 500 errors. This does not establish telemetry redaction
-or tracing across async workflows.
+return contracts remain 500 errors. [Matched REST diagnostics](../operations/REQUEST_DIAGNOSTICS.md)
+record server ID, method, code-defined operation, status and filter elapsed time;
+mapped API failures omit exception messages/causes/throwables, and Flow payload
+tracing is disabled. This does not establish redaction for all library logs,
+universal HTTP coverage or tracing across async workflows.
 
 Disputes are private to the current customer/provider owner and authenticated
 admins. Identity and evidence role come from the token and database, never request

@@ -158,3 +158,13 @@ earlier drafts are preserved. Hosted/operator rehearsal, active-workflow outage
 reconciliation, identity outages and the final CI/native gate remain open.
 Full local Java 21 verification passes 74 scenarios (61 ordinary + 13
 migration/packaged), zero failures/errors/skips, with Spotless clean.
+
+The next slice, `15-request-diagnostics`, builds on draft PR #43 at `29d6424`.
+It adds bounded matched-REST response events, removes throwable content from
+mapped API failure logs and explicitly disables Flow's payload trace logger.
+HTTP log-capture/concurrency tests and packaged JSON checks validate the boundary;
+see [request diagnostics](../operations/REQUEST_DIAGNOSTICS.md). Universal library
+log review, async/restart tracing, external collection/alerts and the final
+CI/native gate remain open. Earlier drafts and existing data are preserved.
+Full local Java 21 verification passes 78 scenarios (64 ordinary + 14
+migration/packaged), zero failures/errors/skips, with Spotless clean.

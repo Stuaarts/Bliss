@@ -12,7 +12,7 @@ assign, not staffed services. Track delivery in [issue #15](https://github.com/S
 | --- | --- | --- |
 | Deployment | Loopback API, PostgreSQL/Flyway, one API worker, durable BookingLifecycleFlow and DisputeFlow | Private database networking, TLS, release/rollback rehearsal, health-based deployment, resource sizing and assigned operator |
 | Identity and secrets | One OIDC issuer, audience/subject and server-side role/ownership checks; explicit packaged DB and issuer configuration | Managed identity availability, least-privilege runtime/migration credentials, secret storage, rotation and revocation drill |
-| Diagnostics | JSON console logging in packaged default profile; operator-gated production health/metrics/documentation; server-generated REST request IDs and generic problem responses | Private management ingress, credential operations, collection/dashboards/alerts, log access/retention/redaction review and end-to-end tracing |
+| Diagnostics | JSON console logging; matched REST response events with generated IDs and operation names; mapped failures omit throwables; Flow payload tracing disabled; operator-gated production management | Private management ingress, credential operations, collection/dashboards/alerts, remaining category access/retention/redaction review and end-to-end tracing |
 | Recovery | Packaged-process crash/restart scenarios; isolated database outage/readiness recovery; migrations and relational constraints tested | Managed backup scheduling, encrypted storage, access/retention, restore of a real paused workflow, agreed RPO/RTO and operator rehearsal |
 | Capacity | Bounded concurrent public category reads and request correlation smoke | Representative authenticated workload, durable write contention, long waits/restarts, saturation and soak tests with agreed SLOs |
 | Abuse and moderation | Authentication, participant/owner checks, validation and bounded pagination | Enforced rate limits, reporting/review/removal workflow, escalation/appeal policy and tested abuse controls |
@@ -104,14 +104,16 @@ message, request ID or raw URL values. Propose alert thresholds from representat
 measurements, then rehearse an alert through acknowledgement and recovery. These
 dashboards, alerts and custom workflow gauges do not exist yet.
 
-REST correlation is generated server-side; it is not a distributed trace.
-Generic server failures log an exception with request ID. There is no universal
-request-completion/MDC instrumentation, OpenTelemetry extension/exporter or
-validated telemetry redaction pipeline. Add these in a separate measured slice;
-verify propagation through async workflow execution and restart. Never collect
-authorization headers, tokens, credentials, private messages or dispute evidence
-as telemetry. Stack traces need access controls and a redaction review before
-external collection; the current generic HTTP response does not prove log privacy.
+REST correlation is generated server-side. [REST response diagnostics](REQUEST_DIAGNOSTICS.md)
+now record the ID, allowlisted method, code-defined operation, status and filter
+elapsed time. Mapped server errors log only ID/error type; Flow's payload-bearing
+trace logger is disabled. This covers matched REST processing, without request
+content or thread-local MDC; it is not a universal HTTP access log or distributed
+trace. OpenTelemetry, async/workflow/restart propagation and a universal redaction
+pipeline remain unimplemented. Never collect authorization headers, tokens,
+credentials, private messages or dispute evidence as telemetry. Other library and
+dispatcher logs still need access controls and content/retention review before
+external collection; the generic HTTP response does not prove all-log privacy.
 
 Incident runbook acceptance: assign an operator and backup, record notification
 and escalation routes, distinguish identity/database/API failures, disable ingress

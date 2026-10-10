@@ -1108,3 +1108,48 @@ outage, hosted ingress or alert delivery/human response. No Flutter/native rerun
 public hosting, paid services, live payments, billing settings or upstream change
 is claimed. Preserve drafts #39–#42 and keep #7/#12/#15 open; the user-requested
 external CI/native gate remains deferred to the end.
+
+## 2026-10-10 — bounded REST diagnostics and mapped-error log content (#15)
+
+Branch `15-request-diagnostics` builds on draft PR #43 at `29d6424` in the same
+isolated managed checkout. Matched REST response preparation now logs one INFO
+event with generated request ID, allowlisted HTTP method, code-defined resource
+operation, status and monotonic filter elapsed milliseconds. The event does not
+read bodies, headers, query strings, raw paths or actor/resource IDs. Correlation
+stays in request properties; there is no new MDC propagation or end-to-end timing
+claim. Mapped API failures now log only request ID and exception type, omitting
+exception messages, nested causes and throwables; generic HTTP problems are
+unchanged. See [diagnostic scope and operator limits](../operations/REQUEST_DIAGNOSTICS.md).
+
+Flow payload tracing is explicitly disabled in all profiles. The unmodified local
+reference listener serializes workflow input/output and failure causes; `javap`
+confirmed the same tracing configuration interface exists in pinned 1.2.0.CR1.
+No upstream source, engine/persistence logic, dependency or schema was changed.
+Other library/dispatcher logs still need review before external collection.
+
+Focused Java 21 `mvnw.cmd -B -ntp spotless:apply test
+-Dtest=RequestDiagnosticsTest,OperationsSmokeTest -Dquarkus.http.test-port=0`
+passed eight scenarios, zero failures/errors/skips. The three new ordinary cases
+capture actual HTTP log records: success/validation/matched missing paths omit
+synthetic private headers/query/body/path/token/subject values; a test-only nested
+private exception produces a correlated generic 500 with no logged throwable;
+24 concurrent reads through four clients retain distinct IDs and exactly one
+response event each. A new packaged case checks the real production JSON console
+for three status/operation cases and absence of private sentinels from its process
+segment. Full Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dquarkus.http.test-port=0` passed all 78 scenarios (64 ordinary + 14
+migration/packaged), zero failures/errors/skips, with Spotless clean, in 5:24.
+The packaged JSON case, database outage recovery, management authorization and
+all four booking/dispute process-restart cases pass. The full Maven log contains
+no Flow trace-listener messages while ordinary booking/dispute workflows execute.
+Logs remain in `services/api/target/diagnostics-focused.log` and
+`diagnostics-verify.log`; XML reports and packaged API output remain under target.
+Documentation links, tracked/new-file hygiene and `git diff --check` pass. Owned
+test resources were cleaned up; existing services/data remain preserved.
+
+This is bounded matched-REST diagnostics, not all HTTP traffic, a universal log
+redactor, async workflow tracing or a managed telemetry service. The private
+failure resource and capture fixtures remain test-only. No Flutter/native rerun,
+public hosting, paid service, live payment, billing settings or existing data
+change is claimed. Preserve drafts #39–#43; #7/#12/#15 and the user-requested
+deferred final CI/native gate remain open.
