@@ -14,7 +14,7 @@ assign, not staffed services. Track delivery in [issue #15](https://github.com/S
 | Identity and secrets | One OIDC issuer, audience/subject and server-side role/ownership checks; explicit packaged DB and issuer configuration | Managed identity availability, least-privilege runtime/migration credentials, secret storage, rotation and revocation drill |
 | Diagnostics | JSON console logging; matched REST response events with generated IDs and operation names; mapped failures omit throwables; Flow payload tracing disabled; operator-gated production management | Private management ingress, credential operations, collection/dashboards/alerts, remaining category access/retention/redaction review and end-to-end tracing |
 | Recovery | Packaged-process crash/restart scenarios; isolated database outage/readiness recovery; migrations and relational constraints tested | Managed backup scheduling, encrypted storage, access/retention, restore of a real paused workflow, agreed RPO/RTO and operator rehearsal |
-| Capacity | Bounded concurrent public category reads and request correlation smoke | Representative authenticated workload, durable write contention, long waits/restarts, saturation and soak tests with agreed SLOs |
+| Capacity | Bounded public category reads; eight-customer authenticated direct-booking/retry workload with four clients, eight restored waits and single-settlement checks | Broader endpoint/actor mixes, agreed dataset/arrival rates, long waits, saturation/soak and resource/backlog evidence against approved SLOs |
 | Abuse and moderation | Authentication, participant/owner checks, validation and bounded pagination | Enforced rate limits, reporting/review/removal workflow, escalation/appeal policy and tested abuse controls |
 | Privacy | Scoped private reads; public review DTO excludes customer/booking identity | Approved inventory/retention rules, authenticated export/deletion, backup expiry and deletion/hold rehearsal |
 
@@ -62,6 +62,13 @@ The test identity resource serves an ephemeral signing key; this does not test
 Keycloak browser login. Workflow dispatch is disabled in the test profile. Full
 Maven verify separately exercises packaged workflow recovery. See the dated
 [progress entry](../agent/PROGRESS.md) for measured results.
+
+The separate [authenticated booking workload](AUTHENTICATED_WORKLOAD.md) adds
+four-client write/retry contention, customer/provider/outsider reads, eight
+simultaneous durable waits through a process crash, cancellation replay and
+per-booking simulated ledger/history assertions. Its bounded phase measurements
+are correctness observations; broader workload, resource and SLO acceptance
+remain open.
 
 The endpoint-validation mapper replaces the default validation report with the
 existing Bliss problem format. It targets Quarkus's endpoint violation type and
@@ -171,8 +178,10 @@ The management access slice, [draft #42](https://github.com/Stuaarts/Bliss/pull/
 builds on [draft #41](https://github.com/Stuaarts/Bliss/pull/41) (readiness and
 correlation). The database outage slice builds on #42; none of these local tests
 waive required CI gates.
-Next engineering slices can validate private management networking, safe structured
-diagnostics and a representative isolated workload. Managed infrastructure,
+The [REST diagnostic slice](REQUEST_DIAGNOSTICS.md) builds on draft #43 and the
+[authenticated workload](AUTHENTICATED_WORKLOAD.md) builds on draft #44. Private
+management networking, broader telemetry review and workload/resource acceptance
+remain open. Managed infrastructure,
 retention/moderation policy and commercial payments need owner decisions first.
 
 The final gate remains: account owner resolves the GitHub payment/spending-limit
