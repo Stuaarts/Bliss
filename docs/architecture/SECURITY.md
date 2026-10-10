@@ -82,6 +82,9 @@ remain product-beta work; do not present this as a production moderation system.
 
 OpenAPI/health/metrics are local development endpoints. Scope management access,
 rate limiting, retention, backup/recovery and abuse controls before product beta (#15).
+The [recovery runbook](../operations/DATABASE_RECOVERY.md) now includes a verified
+synthetic database round trip; real-data encryption/key custody, scheduling and
+identity-provider/application recovery remain pending.
 
 Disputes are private to the current customer/provider owner and authenticated
 admins. Identity and evidence role come from the token and database, never request

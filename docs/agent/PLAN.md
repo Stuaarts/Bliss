@@ -22,6 +22,24 @@ backlog; this file records sequencing and exit gates.
 Do not advance past a failing foundation gate into unrelated features. Record
 external blockers precisely and continue independent, verifiable work.
 
+## Active sequence after October 10 steering
+
+The user requested moving the unresolved GitHub payment/spending-limit condition
+to the end and continuing independent work. Native iOS PR #39 remains saved as a
+draft on `7-ios-secondary`; neither a merge nor native acceptance is implied.
+
+1. Complete a local database backup/restore rehearsal and recovery runbook under
+   #15 on the independent `15-backup-recovery` branch from main.
+2. Continue the remaining operations planning and owner-dependent launch decisions
+   under #13–#16, preserving simulated payments and local-only operation.
+3. **Final deferred release gate:** the account owner resolves GitHub Billing &
+   plans; run ordinary CI, primary/synthetic/browser iOS gates and both new native
+   scenarios on their final heads. Review evidence, merge only when required
+   checks pass, then rerun main before closing #7/#12 or declaring full sign-off.
+
+This changes sequencing, not acceptance criteria. Do not spend money, change
+billing settings, expose services publicly or waive required checks.
+
 ## Current checkpoint
 
 Phase 0 complete except archive unavailable (existing extraction preserved).

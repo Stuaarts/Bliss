@@ -142,7 +142,10 @@ Docker's ordinary Windows restart issue (#17) is mitigated by a guarded helper
 that preserves stale runtime directories; no volume reset is needed. Flow's
 release-specific JPA adapter remains until verified upstream fixes (#22).
 Run one API worker. Multi-replica ownership, operator recovery tooling, production
-rate limits, retention/moderation and backup-restore operations remain future work.
+rate limits and retention/moderation remain future work. A local synthetic
+[database recovery rehearsal](../operations/DATABASE_RECOVERY.md) now passes;
+real-data backup scheduling, encryption/key custody, identity-provider recovery,
+PITR and an application cutover rehearsal remain future operations work.
 
 No live payment gateway, government-ID verification, public hosting, license grant
 or approved commercial cancellation/refund policy is included. The configurable
@@ -150,3 +153,20 @@ local timing rules are demo policy. Product-beta decisions remain #13–#16, as 
 master prompt requests. See [security](../architecture/SECURITY.md),
 [payment boundary](../architecture/ADR-004-payment-abstraction.md) and
 [pending decisions](../agent/DECISIONS_PENDING.md).
+
+
+## Final deferred GitHub and iOS gate
+
+At the user's October 10 request, account billing and blocked Mac execution move
+to the end while independent local operations work proceeds. PR #39 remains
+saved as a draft; no billing change, paid service or waived check is authorized.
+
+1. Account owner reviews GitHub Billing & plans and resolves the reported account
+   payment/spending-limit condition.
+2. Run ordinary CI and the synthetic, real-browser and primary marketplace iOS
+   gates, plus both secondary scenarios, at their final PR heads.
+3. Review exact-head evidence, merge only with passing required checks, rerun main,
+   and close #7/#12 only when the remaining acceptance criteria are met.
+
+The local backup/restore drill covers synthetic PostgreSQL storage only. It does
+not replace any CI, native UI, identity-provider or workflow-execution gate.
