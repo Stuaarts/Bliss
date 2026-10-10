@@ -179,3 +179,14 @@ Broader endpoint mixes, long-duration/resource/saturation acceptance, hosted
 operations and the final CI/native gate remain open. Earlier drafts are preserved.
 Full local Java 21 verification passes 79 scenarios (64 ordinary + 15
 migration/packaged), zero failures/errors/skips, with Spotless clean.
+
+Branch `15-workflow-backup-restore` builds on draft PR #45 at `c8e20ea`.
+It backs up one actual WAIT_PROVIDER booking after stopping the sole worker,
+restores all public tables to a fresh owned database, verifies row equivalence,
+and resumes the same workflow through idempotent simulated cancellation. See
+the [paused workflow recovery drill](../operations/WORKFLOW_BACKUP_RESTORE.md).
+The stopped source must remain unchanged. Broader workflow/external-effect
+restore, managed backups, operator rehearsal and the final CI/native gate remain
+open. Earlier drafts and existing project data are preserved.
+Full local Java 21 verification passes 80 scenarios (64 ordinary + 16
+migration/packaged), zero failures/errors/skips, with Spotless clean.

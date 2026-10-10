@@ -13,7 +13,7 @@ assign, not staffed services. Track delivery in [issue #15](https://github.com/S
 | Deployment | Loopback API, PostgreSQL/Flyway, one API worker, durable BookingLifecycleFlow and DisputeFlow | Private database networking, TLS, release/rollback rehearsal, health-based deployment, resource sizing and assigned operator |
 | Identity and secrets | One OIDC issuer, audience/subject and server-side role/ownership checks; explicit packaged DB and issuer configuration | Managed identity availability, least-privilege runtime/migration credentials, secret storage, rotation and revocation drill |
 | Diagnostics | JSON console logging; matched REST response events with generated IDs and operation names; mapped failures omit throwables; Flow payload tracing disabled; operator-gated production management | Private management ingress, credential operations, collection/dashboards/alerts, remaining category access/retention/redaction review and end-to-end tracing |
-| Recovery | Packaged-process crash/restart scenarios; isolated database outage/readiness recovery; migrations and relational constraints tested | Managed backup scheduling, encrypted storage, access/retention, restore of a real paused workflow, agreed RPO/RTO and operator rehearsal |
+| Recovery | Packaged crash/restart and database outage drills; paused booking backup restored into a fresh database and continued through simulated cancellation; migrations/invariants tested | Managed backup scheduling, encrypted storage, access/retention, broader workflow/external-effect restore, agreed RPO/RTO and operator rehearsal |
 | Capacity | Bounded public category reads; eight-customer authenticated direct-booking/retry workload with four clients, eight restored waits and single-settlement checks | Broader endpoint/actor mixes, agreed dataset/arrival rates, long waits, saturation/soak and resource/backlog evidence against approved SLOs |
 | Abuse and moderation | Authentication, participant/owner checks, validation and bounded pagination | Enforced rate limits, reporting/review/removal workflow, escalation/appeal policy and tested abuse controls |
 | Privacy | Scoped private reads; public review DTO excludes customer/booking identity | Approved inventory/retention rules, authenticated export/deletion, backup expiry and deletion/hold rehearsal |
@@ -21,7 +21,10 @@ assign, not staffed services. Track delivery in [issue #15](https://github.com/S
 The separate [database recovery proposal, PR #40](https://github.com/Stuaarts/Bliss/pull/40)
 has a local synthetic dump/restore drill. Its structural/row/constraint checks do
 not execute the restored Flow payload or establish a managed backup service.
-It remains unmerged pending CI. Do not replace its evidence with the HTTP smoke.
+It remains unmerged pending CI. The separate
+[paused workflow backup/restore drill](WORKFLOW_BACKUP_RESTORE.md) executes one
+real restored WAIT_PROVIDER booking and proves single simulated cancellation.
+It does not establish arbitrary workflow or managed recovery acceptance.
 
 ## Reproduce the bounded operations smoke
 
@@ -179,7 +182,8 @@ builds on [draft #41](https://github.com/Stuaarts/Bliss/pull/41) (readiness and
 correlation). The database outage slice builds on #42; none of these local tests
 waive required CI gates.
 The [REST diagnostic slice](REQUEST_DIAGNOSTICS.md) builds on draft #43 and the
-[authenticated workload](AUTHENTICATED_WORKLOAD.md) builds on draft #44. Private
+[authenticated workload](AUTHENTICATED_WORKLOAD.md) builds on draft #44. The
+[paused workflow restore](WORKFLOW_BACKUP_RESTORE.md) builds on draft #45. Private
 management networking, broader telemetry review and workload/resource acceptance
 remain open. Managed infrastructure,
 retention/moderation policy and commercial payments need owner decisions first.
