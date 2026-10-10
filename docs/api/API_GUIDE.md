@@ -45,7 +45,10 @@ Base URL: `http://localhost:8088`. Version prefix: `/api/v1`.
 
 Lists of offerings return `{items, page, size, total}`. UUID identifiers; exact
 decimal `price` strings; explicit currency. Inactive offerings are not discoverable.
-All reads use DTOs. Unexpected server errors return a generic problem response;
+All reads use DTOs. Endpoint constraint violations return a generic correlated
+400 problem; invalid endpoint return contracts remain generic 500 problems.
+Validation paths/values are not included in these responses. Unexpected server
+errors return a generic problem response;
 `X-Request-ID` identifies the request in diagnosis. Bean Validation rejects invalid
 pagination; malformed typed parameters are rejected by the REST layer.
 

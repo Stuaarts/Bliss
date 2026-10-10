@@ -145,8 +145,9 @@ class WorkflowRestartIT {
             JsonNode waiting = awaitStatus(booking, customer, "WAIT_PROVIDER");
             String instance = waiting.path("workflowInstanceId").asText();
             assertFalse(instance.isBlank());
-            // Exercise several persisted loop checkpoints before the crash.
-            Thread.sleep(6500);
+            // Domain status precedes asynchronous task persistence. Wait for an actual
+            // completed loop, not a fixed sleep, before taking the crash snapshot.
+            awaitLoopCheckpoints(db, instance);
             stop();
             try (var c =
                             DriverManager.getConnection(
@@ -262,6 +263,29 @@ class WorkflowRestartIT {
         assertFalse(
                 runLog.contains("Enlisted connection used without active transaction"),
                 "Restoration transaction rolled back");
+    }
+
+    void awaitLoopCheckpoints(PostgreSQLContainer db, String instance) throws Exception {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(20);
+        int count = 0;
+        try (var connection =
+                        DriverManager.getConnection(
+                                db.getJdbcUrl(), db.getUsername(), db.getPassword());
+                var statement =
+                        connection.prepareStatement(
+                                "SELECT count(*) FROM task_info_entity WHERE workflow_instance_id=?")) {
+            statement.setString(1, instance);
+            do {
+                try (var result = statement.executeQuery()) {
+                    result.next();
+                    count = result.getInt(1);
+                }
+                if (count == 3) return;
+                Thread.sleep(100);
+            } while (System.nanoTime() < deadline);
+        }
+        assertEquals(
+                3, count, "Workflow did not persist one checkpoint per loop task before crash");
     }
 
     void start(PostgreSQLContainer db, Map<String, String> oidc) throws Exception {

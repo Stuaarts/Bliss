@@ -27,6 +27,10 @@ public class ApiErrors implements ExceptionMapper<Exception> {
                                 : exception instanceof WebApplicationException web
                                         ? web.getResponse().getStatus()
                                         : 500;
+        return problem(exception, status);
+    }
+
+    Response problem(Exception exception, int status) {
         String requestId = String.valueOf(request.getProperty(RequestIds.HEADER));
         String detail =
                 switch (status) {

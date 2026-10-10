@@ -976,3 +976,49 @@ attempted. All nine checks passed on `e8c7724` before merge; diff verification
 confirms main has identical app/API/test/runner/workflow source. Main execution
 remains unverified until the external account blocker is resolved and checks rerun.
 #7/#12 retain this blocker alongside the remaining secondary iOS acceptance.
+
+## 2026-10-10 — operations readiness and correlated validation (#15)
+
+Branch `15-operations-readiness` starts from main `f1421a3` in its own managed
+checkout/build directory, independently of draft PR #39 (secondary iOS) and #40
+(database recovery). See the [operations readiness plan](../operations/READINESS.md)
+for topology/secrets, management access, telemetry, recovery, load, abuse/moderation
+and data export/deletion/retention acceptance. Implemented foundations and pending
+controls are explicit; retention periods, infrastructure and staffing are not
+invented. Both prior drafts remain preserved and unmerged.
+
+The new HTTP smoke reproduced endpoint validation bypassing the generic mapper:
+invalid pagination returned Quarkus's validation report without body correlation.
+An endpoint-specific mapper now uses the existing generic problem/UUID, preserving
+500 for invalid return contracts. Five smoke cases cover health/OpenAPI, safe
+validation correlation, return-contract failures, actual Prometheus recording and
+80 category reads through four threads with distinct UUIDs and correct data.
+The deliberately invalid return endpoint is test-only and excluded from the
+packaged application. There is no tracing/exporter, rate limiter or privacy
+lifecycle implementation in this slice.
+
+The first full verify passed all 60 ordinary scenarios and the dispute restarts,
+but one booking restart case killed the API with only two task checkpoints after
+a fixed 6.5-second sleep. The test now waits up to 20 seconds for all three
+persisted loop checkpoints before crashing; the original post-crash count,
+identity, restoration and single-settlement assertions remain. This changes test
+synchronization, not Flow or application behavior. Repeated full verification
+passed against new disposable PostgreSQL 17.6 containers: 68 scenarios
+(60 ordinary and 8 migration/packaged restart), zero failures/errors/skips, with Spotless clean.
+Both booking restart cases and both dispute restart cases pass. The bounded
+80-read smoke observed p50 2.852 ms, p95 7.481 ms and max 98.151 ms, including
+HTTP/validation; no warmup, capacity or production SLO claim is made. Test-profile
+OIDC uses an ephemeral signing key and workflow dispatch is disabled; packaged
+restart cases separately exercise dispatch. No Flutter/native rerun is claimed.
+
+Validation command: Java 21 `mvnw.cmd -B -ntp spotless:apply verify -Dquarkus.http.test-port=0`.
+Reports/logs remain in the isolated checkout under `services/api/target`; the
+initial failed run is retained as `operations-verify-first.log`, and the
+successful full run as `operations-verify.log`. Documentation links,
+generated-file/secret-pattern hygiene and `git diff --check` pass. The isolated
+test resources were removed on exit; existing data is preserved.
+
+At the user's request, GitHub account resolution and native iOS execution remain
+at the final release gate. #7/#12/#15 remain open; no paid services, public hosting,
+live payments, existing volumes or upstream Flow changes are authorized by this
+operations plan.

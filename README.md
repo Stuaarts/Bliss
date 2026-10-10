@@ -164,6 +164,7 @@ flowchart LR
 - [Reconnaissance](docs/agent/RECONNAISSANCE.md)
 - [Execution plan](docs/agent/PLAN.md)
 - [Progress and validation](docs/agent/PROGRESS.md)
+- [Operations readiness and bounded smoke](docs/operations/READINESS.md)
 - [GitHub backlog](https://github.com/Stuaarts/Bliss/issues)
 
 The original `Bliss-*` folders and `quarkus-flow` are preserved local references,
