@@ -1,7 +1,7 @@
 # Aggregate workflow operations metrics (#15)
 
 `WorkflowBacklogMetrics` periodically reads four durable inbox aggregates and one
-durable dispute-failure aggregate, plus booking decision-wait aggregates, in a
+durable dispute-failure aggregate, plus booking/dispute wait aggregates, in a
 single SQL statement/transaction.
 Prometheus scrapes read only its in-memory snapshot;
 they never query the database. Production `/q/metrics` retains the independent
@@ -24,10 +24,14 @@ dashboard, notification destination or alert threshold is configured here.
 | `bliss_workflow_booking_waiting_bookings{stage="..."}` | Current bookings in the corresponding saved decision-wait state |
 | `bliss_workflow_booking_waiting_oldest_seconds{stage="..."}` | Oldest latest matching transition age at snapshot time; NaN if any matching booking lacks that history |
 | `bliss_workflow_booking_waiting_history_missing{stage="..."}` | Current decision-wait bookings without a matching transition-history row |
+| `bliss_workflow_dispute_waiting_cases{stage="..."}` | Current disputes in the corresponding saved evidence/review state |
+| `bliss_workflow_dispute_waiting_oldest_seconds{stage="..."}` | Oldest latest matching dispute-transition age; NaN if any current-stage case lacks matching history |
+| `bliss_workflow_dispute_waiting_history_missing{stage="..."}` | Current-stage disputes without a matching transition-history row |
 
 There are exactly four code-defined `queue` values and twelve backlog time series,
 plus two dispute-failure gauges without labels and six booking decision-wait
-samples with two fixed `stage` labels (twenty custom series total):
+samples with two fixed `stage` labels. Six dispute-wait samples use two other
+fixed stages (twenty-six custom series total):
 
 | Queue | Included rows | Age timestamp |
 | --- | --- | --- |
@@ -106,8 +110,42 @@ temporarily removes one history row in its owned synthetic database, requires
 count one/missing-history one/age NaN, then restores that exact row before the
 crash. This reversible test-only fault injection is not an operator recovery
 procedure and accepts no external target. Ordinary disabled-collection tests
-require all six samples to be NaN before successful collection. The twenty-series
+require all six samples to be NaN before successful collection. The twenty-six-series
 packaged access/outage/drain scenario observes empty decision stages throughout.
+
+## Dispute evidence and admin-review waits
+
+`stage="party_evidence"` selects current COLLECTING_EVIDENCE disputes;
+`stage="admin_review"` selects current UNDER_REVIEW disputes. Count is cases,
+not parties, evidence items or decisions. Resolved customer/provider cases are
+excluded. A case with a saved workflow failure can remain in one of these states
+and is still included: cross-check the durable failure gauges and authorized
+case/execution views. A wait count does not imply engine health or permission
+to settle the case.
+Wait, failure and inbox metrics can overlap; do not sum them as distinct cases.
+
+Age uses each case's latest `dispute_history.occurred_at` matching its current
+status, then measures the oldest such transition at database transaction time.
+It is time in the saved state, not total dispute age, time since the last evidence
+message, remaining evidence deadline or an approved review SLA. Empty stages are
+zero after success. Any current-stage case without matching history increments
+the missing-history gauge and makes the entire stage's oldest age NaN; count still
+includes all current cases. Shared snapshot freshness/failure semantics apply.
+Labels contain only the two code-defined stage values; evidence bodies,
+rationales, identities, IDs and workflow payloads are never aggregate values.
+
+Both packaged dispute outcomes now verify evidence and admin-review metrics
+before/after distinct API crashes, unchanged instance IDs, ages that do not reset,
+and removal after resolution. Evidence retention, decision replay and single
+simulated CAPTURE or REFUND checks remain. One owned evidence-wait fixture
+temporarily removes its history row, requires count one/missing one/NaN age,
+restores that exact row and continues through both crashes and settlement.
+Booking and dispute tests share the test-only `DecisionWaitMetrics` helper; table,
+stage and status choices are code-defined and record IDs are bound parameters.
+Restoration uses the saved ID, actor and timestamp and tolerates a fault before
+deletion. This reversible fixture manipulation accepts no external target and is
+not an operator recovery procedure. Ordinary tests check all six initial unknown
+values; the packaged access/outage/drain drill observes empty dispute waits.
 
 ## Sampling and failure behavior
 
@@ -117,8 +155,8 @@ is delayed three seconds. Concurrent scheduled collections are skipped. The test
 profile disables collection to avoid background work in ordinary database fixtures;
 gauges remain registered with unknown values. The dispute regression explicitly
 opts into one-second collection for its isolated test profile. The packaged
-verification and the two booking restart scenarios also use a one-second interval
-only for their owned scenarios. Other packaged scenarios retain default sampling.
+verification and the booking/dispute restart scenarios also use a one-second
+interval only for their owned scenarios. Other packaged scenarios retain default sampling.
 
 The SQL requests a two-second statement timeout. Pool acquisition and transaction
 timeouts are separate runtime limits; a stalled attempt can take longer. This is
@@ -148,6 +186,7 @@ Use Java 21, Docker and an isolated checkout/build directory. From `services/api
 ./mvnw -B -ntp verify -Dtest=WorkflowBacklogMetricsTest,OperationsSmokeTest -Dit.test=WorkflowBacklogMetricsIT -Dquarkus.http.test-port=0
 ./mvnw -B -ntp verify -Dtest=DisputeTest,WorkflowBacklogMetricsTest -Dit.test=WorkflowBacklogMetricsIT -Dquarkus.http.test-port=0
 ./mvnw -B -ntp verify -Dtest=WorkflowBacklogMetricsTest,OperationsSmokeTest -Dit.test=WorkflowRestartIT,WorkflowBacklogMetricsIT -Dquarkus.http.test-port=0
+./mvnw -B -ntp verify -Dtest=WorkflowBacklogMetricsTest,OperationsSmokeTest -Dit.test=DisputeRestartIT,WorkflowRestartIT,WorkflowBacklogMetricsIT -Dquarkus.http.test-port=0
 ./mvnw -B -ntp verify -Dquarkus.http.test-port=0
 ```
 
@@ -168,7 +207,7 @@ replay retains the same processed event. The two dispute queues are verified emp
 in this scenario; positive dispute admission/settlement remains covered separately
 by domain regression, not by this metrics drill. The empty dispute-failure gauges
 also remain zero in this packaged scenario, including outage/recovery.
-The six booking decision-wait samples likewise remain zero there: its cancellation
+The six booking and six dispute-wait samples likewise remain zero there: its cancellation
 is admitted before authorization and never enters either decision-wait state.
 
 The actual DisputeFlow exhausted-retry regression now reads Prometheus output:
@@ -187,9 +226,9 @@ this metrics scenario makes no new payment-settlement claim. Existing packaged
 workload/restore tests cover simulated settlement. The packaged metrics test has
 a four-minute JUnit bound, 60-second metric waits and five-second HTTP deadlines; those are
 failure guardrails, not service objectives. See [progress](../agent/PROGRESS.md)
-for executed evidence. Booking wait-metric polling has a twenty-second test bound;
+for executed evidence. Shared wait-metric polling has a twenty-second test bound;
 the history fixture's SQL statements have ten-second limits. Private collection,
-dashboards, alert rehearsal, broader booking/engine failures, dispute waits,
+dashboards, alert rehearsal, broader booking/engine failures,
 engine-health classification and capacity acceptance remain
 open under
 [#15](https://github.com/Stuaarts/Bliss/issues/15) and [readiness](READINESS.md).

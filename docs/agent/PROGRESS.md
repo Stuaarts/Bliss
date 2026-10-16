@@ -1402,3 +1402,58 @@ workflow transition, settlement or automatic recovery change. No Flutter/native
 rerun, public/paid hosting, live payment, billing settings or existing project
 database change. Preserve drafts #39–#48 and keep #7/#12/#15 open; required
 CI/native acceptance remains at the deferred final gate.
+
+## 2026-10-16 — dispute evidence/admin-review wait metrics (#15)
+
+Branch `15-dispute-wait-metrics` builds on draft PR #49 at `db9ba62` in the
+existing managed checkout. Six new fixed-stage samples expose current evidence/
+admin-review case counts, latest matching transition ages and missing-history
+counts. The read-only statement now computes all nine inbox/failure/wait
+aggregates in the same snapshot; twenty-six custom time series use only fixed
+queue/stage labels. Missing history includes the case in the count and makes the
+entire stage's oldest age NaN. Empty stages are zero after success; existing
+shared availability/freshness/failure behavior and operator access remain.
+See the [dispute wait contract](../operations/WORKFLOW_BACKLOG_METRICS.md#dispute-evidence-and-admin-review-waits).
+
+Focused Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dtest=WorkflowBacklogMetricsTest,OperationsSmokeTest
+-Dit.test=DisputeRestartIT,WorkflowRestartIT,WorkflowBacklogMetricsIT
+-Dquarkus.http.test-port=0` passed eleven scenarios (six ordinary + five packaged),
+zero failures/errors/skips with Spotless clean, in 3:34. Both actual dispute
+outcomes passed in 93.21 seconds: evidence/admin-review counts and positive ages
+survive distinct API crashes with unchanged workflow IDs; resolved cases leave
+both stages; evidence, decision replay and single CAPTURE/REFUND ledger assertions
+remain valid. One owned fixture removes a dispute history row, requires count
+one/missing one/NaN age, restores the exact saved row, then continues through both
+crashes and resolution. The twenty-six-series access/outage/drain test passed in
+19.93 seconds with empty dispute waits; both booking restart cases passed in
+57.99 seconds. The ordinary test includes six new unknown/NaN samples.
+
+Booking and dispute history faults/HTTP assertions now share the test-only
+DecisionWaitMetrics helper. Table/status/stage choices are code-defined; record
+IDs are bound parameters. Restoration uses saved ID/actor/timestamp and also
+tolerates a failure before deletion. The booking helper consolidation followed
+the focused run. Full Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dquarkus.http.test-port=0` passed all 82 scenarios (65 ordinary + 17
+migration/packaged), zero failures/errors/skips with Spotless clean, in 6:00.
+Both dispute outcomes and both booking outcomes passed using the final shared
+helper, including missing-history NaN, saved-row restoration, age continuity,
+resolved/terminal exclusion and single-settlement assertions. The twenty-six-series
+access/outage/drain test, dispute failure, migrations, management, diagnostics,
+authenticated workload and backup/restore also passed. The full log has no Flow
+trace-listener messages. Test helper/profile/payment fixtures are absent from
+the application jar. Documentation links, tracked/new-file hygiene and
+`git diff --check` pass; owned resources are cleaned up and project data preserved.
+Logs remain in `services/api/target/dispute-wait-focused.log` and
+`dispute-wait-verify.log`.
+
+Counts describe saved states, including failed cases that remain under review;
+cross-check the durable failure signal and authorized case/execution views.
+They do not classify engine health, approve settlement or define a review SLA.
+Broader faults, hosted collection/dashboards/alerts and operator acceptance remain
+open. No schema/dependency/upstream, workflow transition, policy, settlement or
+automatic recovery change. Fixture manipulation is isolated synthetic fault
+injection, not a project-data edit or operator procedure. No Flutter/native rerun,
+public/paid hosting, live payment or billing settings change. Preserve drafts
+#39–#49 and keep #7/#12/#15 open; CI/native acceptance remains the deferred final
+gate.

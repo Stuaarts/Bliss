@@ -22,6 +22,8 @@ class WorkflowRestartIT {
     final HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build();
     Process server;
     int port;
+    private final DecisionWaitMetrics waits =
+            new DecisionWaitMetrics(this, DecisionWaitMetrics.Kind.BOOKING);
 
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
@@ -146,8 +148,8 @@ class WorkflowRestartIT {
             JsonNode waiting = awaitStatus(booking, customer, "WAIT_PROVIDER");
             String instance = waiting.path("workflowInstanceId").asText();
             assertFalse(instance.isBlank());
-            double providerAge = awaitWaitingMetric("provider_decision", false);
-            if (!complete) exerciseMissingWaitHistory(db, booking);
+            double providerAge = waits.await("provider_decision", false);
+            if (!complete) waits.exerciseMissingHistory(db, booking, "provider_decision");
             // Domain status precedes asynchronous task persistence. Wait for an actual
             // completed loop, not a fixed sleep, before taking the crash snapshot.
             awaitLoopCheckpoints(db, instance);
@@ -183,7 +185,7 @@ class WorkflowRestartIT {
                             .path("workflowInstanceId")
                             .asText());
             assertTrue(
-                    awaitWaitingMetric("provider_decision", false) >= providerAge,
+                    waits.await("provider_decision", false) >= providerAge,
                     "Provider wait age must survive process restart");
             String key = UUID.randomUUID().toString();
             String action = "provider-reject", actor = provider, terminal = "CANCELLED";
@@ -225,7 +227,7 @@ class WorkflowRestartIT {
                         UUID.randomUUID().toString(),
                         202);
                 awaitStatus(booking, customer, "WAIT_CUSTOMER");
-                double customerAge = awaitWaitingMetric("customer_decision", false);
+                double customerAge = waits.await("customer_decision", false);
                 Thread.sleep(4500);
                 stop();
                 start(db, oidc);
@@ -235,14 +237,14 @@ class WorkflowRestartIT {
                                 .path("workflowInstanceId")
                                 .asText());
                 assertTrue(
-                        awaitWaitingMetric("customer_decision", false) >= customerAge,
+                        waits.await("customer_decision", false) >= customerAge,
                         "Customer wait age must survive process restart");
                 action = "confirm-completion";
                 actor = customer;
                 terminal = "COMPLETED";
             }
             call("POST", "/api/v1/bookings/" + booking + "/" + action, actor, null, key, 202);
-            awaitWaitingMetric(null, false);
+            waits.await(null, false);
             assertEquals(
                     instance,
                     awaitStatus(booking, customer, terminal).path("workflowInstanceId").asText());
@@ -277,114 +279,6 @@ class WorkflowRestartIT {
         assertFalse(
                 runLog.contains("Enlisted connection used without active transaction"),
                 "Restoration transaction rolled back");
-    }
-
-    private double awaitWaitingMetric(String selected, boolean missingHistory) throws Exception {
-        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(20);
-        do {
-            var response =
-                    client.send(
-                            HttpRequest.newBuilder(uri("/q/metrics"))
-                                    .timeout(Duration.ofSeconds(5))
-                                    .header(
-                                            "Authorization",
-                                            "Bearer "
-                                                    + TestIdentityProvider.token(
-                                                            "waiting-probe", "operator"))
-                                    .GET()
-                                    .build(),
-                            HttpResponse.BodyHandlers.ofString());
-            assertEquals(200, response.statusCode());
-            var values = new HashMap<String, Double>();
-            for (String line : response.body().split("\n")) {
-                if (!line.startsWith("bliss_workflow_booking_waiting_")) continue;
-                var parts = line.trim().split("\\s+");
-                assertEquals(2, parts.length);
-                values.put(parts[0], Double.parseDouble(parts[1]));
-            }
-            var expectedNames = new HashSet<String>();
-            boolean matches = true;
-            double age = 0;
-            for (String stage : List.of("provider_decision", "customer_decision")) {
-                String tag = "{stage=\"" + stage + "\"}";
-                for (String name : List.of("bookings", "oldest_seconds", "history_missing"))
-                    expectedNames.add("bliss_workflow_booking_waiting_" + name + tag);
-                boolean active = stage.equals(selected);
-                double count =
-                        values.getOrDefault(
-                                "bliss_workflow_booking_waiting_bookings" + tag, Double.NaN);
-                double oldest =
-                        values.getOrDefault(
-                                "bliss_workflow_booking_waiting_oldest_seconds" + tag, Double.NaN);
-                double missing =
-                        values.getOrDefault(
-                                "bliss_workflow_booking_waiting_history_missing" + tag, Double.NaN);
-                matches &=
-                        count == (active ? 1 : 0) && missing == (active && missingHistory ? 1 : 0);
-                matches &=
-                        active ? (missingHistory ? Double.isNaN(oldest) : oldest > 0) : oldest == 0;
-                if (active) age = oldest;
-            }
-            assertEquals(
-                    expectedNames,
-                    values.keySet(),
-                    "Six code-defined stage samples without private labels");
-            if (matches) return age;
-            Thread.sleep(100);
-        } while (System.nanoTime() < deadline);
-        fail("Booking wait metrics did not reach expected saved state/history condition");
-        return Double.NaN;
-    }
-
-    private void exerciseMissingWaitHistory(PostgreSQLContainer db, String booking)
-            throws Exception {
-        UUID historyId;
-        Object actor, occurred;
-        try (var connection =
-                        DriverManager.getConnection(
-                                db.getJdbcUrl(), db.getUsername(), db.getPassword());
-                var statement =
-                        connection.prepareStatement(
-                                "SELECT id,actor_user_id,occurred_at FROM booking_status_history WHERE booking_id=? AND status='WAIT_PROVIDER'")) {
-            statement.setQueryTimeout(10);
-            statement.setObject(1, UUID.fromString(booking));
-            try (var rows = statement.executeQuery()) {
-                assertTrue(rows.next());
-                historyId = rows.getObject(1, UUID.class);
-                actor = rows.getObject(2);
-                occurred = rows.getObject(3);
-                assertFalse(rows.next());
-            }
-        }
-        // A reversible history fault in this owned synthetic fixture only; restore before crash.
-        try {
-            try (var connection =
-                            DriverManager.getConnection(
-                                    db.getJdbcUrl(), db.getUsername(), db.getPassword());
-                    var statement =
-                            connection.prepareStatement(
-                                    "DELETE FROM booking_status_history WHERE id=?")) {
-                statement.setQueryTimeout(10);
-                statement.setObject(1, historyId);
-                assertEquals(1, statement.executeUpdate());
-            }
-            awaitWaitingMetric("provider_decision", true);
-        } finally {
-            try (var connection =
-                            DriverManager.getConnection(
-                                    db.getJdbcUrl(), db.getUsername(), db.getPassword());
-                    var statement =
-                            connection.prepareStatement(
-                                    "INSERT INTO booking_status_history(id,booking_id,status,actor_user_id,occurred_at) VALUES (?,?,'WAIT_PROVIDER',?,?) ON CONFLICT (id) DO NOTHING")) {
-                statement.setQueryTimeout(10);
-                statement.setObject(1, historyId);
-                statement.setObject(2, UUID.fromString(booking));
-                statement.setObject(3, actor);
-                statement.setObject(4, occurred);
-                assertEquals(1, statement.executeUpdate());
-            }
-        }
-        awaitWaitingMetric("provider_decision", false);
     }
 
     void awaitLoopCheckpoints(PostgreSQLContainer db, String instance) throws Exception {

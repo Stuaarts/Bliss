@@ -60,7 +60,15 @@ class WorkflowBacklogMetricsTest {
                                             .tag("stage", stage)
                                             .gauge()
                                             .value()));
-            assertEquals(20, registry.getMeters().size());
+            for (String stage : new String[] {"party_evidence", "admin_review"})
+                for (String name : new String[] {"cases", "oldest.seconds", "history.missing"})
+                    assertTrue(
+                            Double.isNaN(
+                                    registry.get("bliss.workflow.dispute.waiting." + name)
+                                            .tag("stage", stage)
+                                            .gauge()
+                                            .value()));
+            assertEquals(26, registry.getMeters().size());
         } finally {
             registry.close();
         }
