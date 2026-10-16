@@ -11,6 +11,8 @@ import com.bliss.workflow.FaultInjectingPayments;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.QuarkusTestProfile;
+import io.quarkus.test.junit.TestProfile;
 import io.restassured.response.Response;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
@@ -23,7 +25,19 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 @QuarkusTest
 @QuarkusTestResource(TestIdentityProvider.class)
+@TestProfile(DisputeTest.MetricsProfile.class)
 class DisputeTest {
+    public static class MetricsProfile implements QuarkusTestProfile {
+        @Override
+        public Map<String, String> getConfigOverrides() {
+            return Map.of(
+                    "bliss.operations.backlog.enabled",
+                    "true",
+                    "bliss.operations.backlog.every",
+                    "1s");
+        }
+    }
+
     @Inject EntityManager em;
     @Inject DisputeDispatcher dispatcher;
     @Inject DisputeService service;
@@ -499,6 +513,7 @@ class DisputeTest {
 
     @Test
     void exhaustedSettlementRetryRollsBackAndExposesOnlyWorkflowStatus() throws Exception {
+        double failedBefore = awaitFailureMetrics(-1);
         var f = ready(false);
         var admin = actor("admin");
         String id = open(f).path("id");
@@ -539,5 +554,46 @@ class DisputeTest {
                 .get("/api/v1/bookings/" + f.booking + "/payment")
                 .then()
                 .body("status", is("AUTHORIZED"), "operations", contains("AUTHORIZE"));
+        assertEquals(
+                1,
+                count(
+                        "SELECT count(*) FROM dispute WHERE id=?1 AND workflow_failed_at IS NOT NULL AND resolved_at IS NULL",
+                        id));
+        assertEquals(
+                0,
+                count(
+                        "SELECT count(*) FROM workflow_instance_entity WHERE instance_id=(SELECT workflow_instance_id FROM dispute WHERE id=?1)",
+                        id));
+        assertEquals(failedBefore + 1, awaitFailureMetrics(failedBefore + 1));
+        // The engine checkpoint has gone; the durable domain marker still drives the gauge.
+        System.out.println(
+                "Dispute failure metrics proof: actual_retry_exhaustion=true attempts=4 checkpoint_removed=true unresolved_failed_delta=1 positive_oldest_age=true fixed_series=2 simulated_authorization_unchanged=true; no automatic recovery/alert claim.");
+    }
+
+    private double awaitFailureMetrics(double expected) throws Exception {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(15);
+        do {
+            String body = given().get("/q/metrics").then().statusCode(200).extract().asString();
+            var values = new HashMap<String, Double>();
+            for (String line : body.split("\n")) {
+                if (!line.startsWith("bliss_workflow_dispute_failed_")) continue;
+                String[] parts = line.trim().split("\\s+");
+                assertEquals(2, parts.length);
+                assertTrue(
+                        Set.of(
+                                        "bliss_workflow_dispute_failed_cases",
+                                        "bliss_workflow_dispute_failed_oldest_seconds")
+                                .contains(parts[0]));
+                values.put(parts[0], Double.parseDouble(parts[1]));
+            }
+            assertEquals(2, values.size());
+            double cases = values.get("bliss_workflow_dispute_failed_cases");
+            double oldest = values.get("bliss_workflow_dispute_failed_oldest_seconds");
+            if (expected < 0 && Double.isFinite(cases)) return cases;
+            if (cases == expected && oldest > 0) return cases;
+            Thread.sleep(100);
+        } while (System.nanoTime() < deadline);
+        fail("Durable dispute failure metrics did not reach expected state");
+        return Double.NaN;
     }
 }

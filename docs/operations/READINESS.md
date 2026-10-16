@@ -12,7 +12,7 @@ assign, not staffed services. Track delivery in [issue #15](https://github.com/S
 | --- | --- | --- |
 | Deployment | Loopback API, PostgreSQL/Flyway, one API worker, durable BookingLifecycleFlow and DisputeFlow | Private database networking, TLS, release/rollback rehearsal, health-based deployment, resource sizing and assigned operator |
 | Identity and secrets | One OIDC issuer, audience/subject and server-side role/ownership checks; explicit packaged DB and issuer configuration | Managed identity availability, least-privilege runtime/migration credentials, secret storage, rotation and revocation drill |
-| Diagnostics | JSON console logging; bounded REST response events; mapped errors omit throwables; Flow payload tracing disabled; operator-gated production management; cached inbox backlog/age/freshness metrics | Private management ingress, credential operations, collection/dashboards/alerts, engine failure/wait observability, remaining log privacy review and end-to-end tracing |
+| Diagnostics | JSON console logging; bounded REST response events; mapped errors omit throwables; Flow payload tracing disabled; operator-gated production management; cached inbox/freshness and unresolved dispute-failure count/age metrics | Private management ingress, credential operations, collection/dashboards/alerts, broader booking/engine failure and human-wait observability, remaining log privacy review and end-to-end tracing |
 | Recovery | Packaged crash/restart and database outage drills; paused booking backup restored into a fresh database and continued through simulated cancellation; migrations/invariants tested | Managed backup scheduling, encrypted storage, access/retention, broader workflow/external-effect restore, agreed RPO/RTO and operator rehearsal |
 | Capacity | Bounded public category reads; eight-customer authenticated direct-booking/retry workload with four clients, eight restored waits and single-settlement checks | Broader endpoint/actor mixes, agreed dataset/arrival rates, long waits, saturation/soak and resource/backlog evidence against approved SLOs |
 | Abuse and moderation | Authentication, participant/owner checks, validation and bounded pagination | Enforced rate limits, reporting/review/removal workflow, escalation/appeal policy and tested abuse controls |
@@ -117,7 +117,11 @@ dashboards and alerts do not exist yet. The
 fixed queue counts/oldest ages and collection availability/freshness/failures.
 Scrapes use a cached snapshot without SQL; database failures preserve last good
 values rather than reporting a false zero. These are admission inbox aggregates,
-not engine fault/healthy-wait gauges or proof that all workflows are progressing.
+not proof that all workflows are progressing. Two additional
+[durable dispute-failure gauges](WORKFLOW_BACKLOG_METRICS.md#durable-dispute-failure-signal)
+count unresolved cases with the existing failure timestamp and their oldest age,
+even after failed engine checkpoints disappear. Broader booking/engine failures,
+healthy human-wait ages and alert acceptance remain open.
 
 REST correlation is generated server-side. [REST response diagnostics](REQUEST_DIAGNOSTICS.md)
 now record the ID, allowlisted method, code-defined operation, status and filter
@@ -193,6 +197,8 @@ The [REST diagnostic slice](REQUEST_DIAGNOSTICS.md) builds on draft #43 and the
 management networking, broader telemetry review and workload/resource acceptance
 remain open. Managed infrastructure,
 retention/moderation policy and commercial payments need owner decisions first.
+The durable dispute-failure metric extension builds on draft #47; it adds
+aggregate visibility without changing failure recording, settlement or recovery.
 
 The final gate remains: account owner resolves the GitHub payment/spending-limit
 condition, required checks pass on each exact current PR head, native iOS secondary
