@@ -24,25 +24,52 @@ public class WorkflowBacklogMetrics {
 
     private record Backlog(long pending, double oldestSeconds) {}
 
+    private enum WaitStage {
+        provider_decision,
+        customer_decision
+    }
+
+    private record Waiting(long bookings, double oldestSeconds, long missingHistory) {}
+
     private record Snapshot(
-            Map<Queue, Backlog> queues, Backlog failedDisputes, long capturedNanos) {}
+            Map<Queue, Backlog> queues,
+            Backlog failedDisputes,
+            Map<WaitStage, Waiting> waiting,
+            long capturedNanos) {}
 
     private static final String SQL =
             """
-            SELECT 'booking_start', count(*), coalesce(greatest(extract(epoch FROM (CURRENT_TIMESTAMP-min(requested_at))),0),0)
+            WITH booking_waits AS (
+              SELECT b.status, (SELECT max(h.occurred_at) FROM booking_status_history h
+                WHERE h.booking_id=b.id AND h.status=b.status) AS entered_at
+              FROM booking b WHERE b.status IN ('WAIT_PROVIDER','WAIT_CUSTOMER')
+            )
+            SELECT 'booking_start', count(*), coalesce(greatest(extract(epoch FROM (CURRENT_TIMESTAMP-min(requested_at))),0),0), 0
               FROM booking_workflow_start WHERE started=false
             UNION ALL
-            SELECT 'booking_action', count(*), coalesce(greatest(extract(epoch FROM (CURRENT_TIMESTAMP-min(occurred_at))),0),0)
+            SELECT 'booking_action', count(*), coalesce(greatest(extract(epoch FROM (CURRENT_TIMESTAMP-min(occurred_at))),0),0), 0
               FROM booking_event WHERE processed_at IS NULL
             UNION ALL
-            SELECT 'dispute_start', count(*), coalesce(greatest(extract(epoch FROM (CURRENT_TIMESTAMP-min(requested_at))),0),0)
+            SELECT 'dispute_start', count(*), coalesce(greatest(extract(epoch FROM (CURRENT_TIMESTAMP-min(requested_at))),0),0), 0
               FROM dispute_workflow_start WHERE started=false
             UNION ALL
-            SELECT 'dispute_decision', count(*), coalesce(greatest(extract(epoch FROM (CURRENT_TIMESTAMP-min(admitted_at))),0),0)
+            SELECT 'dispute_decision', count(*), coalesce(greatest(extract(epoch FROM (CURRENT_TIMESTAMP-min(admitted_at))),0),0), 0
               FROM dispute_decision WHERE processed_at IS NULL
             UNION ALL
-            SELECT 'dispute_failure', count(*), coalesce(greatest(extract(epoch FROM (CURRENT_TIMESTAMP-min(workflow_failed_at))),0),0)
+            SELECT 'dispute_failure', count(*), coalesce(greatest(extract(epoch FROM (CURRENT_TIMESTAMP-min(workflow_failed_at))),0),0), 0
               FROM dispute WHERE workflow_failed_at IS NOT NULL AND resolved_at IS NULL
+            UNION ALL
+            SELECT 'provider_decision', count(*),
+              CASE WHEN count(*) FILTER (WHERE entered_at IS NULL)>0 THEN NULL
+                ELSE coalesce(greatest(extract(epoch FROM (CURRENT_TIMESTAMP-min(entered_at))),0),0) END,
+              count(*) FILTER (WHERE entered_at IS NULL)
+              FROM booking_waits WHERE status='WAIT_PROVIDER'
+            UNION ALL
+            SELECT 'customer_decision', count(*),
+              CASE WHEN count(*) FILTER (WHERE entered_at IS NULL)>0 THEN NULL
+                ELSE coalesce(greatest(extract(epoch FROM (CURRENT_TIMESTAMP-min(entered_at))),0),0) END,
+              count(*) FILTER (WHERE entered_at IS NULL)
+              FROM booking_waits WHERE status='WAIT_CUSTOMER'
             """;
 
     @Inject EntityManager em;
@@ -75,6 +102,32 @@ public class WorkflowBacklogMetrics {
                         self -> self.snapshot == null ? 0 : 1)
                 .description("One after a successful snapshot exists; does not imply freshness")
                 .register(registry);
+        for (WaitStage stage : WaitStage.values()) {
+            Gauge.builder(
+                            "bliss.workflow.booking.waiting.bookings",
+                            this,
+                            self -> self.waitingCount(stage))
+                    .tag("stage", stage.name())
+                    .description(
+                            "Bookings in the corresponding saved decision-wait state at last successful snapshot")
+                    .register(registry);
+            Gauge.builder(
+                            "bliss.workflow.booking.waiting.oldest.seconds",
+                            this,
+                            self -> self.waitingOldest(stage))
+                    .tag("stage", stage.name())
+                    .description(
+                            "Oldest current decision-wait transition age; NaN when history is missing")
+                    .register(registry);
+            Gauge.builder(
+                            "bliss.workflow.booking.waiting.history.missing",
+                            this,
+                            self -> self.waitingMissing(stage))
+                    .tag("stage", stage.name())
+                    .description(
+                            "Decision-wait bookings without matching transition history at last successful snapshot")
+                    .register(registry);
+        }
         Gauge.builder("bliss.workflow.backlog.snapshot.age.seconds", this, self -> self.age())
                 .description(
                         "Monotonic seconds since last successful snapshot; NaN before first success")
@@ -123,8 +176,23 @@ public class WorkflowBacklogMetrics {
                                                                 2000)
                                                         .getResultList();
                                         var values = new EnumMap<Queue, Backlog>(Queue.class);
+                                        var waiting =
+                                                new EnumMap<WaitStage, Waiting>(WaitStage.class);
                                         Backlog failedDisputes = null;
                                         for (Object[] row : rows) {
+                                            if (Set.of("provider_decision", "customer_decision")
+                                                    .contains(row[0])) {
+                                                waiting.put(
+                                                        WaitStage.valueOf((String) row[0]),
+                                                        new Waiting(
+                                                                ((Number) row[1]).longValue(),
+                                                                row[2] == null
+                                                                        ? Double.NaN
+                                                                        : ((Number) row[2])
+                                                                                .doubleValue(),
+                                                                ((Number) row[3]).longValue()));
+                                                continue;
+                                            }
                                             var aggregate =
                                                     new Backlog(
                                                             ((Number) row[1]).longValue(),
@@ -136,13 +204,22 @@ public class WorkflowBacklogMetrics {
                                             values.put(Queue.valueOf((String) row[0]), aggregate);
                                         }
                                         if (values.size() != Queue.values().length
-                                                || failedDisputes == null)
+                                                || failedDisputes == null
+                                                || waiting.size() != WaitStage.values().length)
                                             throw new IllegalStateException(
                                                     "Incomplete aggregate snapshot");
-                                        return new Snapshot(Map.copyOf(values), failedDisputes, 0);
+                                        return new Snapshot(
+                                                Map.copyOf(values),
+                                                failedDisputes,
+                                                Map.copyOf(waiting),
+                                                0);
                                     });
             snapshot =
-                    new Snapshot(collected.queues(), collected.failedDisputes(), System.nanoTime());
+                    new Snapshot(
+                            collected.queues(),
+                            collected.failedDisputes(),
+                            collected.waiting(),
+                            System.nanoTime());
             lastCollectionSuccessful = true;
         } catch (RuntimeException failure) {
             // Preserve last good values and expose failure/freshness, never report a false zero.
@@ -176,5 +253,20 @@ public class WorkflowBacklogMetrics {
     private double failedOldest() {
         Snapshot current = snapshot;
         return current == null ? Double.NaN : current.failedDisputes().oldestSeconds();
+    }
+
+    private double waitingCount(WaitStage stage) {
+        Snapshot current = snapshot;
+        return current == null ? Double.NaN : current.waiting().get(stage).bookings();
+    }
+
+    private double waitingOldest(WaitStage stage) {
+        Snapshot current = snapshot;
+        return current == null ? Double.NaN : current.waiting().get(stage).oldestSeconds();
+    }
+
+    private double waitingMissing(WaitStage stage) {
+        Snapshot current = snapshot;
+        return current == null ? Double.NaN : current.waiting().get(stage).missingHistory();
     }
 }

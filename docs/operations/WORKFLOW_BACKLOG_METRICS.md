@@ -1,7 +1,8 @@
-# Aggregate workflow inbox metrics (#15)
+# Aggregate workflow operations metrics (#15)
 
 `WorkflowBacklogMetrics` periodically reads four durable inbox aggregates and one
-durable dispute-failure aggregate in a single SQL statement/transaction.
+durable dispute-failure aggregate, plus booking decision-wait aggregates, in a
+single SQL statement/transaction.
 Prometheus scrapes read only its in-memory snapshot;
 they never query the database. Production `/q/metrics` retains the independent
 `operator` OIDC role requirement in [management access](MANAGEMENT_ACCESS.md).
@@ -20,9 +21,13 @@ dashboard, notification destination or alert threshold is configured here.
 | `bliss_workflow_backlog_collection_failures_total` | Failed collection attempts since this API process started |
 | `bliss_workflow_dispute_failed_cases` | Unresolved dispute records with a saved workflow failure timestamp |
 | `bliss_workflow_dispute_failed_oldest_seconds` | Age of the earliest saved failure timestamp among those records at snapshot time; zero when none |
+| `bliss_workflow_booking_waiting_bookings{stage="..."}` | Current bookings in the corresponding saved decision-wait state |
+| `bliss_workflow_booking_waiting_oldest_seconds{stage="..."}` | Oldest latest matching transition age at snapshot time; NaN if any matching booking lacks that history |
+| `bliss_workflow_booking_waiting_history_missing{stage="..."}` | Current decision-wait bookings without a matching transition-history row |
 
 There are exactly four code-defined `queue` values and twelve backlog time series,
-plus two dispute-failure gauges without labels (fourteen custom series total):
+plus two dispute-failure gauges without labels and six booking decision-wait
+samples with two fixed `stage` labels (twenty custom series total):
 
 | Queue | Included rows | Age timestamp |
 | --- | --- | --- |
@@ -67,6 +72,43 @@ Booking failures without a durable dispute marker, faults that prevent marker
 persistence, healthy human-wait ages and comprehensive engine health are outside
 this signal. A zero count does not prove the absence of all workflow failures.
 
+## Booking decision waits
+
+`stage="provider_decision"` selects current `WAIT_PROVIDER` bookings;
+`stage="customer_decision"` selects current `WAIT_CUSTOMER` bookings. These are
+saved domain states awaiting the corresponding decision, not an engine-health
+classification. A faulted booking can remain in either state. Scheduling,
+in-progress work, disputed/terminal bookings and dispute-party/admin waits are
+outside these two stages. Completed, cancelled and expired bookings are excluded.
+
+For each booking, the query takes the latest `booking_status_history.occurred_at`
+whose status matches the current state. The stage age is database transaction time
+minus the earliest of those latest transitions, clamped to zero if negative. It
+measures time in the saved state, not booking age, process uptime, request latency
+or an approved decision deadline. Restarting the API does not reset the history
+timestamp. Empty stages have count, age and missing-history values of zero after
+successful collection.
+
+If any current-stage booking lacks matching history, its count remains included,
+the missing-history gauge rises, and the entire stage's oldest age is NaN. The
+collector does not substitute booking creation time or calculate a partial oldest
+age that could hide an older unknown wait. This is a successful observation of
+incomplete history, distinct from SQL collection failure. Investigate through
+authorized views and restricted records; do not edit history to suppress telemetry.
+Counts/ages/missing-history values share the existing snapshot freshness contract.
+Scrapes read memory; labels contain only the two code-defined stage names.
+
+The packaged quote/rejection and direct/completion restart scenarios verify
+positive provider/customer counts and transition ages, unchanged workflow IDs,
+non-resetting ages across process crashes, removal from stages after terminal
+settlement and one simulated settlement per booking. The rejection scenario
+temporarily removes one history row in its owned synthetic database, requires
+count one/missing-history one/age NaN, then restores that exact row before the
+crash. This reversible test-only fault injection is not an operator recovery
+procedure and accepts no external target. Ordinary disabled-collection tests
+require all six samples to be NaN before successful collection. The twenty-series
+packaged access/outage/drain scenario observes empty decision stages throughout.
+
 ## Sampling and failure behavior
 
 `bliss.operations.backlog.enabled=true` enables collection by default.
@@ -75,7 +117,8 @@ is delayed three seconds. Concurrent scheduled collections are skipped. The test
 profile disables collection to avoid background work in ordinary database fixtures;
 gauges remain registered with unknown values. The dispute regression explicitly
 opts into one-second collection for its isolated test profile. The packaged
-verification also uses a one-second interval only for its owned scenario.
+verification and the two booking restart scenarios also use a one-second interval
+only for their owned scenarios. Other packaged scenarios retain default sampling.
 
 The SQL requests a two-second statement timeout. Pool acquisition and transaction
 timeouts are separate runtime limits; a stalled attempt can take longer. This is
@@ -87,7 +130,7 @@ Counts and oldest ages are NaN before the first success. On a runtime collection
 failure, the collector increments its failure counter, marks the latest attempt
 unsuccessful and retains the entire last good snapshot. It never substitutes zero
 for unknown work. Counts/oldest ages remain frozen; snapshot age keeps increasing.
-A subsequent success replaces all queue/failure aggregates and resets snapshot age,
+A subsequent success replaces all queue/failure/wait aggregates and resets snapshot age,
 while the cumulative failure counter remains until process restart. Individual
 gauge reads within a scrape are not a transactional cross-metric snapshot.
 
@@ -104,6 +147,7 @@ Use Java 21, Docker and an isolated checkout/build directory. From `services/api
 ```sh
 ./mvnw -B -ntp verify -Dtest=WorkflowBacklogMetricsTest,OperationsSmokeTest -Dit.test=WorkflowBacklogMetricsIT -Dquarkus.http.test-port=0
 ./mvnw -B -ntp verify -Dtest=DisputeTest,WorkflowBacklogMetricsTest -Dit.test=WorkflowBacklogMetricsIT -Dquarkus.http.test-port=0
+./mvnw -B -ntp verify -Dtest=WorkflowBacklogMetricsTest,OperationsSmokeTest -Dit.test=WorkflowRestartIT,WorkflowBacklogMetricsIT -Dquarkus.http.test-port=0
 ./mvnw -B -ntp verify -Dquarkus.http.test-port=0
 ```
 
@@ -124,6 +168,8 @@ replay retains the same processed event. The two dispute queues are verified emp
 in this scenario; positive dispute admission/settlement remains covered separately
 by domain regression, not by this metrics drill. The empty dispute-failure gauges
 also remain zero in this packaged scenario, including outage/recovery.
+The six booking decision-wait samples likewise remain zero there: its cancellation
+is admitted before authorization and never enters either decision-wait state.
 
 The actual DisputeFlow exhausted-retry regression now reads Prometheus output:
 four failed simulated settlement attempts roll back, the saved failure timestamp
@@ -141,7 +187,9 @@ this metrics scenario makes no new payment-settlement claim. Existing packaged
 workload/restore tests cover simulated settlement. The packaged metrics test has
 a four-minute JUnit bound, 60-second metric waits and five-second HTTP deadlines; those are
 failure guardrails, not service objectives. See [progress](../agent/PROGRESS.md)
-for executed evidence. Private collection, dashboards, alert rehearsal, broader
-booking/engine failure and human-wait observability and capacity acceptance remain
+for executed evidence. Booking wait-metric polling has a twenty-second test bound;
+the history fixture's SQL statements have ten-second limits. Private collection,
+dashboards, alert rehearsal, broader booking/engine failures, dispute waits,
+engine-health classification and capacity acceptance remain
 open under
 [#15](https://github.com/Stuaarts/Bliss/issues/15) and [readiness](READINESS.md).

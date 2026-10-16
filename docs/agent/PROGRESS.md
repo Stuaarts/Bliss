@@ -1352,3 +1352,53 @@ empty failure gauges. No live gateway, Flutter/native rerun, public/paid hosting
 external collection, billing settings or existing-data changes. Preserve drafts
 #39–#47 and keep #7/#12/#15 open; CI/native acceptance remains the deferred final
 gate.
+
+## 2026-10-16 — booking decision-wait metrics (#15)
+
+Branch `15-booking-wait-metrics` builds on draft PR #48 at `2e38d3b` in the
+existing isolated managed checkout. The cached read-only SQL snapshot now includes
+current WAIT_PROVIDER/WAIT_CUSTOMER booking counts, oldest latest matching
+transition ages and missing-history counts. Two code-defined stage labels produce
+six additional samples (twenty total custom series). No record IDs, actor content
+or Flow payloads enter metric labels/values. A stage with any missing matching
+history retains its booking count, increments the missing count and reports NaN
+age rather than an invented/partial value. Empty stages report zero after success;
+unknown/stale/failed collection uses the existing shared snapshot contract.
+See the [contract and test-only history fault](../operations/WORKFLOW_BACKLOG_METRICS.md#booking-decision-waits).
+
+Focused Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dtest=WorkflowBacklogMetricsTest,OperationsSmokeTest
+-Dit.test=WorkflowRestartIT,WorkflowBacklogMetricsIT -Dquarkus.http.test-port=0`
+passed nine scenarios (six ordinary + three packaged), zero failures/errors/skips
+with clean Spotless, in 2:02. The actual quote/rejection and direct/completion
+restart cases passed in 57.90 seconds: provider/customer counts and positive
+transition ages survive process crashes with unchanged workflow IDs, terminal
+records leave the stage metrics, and ledger checks retain one AUTHORIZE and one
+VOID or CAPTURE. The owned quote fixture temporarily removes one history row,
+requires count one/missing one/age NaN, restores the exact row, then proceeds
+through crash/restart and rejection. This is isolated reversible fault injection,
+not an operator command or project-data edit. The twenty-series packaged metrics
+outage/access/drain scenario passed in 22.49 seconds with empty wait stages; the
+ordinary test requires six unknown NaN samples before successful collection.
+Only these owned test scenarios override collection to one second; production
+defaults remain ten seconds. Full Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dquarkus.http.test-port=0` passed all 82 scenarios (65 ordinary + 17
+migration/packaged), zero failures/errors/skips, with Spotless clean, in 5:49.
+Both strengthened booking restart cases passed again in 60.24 seconds, including
+missing-history/NaN and exact-row restoration, provider/customer age continuity,
+terminal exclusion and single settlement. Dispute failure, migrations, management,
+database outage, diagnostics, authenticated workload, backup/restore and dispute
+restart assertions also passed. The full log has no Flow trace-listener messages.
+Test fixtures are absent from the application jar. Documentation links,
+tracked-file hygiene and `git diff --check` pass; owned resources are cleaned up
+and project services/data preserved. Logs remain in
+`services/api/target/wait-metrics-focused.log` and `wait-metrics-verify.log`.
+
+The gauges describe saved booking decision states, not healthy engine waits or
+an approved deadline/SLO. Scheduling/in-progress/terminal/disputed states,
+dispute-party/admin waits, broader engine failures, hosted collection/dashboards/
+alerts and operator acceptance remain separate. No schema/dependency/upstream,
+workflow transition, settlement or automatic recovery change. No Flutter/native
+rerun, public/paid hosting, live payment, billing settings or existing project
+database change. Preserve drafts #39–#48 and keep #7/#12/#15 open; required
+CI/native acceptance remains at the deferred final gate.
