@@ -238,3 +238,22 @@ engine-health classification, alerts and the final CI/native gate remain open;
 prior drafts and project data are preserved.
 Full local Java 21 verification passes 82 scenarios (65 ordinary + 17
 migration/packaged), zero failures/errors/skips, with Spotless clean.
+
+Branch `15-booking-failure-handling` builds on draft PR #50 at `3088da5`.
+It records canonical active booking failures in nullable V11 timestamps after
+Flow checkpoint cleanup. Dispatch/ticks skip marked bookings; owner execution
+returns ERROR, new ordinary actions are rejected, and prior receipts still replay.
+Cached failure count/age adds two unlabeled samples. Actual exhausted AUTHORIZE/
+VOID tests verify rollback/no reclaim, and a separate synthetic marker survives
+a packaged process restart. Populated V10 migration preserves existing values
+without historical failure inference. See [booking failures](../operations/BOOKING_FAILURES.md)
+for investigation and the restriction on rollback to workers that ignore markers.
+No automatic recovery, business transition, settlement-policy, dependency or
+upstream change. Marker-write failures, compatible repair, external reconciliation,
+broader engine health and final CI/native gates remain open.
+Focused Java 21 verification passes 13 scenarios (eight ordinary + five
+migration/packaged), zero failures/errors/skips, Spotless clean, in 2:03.
+Full Java 21 verification passes 85 scenarios (67 ordinary + 18 migration/
+packaged), zero failures/errors/skips, Spotless clean, in 6:27. Final terminal
+execution precedence and start-acknowledgement assertions pass; existing crash,
+restore, outage, ownership and single-settlement evidence remains green.

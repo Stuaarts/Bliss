@@ -1457,3 +1457,72 @@ injection, not a project-data edit or operator procedure. No Flutter/native reru
 public/paid hosting, live payment or billing settings change. Preserve drafts
 #39–#49 and keep #7/#12/#15 open; CI/native acceptance remains the deferred final
 gate.
+
+## 2026-10-16 — durable booking failure handling (#15)
+
+Branch `15-booking-failure-handling` builds on draft PR #50 at `3088da5` in the
+existing managed checkout. Flow removes failed checkpoints; an exhausted
+authorization previously left an unacknowledged start eligible for reclaim after
+thirty seconds. V11 adds nullable UTC `booking.workflow_failed_at`; the lifecycle
+listener records canonical active ordinary failures once and increments version.
+Terminal/disputed bookings are excluded. No historical failure is inferred from
+missing checkpoints. Scheduled dispatch, the locked claim and restored ticks skip
+marked bookings. Owner execution returns ERROR while a booking remains active
+and ordinary; historical markers do not override terminal/disputed outcomes.
+New ordinary actions are rejected with the existing generic 409; exact prior
+receipts retain their processed flag and conflicting reuse remains 409. The
+booking start callback logs identifiers without an exception/payload. Two cached
+unlabeled failure gauges share existing availability/freshness/failure semantics;
+the single statement now computes ten aggregates and twenty-eight custom samples.
+See [booking failure handling](../operations/BOOKING_FAILURES.md) and the
+[metric contract](../operations/WORKFLOW_BACKLOG_METRICS.md#durable-booking-failure-signal).
+
+Focused Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dtest=BookingWorkflowTest,WorkflowBacklogMetricsTest
+-Dit.test=DatabaseInvariantsIT,WorkflowBacklogMetricsIT
+-Dquarkus.http.test-port=0` passed 13 scenarios (eight ordinary + five migration/
+packaged), zero failures/errors/skips with Spotless clean, in 2:03. Both actual
+engine failure cases exhaust all four simulated AUTHORIZE/VOID attempts after
+ledger writes. Transactions roll back; the failure marker survives checkpoint
+removal; aged claims keep their workflow ID; guarded ticks do not act; owner
+ERROR/outsider denial, new-action rejection, receipt replay, stable marker and
+positive failure-count delta/age pass. Existing transient-retry and unmarked
+abandoned-claim recovery pass. An initial test expected a custom 409 detail;
+correcting the assertion to the existing generic problem contract produced this
+green focused run. The problem mapper was not changed.
+
+The packaged metrics drill passed in 38.44 seconds: existing operator access,
+outage/frozen snapshot, same-process collection recovery and drain/replay remain.
+A separate synthetic saved-marker phase restarts a distinct API process with
+scheduled dispatch enabled and verifies retained count/age/instance, no reclaim
+or authorization, ERROR/action denial, and exclusion of an older terminal marker.
+This phase is persistence fault injection, not an actual packaged gateway failure.
+Populated V10-to-V11 adds only the nullable UTC marker, preserves all old booking
+values and other tables, performs no failure backfill and repeats as a no-op.
+Existing populated V8/V9 boundary checks explicitly retain their V10 target;
+the new populated V10 test covers V11. Before full verification, terminal execution
+precedence and start-acknowledgement assertions were tightened; the focused run
+predates those final assertions.
+
+Full Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dquarkus.http.test-port=0` passed all 85 scenarios (67 ordinary + 18 migration/
+packaged), zero failures/errors/skips, in 6:27, finishing at 15:25:19 -04:00.
+Spotless keeps 85 Java files clean. Final terminal execution precedence and
+start-acknowledgement assertions pass. Both actual failure cases, populated V11
+migration, synthetic marker restart (35.29 seconds), both booking restart outcomes
+(57.48 seconds) and both dispute restart outcomes (92.11 seconds) pass, alongside
+management access, diagnostics, authenticated workload, outage recovery and the
+28-table paused-workflow restore/single simulated VOID. No Flow trace-listener
+messages occur. V11 is packaged; test identity/profile/payment alternatives and
+helpers are excluded from the application jar. Local Markdown links, tracked/new
+file hygiene and `git diff --check` pass; owned resources are cleaned up and
+existing project data preserved. Logs remain in
+`services/api/target/booking-failure-focused.log` and `booking-failure-verify.log`.
+
+No automatic recovery/reset, historical repair, dependency/upstream, business
+transition or settlement-policy change. A marker-write failure is outside these
+guards. An older binary ignores the marker and must not run dispatch against
+marked bookings; the operator guide requires compatible roll-forward/recovery
+review. No Flutter/native rerun, public/paid hosting, live gateway, billing change
+or existing project database migration. Preserve drafts #39–#50 and keep
+#7/#12/#15 open; required CI/native acceptance remains at the deferred final gate.

@@ -254,8 +254,8 @@ class DatabaseInvariantsIT {
                                 "dispute_history",
                                 "dispute_workflow_start"));
                 var v9 = snapshot(c, allTables);
-                flyway(db, "latest").migrate();
-                flyway(db, "latest").validate();
+                flyway(db, "10").migrate();
+                flyway(db, "10").validate();
                 assertEquals(v9, snapshot(c, allTables));
 
                 for (String boundary :
@@ -354,6 +354,54 @@ class DatabaseInvariantsIT {
                 flyway(db, "latest").migrate();
                 flyway(db, "latest").validate();
                 assertEquals("85.50", value(c, "SELECT amount::text FROM payment"));
+            }
+        }
+    }
+
+    @Test
+    void populatedV10UpgradeAddsOnlyNullableBookingFailureMarker() throws Exception {
+        try (var db = new PostgreSQLContainer("postgres:17.6-alpine")) {
+            db.start();
+            flyway(db, "10").migrate();
+            try (var c = connect(db)) {
+                seedV8(c);
+                seedV9(c);
+                var tables = new ArrayList<String>();
+                try (var s = c.createStatement();
+                        var rows =
+                                s.executeQuery(
+                                        "SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename NOT IN ('booking','flyway_schema_history') ORDER BY tablename")) {
+                    while (rows.next()) tables.add(rows.getString(1));
+                }
+                var before = snapshot(c, tables);
+                String bookingBefore =
+                        value(c, "SELECT (to_jsonb(b)-'workflow_failed_at')::text FROM booking b");
+                assertEquals(1, flyway(db, "latest").migrate().migrationsExecuted);
+                flyway(db, "latest").validate();
+                assertEquals(before, snapshot(c, tables));
+                assertEquals(
+                        bookingBefore,
+                        value(c, "SELECT (to_jsonb(b)-'workflow_failed_at')::text FROM booking b"));
+                assertEquals(
+                        "1",
+                        value(c, "SELECT count(*) FROM booking WHERE workflow_failed_at IS NULL"));
+                assertEquals(
+                        "timestamp with time zone,YES",
+                        value(
+                                c,
+                                "SELECT data_type||','||is_nullable FROM information_schema.columns WHERE table_schema='public' AND table_name='booking' AND column_name='workflow_failed_at'"));
+                // No historical failure is inferred from this populated booking's absent
+                // checkpoint.
+                sql(c, "UPDATE booking SET workflow_failed_at='2026-10-16T15:00:00.123456Z'");
+                sql(c, "SET TIME ZONE 'Pacific/Auckland'");
+                assertEquals(
+                        "2026-10-16T15:00:00.123456Z",
+                        value(
+                                c,
+                                "SELECT to_char(workflow_failed_at AT TIME ZONE 'UTC','YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"') FROM booking"));
+                assertEquals(0, flyway(db, "latest").migrate().migrationsExecuted);
+                System.out.println(
+                        "Booking failure migration proof: populated_v10_to_v11=true old_values_preserved=true nullable_utc_marker=true no_failure_backfill=true repeat_migration_noop=true");
             }
         }
     }

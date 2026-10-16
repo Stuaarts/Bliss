@@ -1,7 +1,7 @@
 # Aggregate workflow operations metrics (#15)
 
-`WorkflowBacklogMetrics` periodically reads four durable inbox aggregates and one
-durable dispute-failure aggregate, plus booking/dispute wait aggregates, in a
+`WorkflowBacklogMetrics` periodically reads four durable inbox aggregates and
+booking/dispute failure aggregates, plus booking/dispute wait aggregates, in a
 single SQL statement/transaction.
 Prometheus scrapes read only its in-memory snapshot;
 they never query the database. Production `/q/metrics` retains the independent
@@ -21,6 +21,8 @@ dashboard, notification destination or alert threshold is configured here.
 | `bliss_workflow_backlog_collection_failures_total` | Failed collection attempts since this API process started |
 | `bliss_workflow_dispute_failed_cases` | Unresolved dispute records with a saved workflow failure timestamp |
 | `bliss_workflow_dispute_failed_oldest_seconds` | Age of the earliest saved failure timestamp among those records at snapshot time; zero when none |
+| `bliss_workflow_booking_failed_bookings` | Active ordinary bookings with a saved workflow failure timestamp; terminal/disputed bookings excluded |
+| `bliss_workflow_booking_failed_oldest_seconds` | Age of the earliest included booking failure at snapshot time; zero when none |
 | `bliss_workflow_booking_waiting_bookings{stage="..."}` | Current bookings in the corresponding saved decision-wait state |
 | `bliss_workflow_booking_waiting_oldest_seconds{stage="..."}` | Oldest latest matching transition age at snapshot time; NaN if any matching booking lacks that history |
 | `bliss_workflow_booking_waiting_history_missing{stage="..."}` | Current decision-wait bookings without a matching transition-history row |
@@ -29,9 +31,9 @@ dashboard, notification destination or alert threshold is configured here.
 | `bliss_workflow_dispute_waiting_history_missing{stage="..."}` | Current-stage disputes without a matching transition-history row |
 
 There are exactly four code-defined `queue` values and twelve backlog time series,
-plus two dispute-failure gauges without labels and six booking decision-wait
+plus four booking/dispute failure gauges without labels and six booking decision-wait
 samples with two fixed `stage` labels. Six dispute-wait samples use two other
-fixed stages (twenty-six custom series total):
+fixed stages (twenty-eight custom series total):
 
 | Queue | Included rows | Age timestamp |
 | --- | --- | --- |
@@ -72,9 +74,27 @@ they neither identify a case nor grant permission to read evidence or settle it.
 Use existing authorized dispute/execution views and the operator investigation
 procedure. Do not replay decisions, clear failure markers or edit ledger rows
 to force recovery. Automatic recovery and real-provider reconciliation remain open.
-Booking failures without a durable dispute marker, faults that prevent marker
-persistence, healthy human-wait ages and comprehensive engine health are outside
+Faults that prevent marker persistence and comprehensive engine health are outside
 this signal. A zero count does not prove the absence of all workflow failures.
+
+## Durable booking failure signal
+
+The booking-failure gauges select marked bookings outside COMPLETED, CANCELLED,
+EXPIRED, REFUNDED and DISPUTED. These count active ordinary failed bookings, not
+attempts or a cumulative failure total. Age begins at `workflow_failed_at`, not
+creation, claim time, last action or entry into a decision wait. The V11 marker is
+written once by `BookingFailureListener` for the canonical booking lifecycle
+instance; Flow's failed-checkpoint cleanup does not remove it. Missing checkpoints
+alone never create a failure marker. See [booking failure handling](BOOKING_FAILURES.md)
+for dispatch/action guards, safe owner execution status, migration/rollback and
+investigation boundaries.
+
+These gauges share snapshot availability/freshness/failure semantics: NaN before
+first success, zero when empty after success, and frozen last-good values on
+collection failure. They use no private values or labels. Failure counts can
+overlap with wait and inbox counts. They neither identify a booking nor authorize
+automatic recovery or settlement. A lost marker write, other engines and
+historical unmarked failures remain outside their scope.
 
 ## Booking decision waits
 
@@ -110,7 +130,7 @@ temporarily removes one history row in its owned synthetic database, requires
 count one/missing-history one/age NaN, then restores that exact row before the
 crash. This reversible test-only fault injection is not an operator recovery
 procedure and accepts no external target. Ordinary disabled-collection tests
-require all six samples to be NaN before successful collection. The twenty-six-series
+require all six samples to be NaN before successful collection. The twenty-eight-series
 packaged access/outage/drain scenario observes empty decision stages throughout.
 
 ## Dispute evidence and admin-review waits
@@ -187,6 +207,7 @@ Use Java 21, Docker and an isolated checkout/build directory. From `services/api
 ./mvnw -B -ntp verify -Dtest=DisputeTest,WorkflowBacklogMetricsTest -Dit.test=WorkflowBacklogMetricsIT -Dquarkus.http.test-port=0
 ./mvnw -B -ntp verify -Dtest=WorkflowBacklogMetricsTest,OperationsSmokeTest -Dit.test=WorkflowRestartIT,WorkflowBacklogMetricsIT -Dquarkus.http.test-port=0
 ./mvnw -B -ntp verify -Dtest=WorkflowBacklogMetricsTest,OperationsSmokeTest -Dit.test=DisputeRestartIT,WorkflowRestartIT,WorkflowBacklogMetricsIT -Dquarkus.http.test-port=0
+./mvnw -B -ntp verify -Dtest=BookingWorkflowTest,WorkflowBacklogMetricsTest -Dit.test=DatabaseInvariantsIT,WorkflowBacklogMetricsIT -Dquarkus.http.test-port=0
 ./mvnw -B -ntp verify -Dquarkus.http.test-port=0
 ```
 
@@ -207,6 +228,13 @@ replay retains the same processed event. The two dispute queues are verified emp
 in this scenario; positive dispute admission/settlement remains covered separately
 by domain regression, not by this metrics drill. The empty dispute-failure gauges
 also remain zero in this packaged scenario, including outage/recovery.
+The booking-failure gauges are likewise zero during this admission/outage/drain
+phase. A subsequent synthetic saved-marker phase verifies count/age and identity
+survive a distinct API process restart, the scheduled dispatcher skips an expired
+marked claim, no authorization is created and an older terminal marker is excluded.
+Actual booking authorization/VOID retry-exhaustion regressions separately verify
+four rolled-back attempts, retained markers after checkpoint cleanup, no reclaim,
+guarded ticks, action denial/replay and positive failure count/age.
 The six booking and six dispute-wait samples likewise remain zero there: its cancellation
 is admitted before authorization and never enters either decision-wait state.
 
@@ -228,7 +256,7 @@ a four-minute JUnit bound, 60-second metric waits and five-second HTTP deadlines
 failure guardrails, not service objectives. See [progress](../agent/PROGRESS.md)
 for executed evidence. Shared wait-metric polling has a twenty-second test bound;
 the history fixture's SQL statements have ten-second limits. Private collection,
-dashboards, alert rehearsal, broader booking/engine failures,
+dashboards, alert rehearsal, failures without persisted markers,
 engine-health classification and capacity acceptance remain
 open under
 [#15](https://github.com/Stuaarts/Bliss/issues/15) and [readiness](READINESS.md).

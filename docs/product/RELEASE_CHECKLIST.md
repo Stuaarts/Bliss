@@ -9,7 +9,7 @@ the separate verified runs; no narrated video is claimed.
 | --- | --- |
 | Repository and CI | Private monorepo; completed work committed/pushed; Java and Flutter CI |
 | Java 21 / Quarkus build | Full Maven verify on clean CI checkouts; pinned dependency versions |
-| PostgreSQL / Flyway / ORM | V1–V10, empty and populated V5/V8/V9 upgrades, Hibernate validation; local V10 readiness UP |
+| PostgreSQL / Flyway / ORM | V1–V11, empty and populated V5/V8/V9/V10 upgrade tests, Hibernate validation; earlier local V10 readiness evidence retained |
 | Identity and ownership | Real Keycloak PKCE browser login, server-side role/owner checks and negative tests |
 | Catalog and providers | Provider onboarding, owned publishing/edit/archive and public discovery |
 | Request / quote / direct booking | Browser evidence plus concurrent acceptance, price snapshot and duplicate tests |
@@ -19,7 +19,7 @@ the separate verified runs; no narrated video is claimed.
 | Chat | Persisted participant-scoped messages, retry/pagination, browser restart evidence |
 | Reviews | Completed-customer eligibility, one review per booking, public rating/privacy tests |
 | Disputes | Private evidence, independent admin decision, manual review wait and simulated refund verified |
-| Backend quality gates | Merged foundation: 63 scenarios. Dispute-wait metrics branch locally passes 82: 65 ordinary + 17 migration/packaged-process scenarios; remote CI remains pending |
+| Backend quality gates | Merged foundation: 63 scenarios. Booking failure branch locally passes 85: 67 ordinary + 18 migration/packaged-process scenarios; remote CI remains pending |
 | Flutter quality gates | Analysis, formatting, 46 tests; release web build and Android app/test-driver compilation are checked for each PR |
 | Operations and docs | Production health/metrics/OpenAPI/Swagger require an independent operator role; local tools remain available. See [management access](../operations/MANAGEMENT_ACCESS.md), action catalog, ADRs, workflow diagrams and [operations readiness plan](../operations/READINESS.md) for remaining hosting/privacy/abuse controls |
 | Native device validation | Real Android Keycloak login/recovery/logout, request-to-review, direct cancellation, customer/provider/admin dispute and catalog outage/retry pass. iOS app build, native session fixture and real customer/provider Keycloak browser login/recovery/logout/account switching pass. iOS request-to-review/chat/simulated capture/review recovery also pass. **Open #7:** secondary iOS cancellation/dispute/connection-recovery acceptance; other settlement branches retain API/web evidence |
@@ -163,6 +163,13 @@ saved states, not engine health. Dispute evidence/review wait metrics likewise
 retain transition ages across restarts and exclude resolved cases, with explicit
 missing-history values. Broader faults, private collection,
 dashboards and alert rehearsal remain open.
+[Durable booking failure handling](../operations/BOOKING_FAILURES.md) records
+canonical lifecycle failures after retry exhaustion, prevents automatic reclaim
+and new ordinary actions, preserves receipt replay and exposes owner execution
+ERROR plus cached failure count/age. V11 preserves existing records without
+inferring historical failures. A pre-fix worker must not resume dispatch against
+marked bookings; compatible rollback/recovery needs review. This does not approve
+operator repairs, live-gateway reconciliation or general engine-health claims.
 The [bounded authenticated workload](../operations/AUTHENTICATED_WORKLOAD.md)
 checks eight customers through four clients, duplicate booking/cancellation
 requests, eight durable waits surviving an API crash, ownership denial and exactly

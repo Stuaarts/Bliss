@@ -61,6 +61,8 @@ public class BookingEvents {
                 throw new ClientErrorException("Event key already used", 409);
             return new Receipt(eventId, bookingId, type.name(), row[4] != null);
         }
+        if (b.workflowFailedAt != null)
+            throw new ClientErrorException("Booking workflow requires investigation", 409);
         if (type == Type.PROVIDER_ACCEPT) {
             if (scheduledAt == null || !scheduledAt.isAfter(Instant.now()))
                 throw new BadRequestException("Future schedule required");

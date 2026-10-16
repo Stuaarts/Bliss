@@ -35,7 +35,7 @@ public class BookingWorkflowSteps {
 
     private State tick(String instanceId, UUID bookingId) {
         Booking b = em.find(Booking.class, bookingId, LockModeType.PESSIMISTIC_WRITE);
-        if (b == null || !instanceId.equals(b.workflowInstanceId))
+        if (b == null || !instanceId.equals(b.workflowInstanceId) || b.workflowFailedAt != null)
             return new State(bookingId, true);
         em.createNativeQuery("UPDATE booking_workflow_start SET started=true WHERE booking_id=?1")
                 .setParameter(1, b.id)

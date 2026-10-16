@@ -71,6 +71,9 @@ public class Booking extends PanacheEntityBase {
     @Column(name = "workflow_instance_id")
     public String workflowInstanceId;
 
+    @Column(name = "workflow_failed_at")
+    public Instant workflowFailedAt;
+
     @Column(name = "scheduled_at")
     public Instant scheduledAt;
 
