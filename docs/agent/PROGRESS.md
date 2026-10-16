@@ -1246,3 +1246,58 @@ still open. No Flutter/native rerun, billing settings, public/paid hosting, live
 payment, upstream source or existing project database change. Preserve drafts
 #39–#45 and keep #7/#12/#15 open; CI/native acceptance remains the deferred final
 gate.
+
+## 2026-10-16 — aggregate workflow inbox metrics (#15)
+
+Branch `15-workflow-backlog-metrics` builds on draft PR #46 at `17da5eb` in the
+existing managed checkout. `WorkflowBacklogMetrics` periodically collects one
+read-only SQL/transaction snapshot of pending booking starts/actions and dispute
+starts/decisions. Four code-defined queue labels expose counts and oldest ages;
+availability, monotonic snapshot age, last-attempt success and a process-local
+failure counter make stale/unknown observations visible. Twelve custom Prometheus
+series contain no record IDs, tokens, actor text or Flow payloads. Scrapes use
+memory only; failure retains last good values rather than reporting false zero.
+Default collection is ten seconds with a three-second startup delay, skipped
+overlaps and a two-second SQL timeout request. Ordinary test-profile collection
+is disabled. Existing production operator authorization is unchanged. See the
+[contract, sampling limits and reproduction](../operations/WORKFLOW_BACKLOG_METRICS.md).
+
+Docker initially hit the known Windows stale `sailor-ingest.sock` startup failure.
+After the failed Desktop stopped, the existing guarded helper preserved runtime
+directories and started the Linux engine (29.8.0); no reinstall or data reset.
+A test compilation error from treating the pinned SimpleMeterRegistry as
+AutoCloseable was corrected to explicit cleanup before successful verification.
+Focused Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dtest=WorkflowBacklogMetricsTest,OperationsSmokeTest -Dit.test=WorkflowBacklogMetricsIT
+-Dquarkus.http.test-port=0` passed seven scenarios (six ordinary + one packaged),
+zero failures/errors/skips with Spotless clean, in 55.760 seconds. The packaged
+case passed in 20.53 seconds. Its one-second test-only collection interval observes
+one HTTP-created pending booking start/action with positive ages, anonymous and
+marketplace-role denial, and twelve fixed aggregate series without private values.
+Stopping only its labelled database retains counts, freezes oldest ages, advances
+snapshot age and records failure while actual operator scrapes still return 200.
+Database recovery resumes collection in the same API process; restarting only
+the owned API with dispatch enabled drains the queues and preserves event replay.
+The ordinary test checks disabled collection/unknown values without database use.
+Full Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dquarkus.http.test-port=0` passed all 82 scenarios (65 ordinary + 17
+migration/packaged), zero failures/errors/skips, with Spotless clean, in 5:23.
+The packaged metrics case passed again in 19.88 seconds with its pending,
+outage/freshness, same-process collection recovery, operator and drain assertions.
+Existing migrations, management, diagnostics, database outage, eight-workflow
+contention/restart, real backup/restore and all four booking/dispute restart cases
+also passed. The full log has no Flow trace-listener messages. Test fixtures are
+absent from the application jar; documentation links, tracked/new-file hygiene
+and `git diff --check` pass. Owned resources are cleaned up and existing services
+preserved. Logs remain in `services/api/target/backlog-focused.log` and
+`backlog-verify.log`.
+
+No dependency/schema/upstream changes, new endpoint, workflow transition or
+payment behavior change. This measures admission inboxes, not engine failures,
+healthy human waits, capacity or alert effectiveness. The positive packaged case
+covers booking queues; dispute queues are observed empty. Private collection,
+engine failure/wait-age metrics, dashboards, threshold approval and alert/operator
+rehearsal remain open. No Flutter/native rerun, public/paid deployment, live
+payment, billing settings or existing project database change. Preserve drafts
+#39–#46 and keep #7/#12/#15 open; CI/native acceptance stays at the deferred final
+gate.

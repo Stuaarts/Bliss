@@ -12,7 +12,7 @@ assign, not staffed services. Track delivery in [issue #15](https://github.com/S
 | --- | --- | --- |
 | Deployment | Loopback API, PostgreSQL/Flyway, one API worker, durable BookingLifecycleFlow and DisputeFlow | Private database networking, TLS, release/rollback rehearsal, health-based deployment, resource sizing and assigned operator |
 | Identity and secrets | One OIDC issuer, audience/subject and server-side role/ownership checks; explicit packaged DB and issuer configuration | Managed identity availability, least-privilege runtime/migration credentials, secret storage, rotation and revocation drill |
-| Diagnostics | JSON console logging; matched REST response events with generated IDs and operation names; mapped failures omit throwables; Flow payload tracing disabled; operator-gated production management | Private management ingress, credential operations, collection/dashboards/alerts, remaining category access/retention/redaction review and end-to-end tracing |
+| Diagnostics | JSON console logging; bounded REST response events; mapped errors omit throwables; Flow payload tracing disabled; operator-gated production management; cached inbox backlog/age/freshness metrics | Private management ingress, credential operations, collection/dashboards/alerts, engine failure/wait observability, remaining log privacy review and end-to-end tracing |
 | Recovery | Packaged crash/restart and database outage drills; paused booking backup restored into a fresh database and continued through simulated cancellation; migrations/invariants tested | Managed backup scheduling, encrypted storage, access/retention, broader workflow/external-effect restore, agreed RPO/RTO and operator rehearsal |
 | Capacity | Bounded public category reads; eight-customer authenticated direct-booking/retry workload with four clients, eight restored waits and single-settlement checks | Broader endpoint/actor mixes, agreed dataset/arrival rates, long waits, saturation/soak and resource/backlog evidence against approved SLOs |
 | Abuse and moderation | Authentication, participant/owner checks, validation and bounded pagination | Enforced rate limits, reporting/review/removal workflow, escalation/appeal policy and tested abuse controls |
@@ -112,7 +112,12 @@ for route-template/status request counts, error rate, latency, JVM/DB saturation
 and durable workflow wait/retry failures. Do not label metrics with user, booking,
 message, request ID or raw URL values. Propose alert thresholds from representative
 measurements, then rehearse an alert through acknowledgement and recovery. These
-dashboards, alerts and custom workflow gauges do not exist yet.
+dashboards and alerts do not exist yet. The
+[aggregate workflow inbox metrics](WORKFLOW_BACKLOG_METRICS.md) now expose four
+fixed queue counts/oldest ages and collection availability/freshness/failures.
+Scrapes use a cached snapshot without SQL; database failures preserve last good
+values rather than reporting a false zero. These are admission inbox aggregates,
+not engine fault/healthy-wait gauges or proof that all workflows are progressing.
 
 REST correlation is generated server-side. [REST response diagnostics](REQUEST_DIAGNOSTICS.md)
 now record the ID, allowlisted method, code-defined operation, status and filter
@@ -183,7 +188,8 @@ correlation). The database outage slice builds on #42; none of these local tests
 waive required CI gates.
 The [REST diagnostic slice](REQUEST_DIAGNOSTICS.md) builds on draft #43 and the
 [authenticated workload](AUTHENTICATED_WORKLOAD.md) builds on draft #44. The
-[paused workflow restore](WORKFLOW_BACKUP_RESTORE.md) builds on draft #45. Private
+[paused workflow restore](WORKFLOW_BACKUP_RESTORE.md) builds on draft #45. The
+[workflow inbox metrics](WORKFLOW_BACKLOG_METRICS.md) build on draft #46. Private
 management networking, broader telemetry review and workload/resource acceptance
 remain open. Managed infrastructure,
 retention/moderation policy and commercial payments need owner decisions first.
