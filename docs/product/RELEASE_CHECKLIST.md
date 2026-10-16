@@ -19,7 +19,7 @@ the separate verified runs; no narrated video is claimed.
 | Chat | Persisted participant-scoped messages, retry/pagination, browser restart evidence |
 | Reviews | Completed-customer eligibility, one review per booking, public rating/privacy tests |
 | Disputes | Private evidence, independent admin decision, manual review wait and simulated refund verified |
-| Backend quality gates | Merged foundation: 63 scenarios. Workflow backup/restore branch locally passes 80: 64 ordinary + 16 migration/packaged-process scenarios; remote CI remains pending |
+| Backend quality gates | Merged foundation: 63 scenarios. Workflow backlog metrics branch locally passes 82: 65 ordinary + 17 migration/packaged-process scenarios; remote CI remains pending |
 | Flutter quality gates | Analysis, formatting, 46 tests; release web build and Android app/test-driver compilation are checked for each PR |
 | Operations and docs | Production health/metrics/OpenAPI/Swagger require an independent operator role; local tools remain available. See [management access](../operations/MANAGEMENT_ACCESS.md), action catalog, ADRs, workflow diagrams and [operations readiness plan](../operations/READINESS.md) for remaining hosting/privacy/abuse controls |
 | Native device validation | Real Android Keycloak login/recovery/logout, request-to-review, direct cancellation, customer/provider/admin dispute and catalog outage/retry pass. iOS app build, native session fixture and real customer/provider Keycloak browser login/recovery/logout/account switching pass. iOS request-to-review/chat/simulated capture/review recovery also pass. **Open #7:** secondary iOS cancellation/dispute/connection-recovery acceptance; other settlement branches retain API/web evidence |
@@ -152,6 +152,11 @@ The [REST diagnostic boundary](../operations/REQUEST_DIAGNOSTICS.md) verifies
 correlated metadata without private request/exception content in its events,
 including packaged JSON output. Universal library log review, async tracing and
 managed collection/alerts remain open.
+The [aggregate workflow inbox metrics](../operations/WORKFLOW_BACKLOG_METRICS.md)
+expose cached pending counts/oldest ages and collector freshness/failures through
+operator-gated production metrics. Failed collection retains the last good values;
+it does not report false zero backlog. Engine fault/healthy-wait observability,
+private collection, dashboards and alert rehearsal remain open.
 The [bounded authenticated workload](../operations/AUTHENTICATED_WORKLOAD.md)
 checks eight customers through four clients, duplicate booking/cancellation
 requests, eight durable waits surviving an API crash, ownership denial and exactly

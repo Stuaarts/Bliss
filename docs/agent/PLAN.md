@@ -190,3 +190,14 @@ restore, managed backups, operator rehearsal and the final CI/native gate remain
 open. Earlier drafts and existing project data are preserved.
 Full local Java 21 verification passes 80 scenarios (64 ordinary + 16
 migration/packaged), zero failures/errors/skips, with Spotless clean.
+
+Branch `15-workflow-backlog-metrics` builds on draft PR #46 at `17da5eb`.
+It adds cached four-queue inbox counts/oldest ages and snapshot freshness/failure
+metrics at the existing operator-gated Prometheus endpoint. Collection is periodic
+and read-only; scrapes never query the database. See the
+[metric contract and isolated outage/drain drill](../operations/WORKFLOW_BACKLOG_METRICS.md).
+Engine failure/healthy-wait observability, collection/dashboards/alerts and broader
+production acceptance remain open. Earlier drafts and final CI/native gates are
+preserved.
+Full local Java 21 verification passes 82 scenarios (65 ordinary + 17
+migration/packaged), zero failures/errors/skips, with Spotless clean.
