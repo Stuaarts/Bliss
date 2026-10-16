@@ -186,7 +186,7 @@ class WorkflowBacklogMetricsIT {
                 assertEquals(action, replay.path("eventId").asText());
                 assertTrue(replay.path("processed").asBoolean());
                 System.out.println(
-                        "Workflow backlog metrics proof: series=12 fixed_queues=4 pending_start=1 pending_action=1 failure_retains_snapshot=true freshness_advances=true same_process_collection_recovery=true drained=true operator_only=true; no capacity/alert claim.");
+                        "Workflow backlog metrics proof: series=14 fixed_queues=4 pending_start=1 pending_action=1 failure_retains_snapshot=true freshness_advances=true same_process_collection_recovery=true drained=true operator_only=true empty_dispute_failures=true; no capacity/alert claim.");
             } finally {
                 api.stop();
             }
@@ -204,12 +204,13 @@ class WorkflowBacklogMetricsIT {
             assertEquals(200, response.statusCode());
             var values = new TreeMap<String, Double>();
             for (String line : response.body().split("\n")) {
-                if (!line.startsWith("bliss_workflow_backlog_")) continue;
+                if (!line.startsWith("bliss_workflow_backlog_")
+                        && !line.startsWith("bliss_workflow_dispute_failed_")) continue;
                 String[] parts = line.trim().split("\\s+");
                 assertEquals(2, parts.length);
                 values.put(parts[0], Double.parseDouble(parts[1]));
             }
-            assertEquals(12, values.size(), "Fixed-cardinality aggregate series only");
+            assertEquals(14, values.size(), "Fixed-cardinality aggregate series only");
             if (expected.test(values)) return values;
             assertTrue(api.server.isAlive());
             Thread.sleep(150);
@@ -223,6 +224,8 @@ class WorkflowBacklogMetricsIT {
         assertEquals(actions, pending(values, "booking_action"));
         assertEquals(0, pending(values, "dispute_start"));
         assertEquals(0, pending(values, "dispute_decision"));
+        assertEquals(0, values.get("bliss_workflow_dispute_failed_cases"));
+        assertEquals(0, values.get("bliss_workflow_dispute_failed_oldest_seconds"));
     }
 
     private double pending(Map<String, Double> values, String queue) {

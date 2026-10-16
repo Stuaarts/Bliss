@@ -24,7 +24,8 @@ public class WorkflowBacklogMetrics {
 
     private record Backlog(long pending, double oldestSeconds) {}
 
-    private record Snapshot(Map<Queue, Backlog> queues, long capturedNanos) {}
+    private record Snapshot(
+            Map<Queue, Backlog> queues, Backlog failedDisputes, long capturedNanos) {}
 
     private static final String SQL =
             """
@@ -39,6 +40,9 @@ public class WorkflowBacklogMetrics {
             UNION ALL
             SELECT 'dispute_decision', count(*), coalesce(greatest(extract(epoch FROM (CURRENT_TIMESTAMP-min(admitted_at))),0),0)
               FROM dispute_decision WHERE processed_at IS NULL
+            UNION ALL
+            SELECT 'dispute_failure', count(*), coalesce(greatest(extract(epoch FROM (CURRENT_TIMESTAMP-min(workflow_failed_at))),0),0)
+              FROM dispute WHERE workflow_failed_at IS NOT NULL AND resolved_at IS NULL
             """;
 
     @Inject EntityManager em;
@@ -87,6 +91,17 @@ public class WorkflowBacklogMetrics {
                         .description(
                                 "Failed aggregate snapshot attempts since this API process started")
                         .register(registry);
+        Gauge.builder("bliss.workflow.dispute.failed.cases", this, self -> self.failedCases())
+                .description(
+                        "Unresolved disputes with a durable workflow failure marker at last successful snapshot")
+                .register(registry);
+        Gauge.builder(
+                        "bliss.workflow.dispute.failed.oldest.seconds",
+                        this,
+                        self -> self.failedOldest())
+                .description(
+                        "Age of oldest unresolved dispute workflow failure at last successful snapshot; zero when empty")
+                .register(registry);
     }
 
     @Scheduled(
@@ -96,7 +111,7 @@ public class WorkflowBacklogMetrics {
     void collect() {
         if (!enabled) return;
         try {
-            Map<Queue, Backlog> queues =
+            Snapshot collected =
                     QuarkusTransaction.requiringNew()
                             .call(
                                     () -> {
@@ -108,18 +123,26 @@ public class WorkflowBacklogMetrics {
                                                                 2000)
                                                         .getResultList();
                                         var values = new EnumMap<Queue, Backlog>(Queue.class);
-                                        for (Object[] row : rows)
-                                            values.put(
-                                                    Queue.valueOf((String) row[0]),
+                                        Backlog failedDisputes = null;
+                                        for (Object[] row : rows) {
+                                            var aggregate =
                                                     new Backlog(
                                                             ((Number) row[1]).longValue(),
-                                                            ((Number) row[2]).doubleValue()));
-                                        if (values.size() != Queue.values().length)
+                                                            ((Number) row[2]).doubleValue());
+                                            if ("dispute_failure".equals(row[0])) {
+                                                failedDisputes = aggregate;
+                                                continue;
+                                            }
+                                            values.put(Queue.valueOf((String) row[0]), aggregate);
+                                        }
+                                        if (values.size() != Queue.values().length
+                                                || failedDisputes == null)
                                             throw new IllegalStateException(
                                                     "Incomplete aggregate snapshot");
-                                        return Map.copyOf(values);
+                                        return new Snapshot(Map.copyOf(values), failedDisputes, 0);
                                     });
-            snapshot = new Snapshot(queues, System.nanoTime());
+            snapshot =
+                    new Snapshot(collected.queues(), collected.failedDisputes(), System.nanoTime());
             lastCollectionSuccessful = true;
         } catch (RuntimeException failure) {
             // Preserve last good values and expose failure/freshness, never report a false zero.
@@ -143,5 +166,15 @@ public class WorkflowBacklogMetrics {
         return current == null
                 ? Double.NaN
                 : (System.nanoTime() - current.capturedNanos()) / 1_000_000_000.0;
+    }
+
+    private double failedCases() {
+        Snapshot current = snapshot;
+        return current == null ? Double.NaN : current.failedDisputes().pending();
+    }
+
+    private double failedOldest() {
+        Snapshot current = snapshot;
+        return current == null ? Double.NaN : current.failedDisputes().oldestSeconds();
     }
 }

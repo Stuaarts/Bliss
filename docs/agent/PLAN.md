@@ -201,3 +201,15 @@ production acceptance remain open. Earlier drafts and final CI/native gates are
 preserved.
 Full local Java 21 verification passes 82 scenarios (65 ordinary + 17
 migration/packaged), zero failures/errors/skips, with Spotless clean.
+
+Branch `15-dispute-failure-metrics` builds on draft PR #47 at `2823027`.
+It extends the cached snapshot with two unlabeled gauges for unresolved failed
+disputes and oldest saved failure age. The existing marker survives failed engine
+checkpoint cleanup. Actual DisputeFlow retry exhaustion/rollback now verifies
+positive Prometheus samples; packaged access/outage tests include the empty
+failure gauges. See the [durable failure contract](../operations/WORKFLOW_BACKLOG_METRICS.md#durable-dispute-failure-signal).
+No schema, listener, settlement or automatic recovery change. Broader
+booking/engine/human-wait observability, alerts and the final CI/native gate remain
+open; earlier drafts and existing project data are preserved.
+Full local Java 21 verification passes 82 scenarios (65 ordinary + 17
+migration/packaged), zero failures/errors/skips, with Spotless clean.

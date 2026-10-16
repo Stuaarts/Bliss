@@ -1301,3 +1301,54 @@ rehearsal remain open. No Flutter/native rerun, public/paid deployment, live
 payment, billing settings or existing project database change. Preserve drafts
 #39–#46 and keep #7/#12/#15 open; CI/native acceptance stays at the deferred final
 gate.
+
+## 2026-10-16 — durable unresolved dispute-failure metrics (#15)
+
+Branch `15-dispute-failure-metrics` builds on draft PR #47 at `2823027` in the
+existing managed checkout. The cached read-only snapshot now includes count and
+oldest saved failure age for `dispute.workflow_failed_at IS NOT NULL AND
+resolved_at IS NULL`. The two gauges have no labels or private content, and share
+the existing collection availability/freshness/failure contract. The four inbox
+labels/twelve backlog series remain; fourteen custom aggregate series now exist.
+The same single SQL statement/transaction reads all five aggregates. Scrapes
+remain memory-only and failed collection retains last good values.
+
+The existing DisputeFailureListener already records a content-free failure marker.
+The read-only upstream JPA reference and actual regression confirm that failed
+engine checkpoints are removed, so engine-row counts alone miss this condition.
+No listener/schema/dependency/upstream, failure-recording, settlement or recovery
+behavior changed. See the [contract and remaining limits](../operations/WORKFLOW_BACKLOG_METRICS.md#durable-dispute-failure-signal).
+
+Focused Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dtest=DisputeTest,WorkflowBacklogMetricsTest -Dit.test=WorkflowBacklogMetricsIT
+-Dquarkus.http.test-port=0` passed nine scenarios (eight ordinary + one packaged),
+zero failures/errors/skips and clean Spotless, in 1:24. The seven dispute scenarios
+passed in 29.63 seconds; their test-only profile enables one-second collection.
+After four actual exhausted simulated settlement attempts, SQL verifies a saved
+unresolved marker and zero engine rows for that case. Actual Prometheus output
+must rise by one failed case with positive oldest age and exactly two fixed,
+unlabeled failure samples. The case/decision remain UNDER_REVIEW/unprocessed and
+the payment still has only AUTHORIZE. The ordinary metrics test verifies both
+new gauges are NaN before successful collection. The packaged metrics case passed
+in 22.52 seconds with fourteen series, empty failure gauges, operator access,
+database outage retention/freshness, same-process collection recovery and queue
+drain/replay. Full Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dquarkus.http.test-port=0` passed all 82 scenarios (65 ordinary + 17
+migration/packaged), zero failures/errors/skips and clean Spotless, in 5:41.
+The positive retry-exhaustion/failure-marker/Prometheus assertions and packaged
+fourteen-series checks passed again. Migrations, management, database outage,
+diagnostics, authenticated workload, backup/restore and all four booking/dispute
+restart scenarios passed; no Flow trace-listener messages appear in the full log.
+Test-only metrics profile and payment fault fixtures are absent from the
+application jar. Documentation links, tracked-file hygiene and `git diff --check`
+pass; owned resources are cleaned up and existing services/data preserved. Logs remain in
+`services/api/target/dispute-metrics-focused.log` and `dispute-metrics-verify.log`.
+
+These gauges cover saved unresolved dispute failures, not all booking/engine
+faults, marker-persistence failures, healthy human waits, automatic recovery or
+alert effectiveness. Positive failure evidence uses real Quarkus/PostgreSQL/Flow
+with the test-only payment fault alternative; the packaged outage case observes
+empty failure gauges. No live gateway, Flutter/native rerun, public/paid hosting,
+external collection, billing settings or existing-data changes. Preserve drafts
+#39–#47 and keep #7/#12/#15 open; CI/native acceptance remains the deferred final
+gate.

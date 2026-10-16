@@ -44,7 +44,15 @@ class WorkflowBacklogMetricsTest {
                                         .gauge()
                                         .value()));
             }
-            assertEquals(12, registry.getMeters().size());
+            assertTrue(
+                    Double.isNaN(
+                            registry.get("bliss.workflow.dispute.failed.cases").gauge().value()));
+            assertTrue(
+                    Double.isNaN(
+                            registry.get("bliss.workflow.dispute.failed.oldest.seconds")
+                                    .gauge()
+                                    .value()));
+            assertEquals(14, registry.getMeters().size());
         } finally {
             registry.close();
         }
