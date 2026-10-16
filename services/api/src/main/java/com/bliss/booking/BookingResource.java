@@ -158,6 +158,11 @@ public class BookingResource {
                                 WorkflowInstanceEntity.class)
                         .setParameter("id", booking.workflowInstanceId())
                         .getResultList();
+        Booking record = em.find(Booking.class, id); // get(id) above enforces ownership first.
+        if (record.workflowFailedAt != null
+                && !record.status.terminal()
+                && record.status != Booking.Status.DISPUTED)
+            return new Execution(booking.workflowInstanceId(), "ERROR", !rows.isEmpty());
         if (rows.isEmpty())
             return new Execution(
                     booking.workflowInstanceId(),

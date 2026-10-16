@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.bliss.identity.TestIdentityProvider;
 import java.net.ServerSocket;
 import java.net.http.*;
+import java.sql.DriverManager;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Predicate;
@@ -185,8 +186,9 @@ class WorkflowBacklogMetricsIT {
                                 202);
                 assertEquals(action, replay.path("eventId").asText());
                 assertTrue(replay.path("processed").asBoolean());
+                verifySavedBookingFailureSurvivesRestart(db, oidc, customer, offering, booking);
                 System.out.println(
-                        "Workflow backlog metrics proof: series=26 fixed_queues=4 pending_start=1 pending_action=1 failure_retains_snapshot=true freshness_advances=true same_process_collection_recovery=true drained=true operator_only=true empty_dispute_failures=true empty_booking_waits=true empty_dispute_waits=true; no capacity/alert claim.");
+                        "Workflow backlog metrics proof: series=28 fixed_queues=4 pending_start=1 pending_action=1 failure_retains_snapshot=true freshness_advances=true same_process_collection_recovery=true drained=true operator_only=true empty_dispute_failures=true empty_booking_failures=true empty_booking_waits=true empty_dispute_waits=true; no capacity/alert claim.");
             } finally {
                 api.stop();
             }
@@ -194,6 +196,124 @@ class WorkflowBacklogMetricsIT {
             identity.stop();
             api.client.close();
         }
+    }
+
+    private void verifySavedBookingFailureSurvivesRestart(
+            PostgreSQLContainer db,
+            Map<String, String> oidc,
+            String customer,
+            String offering,
+            String terminal)
+            throws Exception {
+        api.stop();
+        oidc.put("bliss.workflow.dispatch-enabled", "false");
+        api.start(db, oidc);
+        String booking =
+                api.call(
+                                "POST",
+                                "/api/v1/offerings/" + offering + "/bookings",
+                                customer,
+                                Map.of("offeringVersion", 0, "city", "Toronto"),
+                                UUID.randomUUID().toString(),
+                                201)
+                        .path("id")
+                        .asText();
+        String instance = "saved-failure-" + UUID.randomUUID();
+        // Synthetic marker persistence fixture; actual engine retry exhaustion is tested
+        // separately.
+        try (var c =
+                DriverManager.getConnection(db.getJdbcUrl(), db.getUsername(), db.getPassword())) {
+            try (var s =
+                    c.prepareStatement(
+                            "UPDATE booking SET workflow_instance_id=?,workflow_failed_at=now()-interval '5 seconds',version=version+1 WHERE id=?")) {
+                s.setString(1, instance);
+                s.setObject(2, UUID.fromString(booking));
+                assertEquals(1, s.executeUpdate());
+            }
+            try (var s =
+                    c.prepareStatement(
+                            "UPDATE booking_workflow_start SET claimed_at=now()-interval '60 seconds' WHERE booking_id=?")) {
+                s.setObject(1, UUID.fromString(booking));
+                assertEquals(1, s.executeUpdate());
+            }
+            try (var s =
+                    c.prepareStatement(
+                            "UPDATE booking SET workflow_failed_at=now()-interval '1 day' WHERE id=?")) {
+                s.setObject(1, UUID.fromString(terminal));
+                assertEquals(1, s.executeUpdate());
+            }
+        }
+        assertEquals(
+                "FINISHED",
+                api.call(
+                                "GET",
+                                "/api/v1/bookings/" + terminal + "/execution",
+                                customer,
+                                null,
+                                null,
+                                200)
+                        .path("status")
+                        .asText());
+        var before =
+                awaitMetrics(
+                        v ->
+                                v.get("bliss_workflow_booking_failed_bookings") == 1
+                                        && v.get("bliss_workflow_booking_failed_oldest_seconds")
+                                                >= 5);
+        assertTrue(
+                before.get("bliss_workflow_booking_failed_oldest_seconds") < 120,
+                "Terminal fixture's older marker must not contribute");
+        api.stop(); // A distinct packaged process must retain the domain marker and skip dispatch.
+        oidc.put("bliss.workflow.dispatch-enabled", "true");
+        api.start(db, oidc);
+        var after =
+                awaitMetrics(
+                        v ->
+                                v.get("bliss_workflow_booking_failed_bookings") == 1
+                                        && v.get("bliss_workflow_booking_failed_oldest_seconds")
+                                                >= before.get(
+                                                        "bliss_workflow_booking_failed_oldest_seconds"));
+        assertEquals(
+                1,
+                pending(
+                        after,
+                        "booking_start")); // Failure does not pretend admission was acknowledged.
+        Thread.sleep(4500); // Two scheduled dispatch intervals beyond readiness.
+        assertEquals(
+                instance,
+                api.call("GET", "/api/v1/bookings/" + booking, customer, null, null, 200)
+                        .path("workflowInstanceId")
+                        .asText());
+        var execution =
+                api.call(
+                        "GET",
+                        "/api/v1/bookings/" + booking + "/execution",
+                        customer,
+                        null,
+                        null,
+                        200);
+        assertEquals("ERROR", execution.path("status").asText());
+        assertFalse(execution.path("checkpointPresent").asBoolean());
+        api.call(
+                "POST",
+                "/api/v1/bookings/" + booking + "/cancel",
+                customer,
+                null,
+                UUID.randomUUID().toString(),
+                409);
+        assertEquals(
+                "NOT_AUTHORIZED",
+                api.call(
+                                "GET",
+                                "/api/v1/bookings/" + booking + "/payment",
+                                customer,
+                                null,
+                                null,
+                                200)
+                        .path("status")
+                        .asText());
+        System.out.println(
+                "Saved booking failure proof: synthetic_marker=true fresh_api_process=true expired_claim_not_restarted=true same_instance=true positive_age_retained=true terminal_marker_excluded=true no_authorization=true; actual retry exhaustion covered separately.");
     }
 
     private Map<String, Double> awaitMetrics(Predicate<Map<String, Double>> expected)
@@ -206,13 +326,14 @@ class WorkflowBacklogMetricsIT {
             for (String line : response.body().split("\n")) {
                 if (!line.startsWith("bliss_workflow_backlog_")
                         && !line.startsWith("bliss_workflow_dispute_failed_")
+                        && !line.startsWith("bliss_workflow_booking_failed_")
                         && !line.startsWith("bliss_workflow_booking_waiting_")
                         && !line.startsWith("bliss_workflow_dispute_waiting_")) continue;
                 String[] parts = line.trim().split("\\s+");
                 assertEquals(2, parts.length);
                 values.put(parts[0], Double.parseDouble(parts[1]));
             }
-            assertEquals(26, values.size(), "Fixed-cardinality aggregate series only");
+            assertEquals(28, values.size(), "Fixed-cardinality aggregate series only");
             if (expected.test(values)) return values;
             assertTrue(api.server.isAlive());
             Thread.sleep(150);
@@ -228,6 +349,8 @@ class WorkflowBacklogMetricsIT {
         assertEquals(0, pending(values, "dispute_decision"));
         assertEquals(0, values.get("bliss_workflow_dispute_failed_cases"));
         assertEquals(0, values.get("bliss_workflow_dispute_failed_oldest_seconds"));
+        assertEquals(0, values.get("bliss_workflow_booking_failed_bookings"));
+        assertEquals(0, values.get("bliss_workflow_booking_failed_oldest_seconds"));
         for (String stage : List.of("party_evidence", "admin_review"))
             for (String name : List.of("cases", "oldest_seconds", "history_missing"))
                 assertEquals(

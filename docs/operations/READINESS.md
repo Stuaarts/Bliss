@@ -12,7 +12,7 @@ assign, not staffed services. Track delivery in [issue #15](https://github.com/S
 | --- | --- | --- |
 | Deployment | Loopback API, PostgreSQL/Flyway, one API worker, durable BookingLifecycleFlow and DisputeFlow | Private database networking, TLS, release/rollback rehearsal, health-based deployment, resource sizing and assigned operator |
 | Identity and secrets | One OIDC issuer, audience/subject and server-side role/ownership checks; explicit packaged DB and issuer configuration | Managed identity availability, least-privilege runtime/migration credentials, secret storage, rotation and revocation drill |
-| Diagnostics | JSON console logging; bounded REST response events; mapped errors omit throwables; Flow payload tracing disabled; operator-gated management; cached inbox/freshness, dispute-failure and booking/dispute wait/history metrics | Private management ingress, credential operations, collection/dashboards/alerts, broader booking/engine failures, engine-health classification, remaining log privacy review and tracing |
+| Diagnostics | JSON console logging; bounded REST response events; mapped errors omit throwables; Flow payload tracing disabled; operator-gated management; cached inbox/freshness, booking/dispute failures and wait/history metrics; durable booking failure guards | Private management ingress, credential operations, collection/dashboards/alerts, failures without persisted markers, engine-health classification, remaining log privacy review and tracing |
 | Recovery | Packaged crash/restart and database outage drills; paused booking backup restored into a fresh database and continued through simulated cancellation; migrations/invariants tested | Managed backup scheduling, encrypted storage, access/retention, broader workflow/external-effect restore, agreed RPO/RTO and operator rehearsal |
 | Capacity | Bounded public category reads; eight-customer authenticated direct-booking/retry workload with four clients, eight restored waits and single-settlement checks | Broader endpoint/actor mixes, agreed dataset/arrival rates, long waits, saturation/soak and resource/backlog evidence against approved SLOs |
 | Abuse and moderation | Authentication, participant/owner checks, validation and bounded pagination | Enforced rate limits, reporting/review/removal workflow, escalation/appeal policy and tested abuse controls |
@@ -120,7 +120,7 @@ values rather than reporting a false zero. These are admission inbox aggregates,
 not proof that all workflows are progressing. Two additional
 [durable dispute-failure gauges](WORKFLOW_BACKLOG_METRICS.md#durable-dispute-failure-signal)
 count unresolved cases with the existing failure timestamp and their oldest age,
-even after failed engine checkpoints disappear. Broader booking/engine failures,
+even after failed engine checkpoints disappear. Broader failures without markers,
 engine-health classification and alert acceptance remain
 open. [Booking decision-wait metrics](WORKFLOW_BACKLOG_METRICS.md#booking-decision-waits)
 now count current WAIT_PROVIDER/WAIT_CUSTOMER records and measure their latest
@@ -130,6 +130,13 @@ the stage age unknown; these saved-state observations do not prove engine health
 likewise count current evidence/review cases and their latest transition ages,
 including missing-history reporting and resolved-case exclusion. Failed cases can
 remain in those saved states; cross-check the failure signal and authorized views.
+[Booking failure handling](BOOKING_FAILURES.md) now records canonical active
+lifecycle failures in V11, prevents automatic reclaim/advance and new ordinary
+actions, preserves receipt replay, and exposes safe owner execution ERROR plus
+cached count/age. Actual exhausted authorization/VOID retries and a separate
+saved-marker process restart are covered. Rollback to a worker that ignores the
+marker is unsafe with dispatch enabled; marker-write failures and repair tooling
+remain open.
 
 REST correlation is generated server-side. [REST response diagnostics](REQUEST_DIAGNOSTICS.md)
 now record the ID, allowlisted method, code-defined operation, status and filter
@@ -211,6 +218,9 @@ The booking decision-wait metric extension builds on draft #48, retaining the
 same read-only sampling/access boundary and exposing history completeness.
 The dispute evidence/review wait extension builds on draft #49 and keeps the
 same snapshot and authorization contract.
+The durable booking failure slice builds on draft #50; it changes failure
+recording and guards, adds V11 and two cached gauges, and retains the existing
+business transition/settlement rules. See its rollback restriction above.
 
 The final gate remains: account owner resolves the GitHub payment/spending-limit
 condition, required checks pass on each exact current PR head, native iOS secondary

@@ -39,6 +39,7 @@ public class WorkflowBacklogMetrics {
     private record Snapshot(
             Map<Queue, Backlog> queues,
             Backlog failedDisputes,
+            Backlog failedBookings,
             Map<WaitStage, Waiting> waiting,
             Map<DisputeWaitStage, Waiting> disputeWaiting,
             long capturedNanos) {}
@@ -65,6 +66,9 @@ public class WorkflowBacklogMetrics {
             UNION ALL
             SELECT 'dispute_decision', count(*), coalesce(greatest(extract(epoch FROM (CURRENT_TIMESTAMP-min(admitted_at))),0),0), 0
               FROM dispute_decision WHERE processed_at IS NULL
+            UNION ALL
+            SELECT 'booking_failure', count(*), coalesce(greatest(extract(epoch FROM (CURRENT_TIMESTAMP-min(workflow_failed_at))),0),0), 0
+              FROM booking WHERE workflow_failed_at IS NOT NULL AND status NOT IN ('COMPLETED','CANCELLED','EXPIRED','REFUNDED','DISPUTED')
             UNION ALL
             SELECT 'dispute_failure', count(*), coalesce(greatest(extract(epoch FROM (CURRENT_TIMESTAMP-min(workflow_failed_at))),0),0), 0
               FROM dispute WHERE workflow_failed_at IS NOT NULL AND resolved_at IS NULL
@@ -203,6 +207,17 @@ public class WorkflowBacklogMetrics {
                 .description(
                         "Age of oldest unresolved dispute workflow failure at last successful snapshot; zero when empty")
                 .register(registry);
+        Gauge.builder("bliss.workflow.booking.failed.bookings", this, self -> self.failedBookings())
+                .description(
+                        "Active ordinary bookings with a durable workflow failure marker at last successful snapshot")
+                .register(registry);
+        Gauge.builder(
+                        "bliss.workflow.booking.failed.oldest.seconds",
+                        this,
+                        self -> self.failedBookingOldest())
+                .description(
+                        "Age of oldest active ordinary booking workflow failure at last successful snapshot; zero when empty")
+                .register(registry);
     }
 
     @Scheduled(
@@ -230,6 +245,7 @@ public class WorkflowBacklogMetrics {
                                                 new EnumMap<DisputeWaitStage, Waiting>(
                                                         DisputeWaitStage.class);
                                         Backlog failedDisputes = null;
+                                        Backlog failedBookings = null;
                                         for (Object[] row : rows) {
                                             if (Set.of("party_evidence", "admin_review")
                                                     .contains(row[0])) {
@@ -265,10 +281,15 @@ public class WorkflowBacklogMetrics {
                                                 failedDisputes = aggregate;
                                                 continue;
                                             }
+                                            if ("booking_failure".equals(row[0])) {
+                                                failedBookings = aggregate;
+                                                continue;
+                                            }
                                             values.put(Queue.valueOf((String) row[0]), aggregate);
                                         }
                                         if (values.size() != Queue.values().length
                                                 || failedDisputes == null
+                                                || failedBookings == null
                                                 || waiting.size() != WaitStage.values().length
                                                 || disputeWaiting.size()
                                                         != DisputeWaitStage.values().length)
@@ -277,6 +298,7 @@ public class WorkflowBacklogMetrics {
                                         return new Snapshot(
                                                 Map.copyOf(values),
                                                 failedDisputes,
+                                                failedBookings,
                                                 Map.copyOf(waiting),
                                                 Map.copyOf(disputeWaiting),
                                                 0);
@@ -285,6 +307,7 @@ public class WorkflowBacklogMetrics {
                     new Snapshot(
                             collected.queues(),
                             collected.failedDisputes(),
+                            collected.failedBookings(),
                             collected.waiting(),
                             collected.disputeWaiting(),
                             System.nanoTime());
@@ -316,6 +339,16 @@ public class WorkflowBacklogMetrics {
     private double failedCases() {
         Snapshot current = snapshot;
         return current == null ? Double.NaN : current.failedDisputes().pending();
+    }
+
+    private double failedBookings() {
+        Snapshot current = snapshot;
+        return current == null ? Double.NaN : current.failedBookings().pending();
+    }
+
+    private double failedBookingOldest() {
+        Snapshot current = snapshot;
+        return current == null ? Double.NaN : current.failedBookings().oldestSeconds();
     }
 
     private double failedOldest() {

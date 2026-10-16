@@ -34,7 +34,7 @@ public class BookingWorkflowDispatcher {
                                     @SuppressWarnings("unchecked")
                                     List<UUID> rows =
                                             em.createNativeQuery(
-                                                            "SELECT booking_id FROM booking_workflow_start WHERE started=false ORDER BY requested_at LIMIT 50")
+                                                            "SELECT s.booking_id FROM booking_workflow_start s JOIN booking b ON b.id=s.booking_id WHERE s.started=false AND b.workflow_failed_at IS NULL AND b.status NOT IN ('COMPLETED','CANCELLED','EXPIRED','REFUNDED','DISPUTED') ORDER BY s.requested_at LIMIT 50")
                                                     .getResultList();
                                     return rows;
                                 });
@@ -49,16 +49,17 @@ public class BookingWorkflowDispatcher {
                             (result, error) -> {
                                 if (error != null)
                                     LOG.errorf(
-                                            error,
                                             "Booking workflow failed bookingId=%s instanceId=%s",
-                                            id,
-                                            instance.id());
+                                            id, instance.id());
                             });
     }
 
     private WorkflowInstance claim(UUID id) {
         Booking b = em.find(Booking.class, id, LockModeType.PESSIMISTIC_WRITE);
-        if (b == null || b.status.terminal()) return null;
+        if (b == null
+                || b.status.terminal()
+                || b.status == Booking.Status.DISPUTED
+                || b.workflowFailedAt != null) return null;
         @SuppressWarnings("unchecked")
         List<Object[]> jobs =
                 em.createNativeQuery(

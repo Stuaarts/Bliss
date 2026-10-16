@@ -68,7 +68,13 @@ class WorkflowBacklogMetricsTest {
                                             .tag("stage", stage)
                                             .gauge()
                                             .value()));
-            assertEquals(26, registry.getMeters().size());
+            for (String name : new String[] {"bookings", "oldest.seconds"})
+                assertTrue(
+                        Double.isNaN(
+                                registry.get("bliss.workflow.booking.failed." + name)
+                                        .gauge()
+                                        .value()));
+            assertEquals(28, registry.getMeters().size());
         } finally {
             registry.close();
         }
