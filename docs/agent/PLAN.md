@@ -226,3 +226,15 @@ broader faults, engine health and the final CI/native gate remain open; existing
 project data and prior drafts are preserved.
 Full local Java 21 verification passes 82 scenarios (65 ordinary + 17
 migration/packaged), zero failures/errors/skips, with Spotless clean.
+
+Branch `15-dispute-wait-metrics` builds on draft PR #49 at `db9ba62`.
+It adds evidence/admin-review case counts, latest-transition ages and
+missing-history counts to the cached snapshot. Both dispute restart/settlement
+outcomes verify positive stages, age continuity and resolved exclusion; an owned
+fixture verifies missing-history NaN and exact-row restoration. Booking/dispute
+tests share a test-only helper. See the [dispute wait contract](../operations/WORKFLOW_BACKLOG_METRICS.md#dispute-evidence-and-admin-review-waits).
+No schema/policy/workflow transition or settlement change. Broader faults,
+engine-health classification, alerts and the final CI/native gate remain open;
+prior drafts and project data are preserved.
+Full local Java 21 verification passes 82 scenarios (65 ordinary + 17
+migration/packaged), zero failures/errors/skips, with Spotless clean.

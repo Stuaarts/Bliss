@@ -20,8 +20,10 @@ class DisputeRestartIT {
     @ValueSource(booleans = {false, true})
     void disputeRestoresEvidenceAndAdminWaitWithOneSettlement(boolean captured) throws Exception {
         var api = new WorkflowRestartIT();
+        var waits = new DecisionWaitMetrics(api, DecisionWaitMetrics.Kind.DISPUTE);
         var identity = new TestIdentityProvider();
-        var oidc = identity.start();
+        var oidc = new HashMap<>(identity.start());
+        oidc.put("bliss.operations.backlog.every", "1s");
         try (var db = new PostgreSQLContainer("postgres:17.6-alpine")) {
             db.start();
             try (var socket = new ServerSocket(0)) {
@@ -139,6 +141,8 @@ class DisputeRestartIT {
                             .asText();
             var collecting = await(api, id, customer, "COLLECTING_EVIDENCE", true);
             String instance = collecting.path("workflowInstanceId").asText();
+            double evidenceAge = waits.await("party_evidence", false);
+            if (!captured) waits.exerciseMissingHistory(db, id, "party_evidence");
             Thread.sleep(4500);
             api.stop();
             api.start(db, oidc);
@@ -147,6 +151,9 @@ class DisputeRestartIT {
                     await(api, id, customer, "COLLECTING_EVIDENCE", true)
                             .path("workflowInstanceId")
                             .asText());
+            assertTrue(
+                    waits.await("party_evidence", false) >= evidenceAge,
+                    "Evidence wait age must survive process restart");
             assertEquals(
                     1,
                     api.call(
@@ -166,6 +173,7 @@ class DisputeRestartIT {
                     UUID.randomUUID().toString(),
                     200);
             await(api, id, admin, "UNDER_REVIEW", true);
+            double reviewAge = waits.await("admin_review", false);
             Thread.sleep(2500);
             api.stop();
             api.start(db, oidc);
@@ -174,6 +182,9 @@ class DisputeRestartIT {
                     await(api, id, admin, "UNDER_REVIEW", true)
                             .path("workflowInstanceId")
                             .asText());
+            assertTrue(
+                    waits.await("admin_review", false) >= reviewAge,
+                    "Admin wait age must survive process restart");
             String outcome = captured ? "CUSTOMER_FAVORED" : "PROVIDER_FAVORED",
                     key = UUID.randomUUID().toString();
             var decision =
@@ -191,6 +202,7 @@ class DisputeRestartIT {
                             captured ? "RESOLVED_CUSTOMER" : "RESOLVED_PROVIDER",
                             false);
             assertTrue(resolved.path("decision").path("processed").asBoolean());
+            waits.await(null, false);
             assertEquals(instance, resolved.path("workflowInstanceId").asText());
             assertTrue(
                     api.call(
@@ -220,6 +232,9 @@ class DisputeRestartIT {
                                 : Map.of("AUTHORIZE", 1, "CAPTURE", 1),
                         counts);
             }
+            System.out.printf(
+                    "Dispute waiting metrics proof: evidence=true admin_review=true captured=%s missing_history_exercised=%s age_survives_restart=true resolved_removed=true fixed_stages=2 private_labels=false; simulated_settlement_once=true.%n",
+                    captured, !captured);
         } finally {
             api.stop();
             identity.stop();

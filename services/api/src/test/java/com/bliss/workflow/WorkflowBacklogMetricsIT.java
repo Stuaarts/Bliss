@@ -186,7 +186,7 @@ class WorkflowBacklogMetricsIT {
                 assertEquals(action, replay.path("eventId").asText());
                 assertTrue(replay.path("processed").asBoolean());
                 System.out.println(
-                        "Workflow backlog metrics proof: series=20 fixed_queues=4 pending_start=1 pending_action=1 failure_retains_snapshot=true freshness_advances=true same_process_collection_recovery=true drained=true operator_only=true empty_dispute_failures=true empty_booking_waits=true; no capacity/alert claim.");
+                        "Workflow backlog metrics proof: series=26 fixed_queues=4 pending_start=1 pending_action=1 failure_retains_snapshot=true freshness_advances=true same_process_collection_recovery=true drained=true operator_only=true empty_dispute_failures=true empty_booking_waits=true empty_dispute_waits=true; no capacity/alert claim.");
             } finally {
                 api.stop();
             }
@@ -206,12 +206,13 @@ class WorkflowBacklogMetricsIT {
             for (String line : response.body().split("\n")) {
                 if (!line.startsWith("bliss_workflow_backlog_")
                         && !line.startsWith("bliss_workflow_dispute_failed_")
-                        && !line.startsWith("bliss_workflow_booking_waiting_")) continue;
+                        && !line.startsWith("bliss_workflow_booking_waiting_")
+                        && !line.startsWith("bliss_workflow_dispute_waiting_")) continue;
                 String[] parts = line.trim().split("\\s+");
                 assertEquals(2, parts.length);
                 values.put(parts[0], Double.parseDouble(parts[1]));
             }
-            assertEquals(20, values.size(), "Fixed-cardinality aggregate series only");
+            assertEquals(26, values.size(), "Fixed-cardinality aggregate series only");
             if (expected.test(values)) return values;
             assertTrue(api.server.isAlive());
             Thread.sleep(150);
@@ -227,6 +228,16 @@ class WorkflowBacklogMetricsIT {
         assertEquals(0, pending(values, "dispute_decision"));
         assertEquals(0, values.get("bliss_workflow_dispute_failed_cases"));
         assertEquals(0, values.get("bliss_workflow_dispute_failed_oldest_seconds"));
+        for (String stage : List.of("party_evidence", "admin_review"))
+            for (String name : List.of("cases", "oldest_seconds", "history_missing"))
+                assertEquals(
+                        0,
+                        values.get(
+                                "bliss_workflow_dispute_waiting_"
+                                        + name
+                                        + "{stage=\""
+                                        + stage
+                                        + "\"}"));
         for (String stage : List.of("provider_decision", "customer_decision"))
             for (String name : List.of("bookings", "oldest_seconds", "history_missing"))
                 assertEquals(
