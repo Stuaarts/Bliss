@@ -213,3 +213,16 @@ booking/engine/human-wait observability, alerts and the final CI/native gate rem
 open; earlier drafts and existing project data are preserved.
 Full local Java 21 verification passes 82 scenarios (65 ordinary + 17
 migration/packaged), zero failures/errors/skips, with Spotless clean.
+
+Branch `15-booking-wait-metrics` builds on draft PR #48 at `2e38d3b`.
+It extends the cached snapshot with counts, oldest transition ages and
+missing-history counts for saved provider/customer decision waits. Ages persist
+across process crashes; missing history produces NaN rather than a partial or
+invented oldest age. See [booking decision waits](../operations/WORKFLOW_BACKLOG_METRICS.md#booking-decision-waits).
+The packaged quote/rejection and direct/completion cases cover positive waits,
+reversible history fault injection, restart, terminal exclusion and single
+simulated settlement. No schema/policy/workflow transition change. Dispute waits,
+broader faults, engine health and the final CI/native gate remain open; existing
+project data and prior drafts are preserved.
+Full local Java 21 verification passes 82 scenarios (65 ordinary + 17
+migration/packaged), zero failures/errors/skips, with Spotless clean.
