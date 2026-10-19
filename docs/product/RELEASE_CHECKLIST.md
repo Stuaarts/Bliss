@@ -157,8 +157,11 @@ runtime cannot migrate or rewrite history. Existing database roles and runtime
 defaults remain unchanged. The [credential rotation rehearsal](../operations/CREDENTIAL_ROTATION.md)
 adds real SCRAM refusal, existing-session/pooled readiness checks, explicit
 revocation and a fenced workflow restart using the new runtime password. Hosted
-adoption, managed secret delivery/rotation, ingress fencing and a release migration
-runner still need operator acceptance.
+adoption, managed secret delivery/rotation and ingress fencing still need
+operator acceptance. The [standalone migration command](../operations/DATABASE_MIGRATION_COMMAND.md)
+adds guarded fresh/populated upgrades and validation using separate credentials,
+without launching the API or demo seeds. Hosted job orchestration and rollout/
+rollback acceptance remain open.
 The [database outage drill](../operations/DATABASE_OUTAGE.md) verifies readiness
 DOWN/UP with continued liveness, retained data and a successful update in the
 same API process. Active-workflow outage reconciliation and hosted incident

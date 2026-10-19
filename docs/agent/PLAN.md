@@ -317,3 +317,33 @@ packaged), zero failures/errors/skips, Spotless clean, in 12:27. Rotation passes
 again with final shared helpers; all prior role, restart/restore, metrics, outage,
 workload and migration checks remain green. Test fixtures stay out of the jar;
 existing project credentials/data and prior drafts remain preserved.
+
+
+Branch `15-migration-command` builds on draft PR #54 at `c742f4b`.
+The packaged fast-jar exposes a standalone Java migration entry point and a
+PowerShell wrapper. Dedicated migration environment variables and an explicit
+database guard are required; only bundled versioned SQL, validate and migrate
+are allowed. Restricted schema ownership and role attributes/membership are
+checked before Flyway; unsafe actions, pending validation, checksum drift and
+unknown newer history are refused. Fresh V11 creation excludes demo data and
+workflow bootstrap; populated V10 upgrade preserves a synthetic profile.
+The runtime API starts/writes with restricted access after the migrator login
+is disabled. See [migration command](../operations/DATABASE_MIGRATION_COMMAND.md).
+The full run exposed an existing metrics fixture race between saved cancellation
+and engine cleanup. A bounded pre-stop FINISHED/no-checkpoint wait now establishes
+the terminal fixture; the post-restart assertion remains unchanged.
+Existing API defaults, project credentials/data, schema and settlement policy
+are unchanged. Hosted migration orchestration, worker/ingress fencing, secrets,
+TLS/network adoption, rollback and operator acceptance remain open.
+Corrected focused Java 21 verification passes seven scenarios (five ordinary +
+two packaged), zero failures/errors/skips, Spotless clean, in 1:00. Both command
+cases pass in 25.90 seconds, including PowerShell validation on Windows and exact
+fixed-output checks across all refusals/successes.
+
+After the cancellation/cleanup synchronization fix, focused verification passes
+eight scenarios (five ordinary + three packaged), zero failures/errors/skips,
+Spotless clean, in 1:56. Full Java 21 verification with this final source passes 92 scenarios
+(67 ordinary + 25 migration/packaged), zero failures/errors/skips, Spotless clean,
+in 12:23. The corrected metrics drill passes alongside the shipped command and
+all prior recovery, role/rotation, ownership and migration checks. Test-only and
+administrator artifacts stay out of the jar; existing project data is preserved.

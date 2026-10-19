@@ -1728,3 +1728,82 @@ zero-downtime rotation, unfenced workflow outage recovery or operator acceptance
 No Flutter/native rerun, public/paid hosting, live gateway, billing change or
 existing project database migration. Preserve drafts #39–#53 and keep #7/#12/#15
 open; required current-head CI/native acceptance remains at the deferred final gate.
+
+
+## 2026-10-19 — standalone migration command (#15)
+
+Branch `15-migration-command` builds on draft PR #54 at `c742f4b` in the
+existing managed checkout. Docker is healthy; no repair/reset is needed.
+`DatabaseMigration` is a plain Java entry point shipped in the existing fast-jar,
+using its existing Flyway/PostgreSQL dependencies. It never starts Quarkus, HTTP,
+OIDC, CDI, schedulers or Flow restoration. Dedicated migration environment
+variables and an explicit expected database name select the connection. A bound
+preflight query checks actual database/user, restricted attributes/no memberships,
+public schema ownership and ownership of existing public relations before
+migration. Only the artifact's versioned SQL, validate and migrate are exposed;
+clean/repair/baseline/undo, extra options, alternate locations, out-of-order work
+and automatic baselining are unavailable. Runtime defaults remain unchanged.
+
+The two packaged tests invoke the actual shipped class in distinct Java processes
+against owned SCRAM PostgreSQL databases, with misleading runtime/local/Flyway
+environment settings to verify isolation. The fresh case checks V11/28 tables,
+no demo identities/providers/workflows, repeat no-op and validation. After grants
+and migration NOLOGIN, the real restricted API starts and writes a customer.
+The populated V10 case tests missing configuration, wrong database/password,
+runtime/admin/member-role refusal, unsafe commands, pending validation, checksum
+drift and newer unresolved history. Full public count/digest snapshots stay
+unchanged across refused attempts. Only the fixture reverses its injected
+corruption; then the command applies V11 and preserves the synthetic profile.
+Successful validation uses the PowerShell wrapper on Windows as well.
+See [operator procedure](../operations/DATABASE_MIGRATION_COMMAND.md).
+
+The initial output guard detected a bundled JBoss logging-provider warning after
+successful/refused command execution. Initializing its log manager before using
+Flyway fixes the standalone logging setup. Flyway's SQL/connection-bearing logs
+are suppressed in this separate process; output is limited to fixed stage/action/
+count results without exception messages, credentials or SQL. This does not alter
+the API logger or prove privacy for external deployment/database tools.
+
+Corrected focused Java 21 verification passes seven scenarios (five ordinary +
+two packaged), zero failures/errors/skips, Spotless clean, in 1:00. Both command
+cases pass in 25.90 seconds, including PowerShell validation on Windows and exact
+fixed-output checks across all refusals/successes. A separate wrapper invocation
+with missing dedicated configuration emits only the fixed configuration failure
+and preserves Java exit status 2. Final results follow below.
+
+The initial full run completed 91 of 92 scenarios successfully; the existing
+metrics drill expected a cancelled execution FINISHED after it had already
+stopped/restarted the API while checkpoint cleanup could still be RUNNING.
+The fixture now waits, with a twenty-second bound, for FINISHED and no checkpoint
+before that stop. The later terminal-marker FINISHED assertion remains unchanged;
+ERROR or missing cleanup still fails. This changes test synchronization only.
+The failed log/report are retained under `target/migration-command-initial-failed*`.
+Corrected Java 21 verification with `OperationsSmokeTest` and
+`DatabaseMigrationCommandIT,WorkflowBacklogMetricsIT` passes eight scenarios
+(five ordinary + three packaged), zero failures/errors/skips, Spotless clean,
+in 1:56. Migration cases pass in 26.13 seconds and the corrected metrics/restart
+case in 56.75 seconds, retaining the post-restart FINISHED assertion.
+Final Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dquarkus.http.test-port=0` passes all 92 scenarios (67 ordinary + 25 migration/
+packaged), zero failures/errors/skips, Spotless clean, in 12:23, finishing at
+09:56:20 -04:00. Both command cases pass in 24.91 seconds; the corrected metrics
+case passes in 52.70 seconds. All existing role/rotation, restart/backup restore,
+ownership, failure, workload/outage and migration checks remain green. Spotless
+keeps 93 Java files clean. The shipped jar contains the command and excludes
+migration/role/recovery/identity/payment fixtures and administrator grants SQL.
+No Flow trace-listener messages occur; temporary backup archives are absent.
+Documentation links, tracked/new-file hygiene and `git diff --check` pass.
+Owned resources close and existing project services/data remain preserved.
+Final/focused/correction/initial-failure logs remain under
+`services/api/target/migration-command-*`. Exact pushed-head, remote-run and
+backlog evidence is recorded in the stacked draft PR and milestone updates
+on #15/#12.
+
+No additional dependency, application startup default, migration/schema, business
+transition, payment policy or upstream change. Only disposable generated roles/
+credentials/data are used. Hosted migration job orchestration, immutable artifact
+distribution, managed secrets, ingress/worker fencing, TLS/network adoption,
+rollout/rollback and operator acceptance remain open. No public/paid hosting,
+live gateway, billing change, existing database migration or Flutter/native rerun.
+Preserve drafts #39–#54; #7/#12/#15 stay open and required current-head CI/native
+acceptance remains at the deferred final gate.

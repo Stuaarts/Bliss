@@ -186,6 +186,7 @@ class WorkflowBacklogMetricsIT {
                                 202);
                 assertEquals(action, replay.path("eventId").asText());
                 assertTrue(replay.path("processed").asBoolean());
+                awaitFinishedExecution(booking, customer);
                 verifySavedBookingFailureSurvivesRestart(db, oidc, customer, offering, booking);
                 System.out.println(
                         "Workflow backlog metrics proof: series=28 fixed_queues=4 pending_start=1 pending_action=1 failure_retains_snapshot=true freshness_advances=true same_process_collection_recovery=true drained=true operator_only=true empty_dispute_failures=true empty_booking_failures=true empty_booking_waits=true empty_dispute_waits=true; no capacity/alert claim.");
@@ -196,6 +197,30 @@ class WorkflowBacklogMetricsIT {
             identity.stop();
             api.client.close();
         }
+    }
+
+    private void awaitFinishedExecution(String booking, String customer) throws Exception {
+        // Domain cancellation and inbox acknowledgement precede the engine's final checkpoint
+        // cleanup. Establish a finished terminal fixture before the next helper stops the API.
+        long deadline = System.nanoTime() + Duration.ofSeconds(20).toNanos();
+        do {
+            var execution =
+                    api.call(
+                            "GET",
+                            "/api/v1/bookings/" + booking + "/execution",
+                            customer,
+                            null,
+                            null,
+                            200);
+            String status = execution.path("status").asText();
+            if (status.equals("FINISHED")) {
+                assertFalse(execution.path("checkpointPresent").asBoolean());
+                return;
+            }
+            assertNotEquals("ERROR", status, "Cancelled fixture execution failed");
+            Thread.sleep(100);
+        } while (System.nanoTime() < deadline);
+        fail("Cancelled fixture did not finish engine cleanup before restart");
     }
 
     private void verifySavedBookingFailureSurvivesRestart(
