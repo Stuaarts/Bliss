@@ -48,9 +48,10 @@ the boundary; review them before deployment.
    access it needs. No passwords or role-creation secrets are supplied by this
    repository policy.
 2. Fence application workers and apply the reviewed migrations through the
-   migration connection. Runtime is not the migration runner. The integration
-   test uses the pinned Flyway Java API; a hosted release runner still needs
-   implementation and approval.
+   migration connection. Runtime is not the migration runner. The
+   [standalone migration command](DATABASE_MIGRATION_COMMAND.md) uses the pinned
+   Flyway API and bundled versioned SQL without starting the API. Hosted release
+   orchestration and operator adoption still need implementation and approval.
 3. From the repository root, as the database administrator, apply the policy
    using the matching `psql` client, its existing authenticated connection and
    explicit target variables:
@@ -83,8 +84,9 @@ the boundary; review them before deployment.
    tables do not automatically receive runtime access. Reapplying is tested.
 
 These are adoption steps for an operator to review, not commands executed against
-an existing project database by this task. Hosted secret storage, migration
-runners, release/rollback rehearsal, private networking and operator acceptance remain open. The separate
+an existing project database by this task. Hosted secret storage, migration job
+orchestration, release/rollback rehearsal, private networking and operator
+acceptance remain open. The separate
 [credential rotation rehearsal](CREDENTIAL_ROTATION.md) now tests password changes,
 NOLOGIN, explicit runtime session termination and a controlled workflow restart
 with a replacement secret. Managed credential delivery and operator adoption
