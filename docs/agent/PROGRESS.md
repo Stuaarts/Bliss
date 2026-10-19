@@ -1526,3 +1526,73 @@ marked bookings; the operator guide requires compatible roll-forward/recovery
 review. No Flutter/native rerun, public/paid hosting, live gateway, billing change
 or existing project database migration. Preserve drafts #39–#50 and keep
 #7/#12/#15 open; required CI/native acceptance remains at the deferred final gate.
+
+## 2026-10-18 — dispute backup/restore with admitted decision (#15)
+
+Branch `15-dispute-backup-restore` builds on draft PR #51 at `9f30ca3` in the
+existing managed checkout. The prior backup drill resumed one WAIT_PROVIDER
+booking; dispute waits only had same-database process-restart coverage. Two new
+packaged cases now restore actual DisputeFlow data/checkpoints into distinct empty
+PostgreSQL 17.6 targets. The evidence-wait path restores an authorized payment
+and two customer evidence records, then admits provider evidence and an independent
+admin decision for one simulated CAPTURE. The admin-review path restores a
+captured payment, three evidence rows and a customer-favored decision admitted
+through actual HTTP before backup, then records one simulated REFUND.
+
+The admin fixture stops the source API, restarts with both dispatch and automatic
+checkpoint restoration disabled, admits the decision and proves it remains
+unprocessed beyond a polling interval. Disabling dispatch alone does not pause
+restored instances. Both flags are test-process overrides; defaults are unchanged.
+The source exits before snapshot/restore. Every public table's row count and
+sorted row digest must match before candidate startup. The candidate first starts
+with both controls disabled to verify exact evidence/receipt replay, saved wait
+age, workflow identity, cross-account denial and the pending decision. Only the
+restored worker then resumes. Resolution, duplicate decision receipt/timestamp,
+one AUTHORIZE/one CAPTURE and conditional one REFUND are checked. The stopped
+source's full snapshot remains unchanged in its original wait. See the
+[recovery contract](../operations/DISPUTE_BACKUP_RESTORE.md).
+
+The new test-only `WorkflowBackup` helper consolidates the existing booking drill's
+quiesced dump, fresh-target/empty-schema checks, all-table comparison and temporary
+archive cleanup. It creates its own archive and removes it before returning,
+including failures. Comparison failures do not print digest maps. The test-only
+`DisputeRecoveryFixture` extracts the unchanged HTTP booking/dispute lifecycle
+used by both old restart outcomes and the new restore cases. Existing checkpoint,
+wait/history and single-settlement assertions remain. The dispute restart client
+now closes explicitly.
+
+Docker was stopped at turn start. The existing guarded helper preserved stale
+socket-only runtime directories and started Docker 29.8.0 without reset/reinstall
+or volume changes. Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dtest=OperationsSmokeTest
+-Dit.test=DisputeBackupRestoreIT,WorkflowBackupRestoreIT,DisputeRestartIT
+-Dquarkus.http.test-port=0` passed ten scenarios (five ordinary + five packaged),
+zero failures/errors/skips, Spotless clean, in 5:06. Both new restore paths passed
+in 119.4 seconds, both dispute restart outcomes in 124.3 seconds, and the booking
+restore/cancellation case in 24.76 seconds. During the focused run, final
+digest-comparison diagnostics and client cleanup were tightened; the full run
+below checks the final compiled sources.
+
+Full Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dquarkus.http.test-port=0` passed all 87 scenarios (67 ordinary + 20 migration/
+packaged), zero failures/errors/skips, Spotless clean, in 10:34, finishing at
+23:21:46 -04:00. Spotless keeps 88 Java files clean. Both new dispute restore
+paths passed in 124.3 seconds; both dispute restart outcomes in 126.4 seconds;
+booking restore in 25.22 seconds; both booking restart outcomes in 84.10 seconds.
+Final comparison diagnostics and client cleanup are included. Durable failure,
+management, diagnostics, authenticated workload, outage recovery, all 28 metrics
+samples and populated/empty migration checks also pass. No Flow trace-listener
+messages occur. Recovery helpers, test identity and payment alternatives are
+absent from the application jar. No temporary host backup remains. Local Markdown
+links, tracked/new-file hygiene and `git diff --check` pass; owned resources close
+and existing project services/data remain preserved. Logs remain in
+`services/api/target/dispute-backup-focused.log` and `dispute-backup-verify.log`.
+
+No application code, runtime defaults, schema, dependency/upstream, business
+transition or settlement-policy change. This is one synthetic case per isolated
+source/target pair on pinned versions, not managed/online/PITR, simultaneous or
+in-flight settlement recovery, real-provider/identity reconciliation, least-privilege
+database roles, RPO/RTO or operator acceptance. No Flutter/native rerun, public/paid
+hosting, live payment, billing change or existing project database migration.
+Preserve drafts #39–#51 and keep #7/#12/#15 open; required CI/native acceptance
+remains at the deferred final gate.

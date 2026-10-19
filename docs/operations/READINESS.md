@@ -13,7 +13,7 @@ assign, not staffed services. Track delivery in [issue #15](https://github.com/S
 | Deployment | Loopback API, PostgreSQL/Flyway, one API worker, durable BookingLifecycleFlow and DisputeFlow | Private database networking, TLS, release/rollback rehearsal, health-based deployment, resource sizing and assigned operator |
 | Identity and secrets | One OIDC issuer, audience/subject and server-side role/ownership checks; explicit packaged DB and issuer configuration | Managed identity availability, least-privilege runtime/migration credentials, secret storage, rotation and revocation drill |
 | Diagnostics | JSON console logging; bounded REST response events; mapped errors omit throwables; Flow payload tracing disabled; operator-gated management; cached inbox/freshness, booking/dispute failures and wait/history metrics; durable booking failure guards | Private management ingress, credential operations, collection/dashboards/alerts, failures without persisted markers, engine-health classification, remaining log privacy review and tracing |
-| Recovery | Packaged crash/restart and database outage drills; paused booking backup restored into a fresh database and continued through simulated cancellation; migrations/invariants tested | Managed backup scheduling, encrypted storage, access/retention, broader workflow/external-effect restore, agreed RPO/RTO and operator rehearsal |
+| Recovery | Packaged crash/restart and outage drills; booking/dispute backups restored into fresh databases through simulated cancellation/CAPTURE/REFUND; preserved evidence and admitted decision; migrations/invariants tested | Managed backup scheduling, encrypted storage, access/retention, simultaneous/in-flight/external-effect recovery, agreed RPO/RTO and operator rehearsal |
 | Capacity | Bounded public category reads; eight-customer authenticated direct-booking/retry workload with four clients, eight restored waits and single-settlement checks | Broader endpoint/actor mixes, agreed dataset/arrival rates, long waits, saturation/soak and resource/backlog evidence against approved SLOs |
 | Abuse and moderation | Authentication, participant/owner checks, validation and bounded pagination | Enforced rate limits, reporting/review/removal workflow, escalation/appeal policy and tested abuse controls |
 | Privacy | Scoped private reads; public review DTO excludes customer/booking identity | Approved inventory/retention rules, authenticated export/deletion, backup expiry and deletion/hold rehearsal |
@@ -25,6 +25,11 @@ It remains unmerged pending CI. The separate
 [paused workflow backup/restore drill](WORKFLOW_BACKUP_RESTORE.md) executes one
 real restored WAIT_PROVIDER booking and proves single simulated cancellation.
 It does not establish arbitrary workflow or managed recovery acceptance.
+The [dispute backup/restore drill](DISPUTE_BACKUP_RESTORE.md) extends this to
+evidence/admin-review waits and a decision admitted before backup. It preserves
+the case/instance, evidence and ownership, resumes one simulated CAPTURE/REFUND,
+and leaves the stopped source unchanged. It uses both dispatch and auto-restore
+controls to fence the test worker; no production pause/recovery API is provided.
 
 ## Reproduce the bounded operations smoke
 
@@ -221,6 +226,9 @@ same snapshot and authorization contract.
 The durable booking failure slice builds on draft #50; it changes failure
 recording and guards, adds V11 and two cached gauges, and retains the existing
 business transition/settlement rules. See its rollback restriction above.
+The dispute backup/restore slice builds on draft #51. It adds isolated recovery
+evidence and shared test helpers without changing runtime defaults, schema,
+business policy or settlement code.
 
 The final gate remains: account owner resolves the GitHub payment/spending-limit
 condition, required checks pass on each exact current PR head, native iOS secondary

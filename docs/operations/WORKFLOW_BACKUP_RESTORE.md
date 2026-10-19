@@ -58,6 +58,13 @@ the owned databases and their internal archives; the API/JWKS/client close too.
 A machine/JVM kill can interrupt cleanup, so ignored build files still need local
 access controls. Never commit or publish a backup, even synthetic test output.
 
+Booking and dispute recovery now share the test-only `WorkflowBackup` helper.
+It requires the source API to have exited, starts a distinct empty destination,
+compares all public tables and removes its temporary archive before returning.
+The separate [dispute restore drill](DISPUTE_BACKUP_RESTORE.md) adds evidence and
+admin-review waits, an actual admitted decision, and simulated CAPTURE/REFUND.
+Its fixture also serves the existing dispute process-restart cases.
+
 ## Scope and operator acceptance still required
 
 This is an offline, quiesced synthetic recovery of one WAIT_PROVIDER booking on
@@ -65,7 +72,8 @@ the same pinned API/Flow/PostgreSQL versions. It proves restored execution and
 idempotent simulated cancellation; it does not prove managed backups, online
 snapshot races, point-in-time recovery, changed-version compatibility, disaster
 availability or an approved RPO/RTO. No recovery-time objective is measured.
-Capture, refund, dispute, several simultaneous restored waits, external identity
+The separate dispute drill covers CAPTURE/REFUND after restored waits. Several
+simultaneous restored waits, in-flight settlement snapshots, external identity
 records, real payment/provider reconciliation and infrastructure secrets remain
 separate acceptance work. A row-equivalent archive alone does not establish that
 any arbitrary workflow can safely resume.

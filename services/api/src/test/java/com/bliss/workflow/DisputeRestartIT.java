@@ -6,8 +6,6 @@ import com.bliss.identity.TestIdentityProvider;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.net.ServerSocket;
 import java.sql.*;
-import java.time.*;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -30,115 +28,12 @@ class DisputeRestartIT {
                 api.port = socket.getLocalPort();
             }
             api.start(db, oidc);
-            String customer = TestIdentityProvider.token("dispute-restart-customer", "customer");
-            String provider = TestIdentityProvider.token("dispute-restart-provider", "provider");
-            String admin = TestIdentityProvider.token("dispute-restart-admin", "admin");
-            for (String token : List.of(customer, provider, admin))
-                api.call("POST", "/api/v1/me/bootstrap", token, null, null, 200);
-            String providerId =
-                    api.call(
-                                    "POST",
-                                    "/api/v1/providers/me",
-                                    provider,
-                                    Map.of(
-                                            "displayName",
-                                            "Dispute restart provider",
-                                            "type",
-                                            "INDIVIDUAL",
-                                            "description",
-                                            "Demo",
-                                            "city",
-                                            "Toronto"),
-                                    null,
-                                    201)
-                            .path("id")
-                            .asText();
-            String offering =
-                    api.call(
-                                    "POST",
-                                    "/api/v1/providers/me/" + providerId + "/offerings",
-                                    provider,
-                                    Map.of(
-                                            "title",
-                                            "Dispute restart service",
-                                            "description",
-                                            "Fixed scope",
-                                            "price",
-                                            "80.50",
-                                            "currency",
-                                            "CAD",
-                                            "categoryId",
-                                            "10000000-0000-0000-0000-000000000004"),
-                                    null,
-                                    201)
-                            .path("id")
-                            .asText();
-            String booking =
-                    api.call(
-                                    "POST",
-                                    "/api/v1/offerings/" + offering + "/bookings",
-                                    customer,
-                                    Map.of("offeringVersion", 0, "city", "Toronto"),
-                                    UUID.randomUUID().toString(),
-                                    201)
-                            .path("id")
-                            .asText();
-            api.awaitStatus(booking, customer, "WAIT_PROVIDER");
-            api.call(
-                    "POST",
-                    "/api/v1/bookings/" + booking + "/provider-accept",
-                    provider,
-                    Map.of(
-                            "scheduledAt",
-                            Instant.now()
-                                    .plusSeconds(10)
-                                    .truncatedTo(ChronoUnit.MICROS)
-                                    .toString()),
-                    UUID.randomUUID().toString(),
-                    202);
-            var scheduled = api.awaitStatus(booking, customer, "SCHEDULED");
-            long wait =
-                    Duration.between(
-                                    Instant.now(),
-                                    Instant.parse(scheduled.path("scheduledAt").asText()))
-                            .toMillis();
-            if (wait > 0) Thread.sleep(wait + 50);
-            api.call(
-                    "POST",
-                    "/api/v1/bookings/" + booking + "/start",
-                    provider,
-                    null,
-                    UUID.randomUUID().toString(),
-                    202);
-            api.awaitStatus(booking, customer, "IN_PROGRESS");
-            api.call(
-                    "POST",
-                    "/api/v1/bookings/" + booking + "/mark-complete",
-                    provider,
-                    null,
-                    UUID.randomUUID().toString(),
-                    202);
-            api.awaitStatus(booking, customer, "WAIT_CUSTOMER");
-            if (captured) {
-                api.call(
-                        "POST",
-                        "/api/v1/bookings/" + booking + "/confirm-completion",
-                        customer,
-                        null,
-                        UUID.randomUUID().toString(),
-                        202);
-                api.awaitStatus(booking, customer, "COMPLETED");
-            }
-            String id =
-                    api.call(
-                                    "POST",
-                                    "/api/v1/bookings/" + booking + "/disputes",
-                                    customer,
-                                    Map.of("reason", "Work needs review; restart demo."),
-                                    null,
-                                    201)
-                            .path("id")
-                            .asText();
+            var fixture = DisputeRecoveryFixture.create(api, captured);
+            String customer = fixture.customer(),
+                    provider = fixture.provider(),
+                    admin = fixture.admin(),
+                    booking = fixture.booking(),
+                    id = fixture.dispute();
             var collecting = await(api, id, customer, "COLLECTING_EVIDENCE", true);
             String instance = collecting.path("workflowInstanceId").asText();
             double evidenceAge = waits.await("party_evidence", false);
@@ -238,10 +133,11 @@ class DisputeRestartIT {
         } finally {
             api.stop();
             identity.stop();
+            api.client.close();
         }
     }
 
-    JsonNode await(
+    static JsonNode await(
             WorkflowRestartIT api, String id, String token, String expected, boolean checkpoint)
             throws Exception {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(25);

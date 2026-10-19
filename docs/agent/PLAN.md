@@ -257,3 +257,22 @@ Full Java 21 verification passes 85 scenarios (67 ordinary + 18 migration/
 packaged), zero failures/errors/skips, Spotless clean, in 6:27. Final terminal
 execution precedence and start-acknowledgement assertions pass; existing crash,
 restore, outage, ownership and single-settlement evidence remains green.
+
+Branch `15-dispute-backup-restore` builds on draft PR #51 at `9f30ca3`.
+It restores actual evidence/admin-review waits into fresh owned PostgreSQL
+databases, including a real HTTP-admitted unprocessed decision. All public table
+counts/digests match before execution. Case/instance identity, wait age, evidence,
+ownership and receipt replay survive; only the restored worker proceeds through
+one simulated CAPTURE/REFUND and the frozen source remains unchanged. Shared
+test-only fixture/backup helpers also serve existing restart/cancellation drills.
+See [dispute backup/restore](../operations/DISPUTE_BACKUP_RESTORE.md).
+No runtime/schema/policy/settlement change. Managed/online/PITR, in-flight or
+simultaneous settlement, external reconciliation and RPO/RTO acceptance remain
+open, alongside the deferred current-head CI/native gate. Focused Java 21
+verification passes ten scenarios (five ordinary + five packaged), zero
+failures/errors/skips, Spotless clean, in 5:06.
+Full Java 21 verification passes 87 scenarios (67 ordinary + 20 migration/
+packaged), zero failures/errors/skips, Spotless clean, in 10:34. Both dispute
+restores, both existing dispute/booking restart outcomes and the booking restore
+pass with final shared helpers. Temporary archives are removed; fixtures stay
+out of the application jar and existing project data is preserved.
