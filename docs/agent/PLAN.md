@@ -276,3 +276,22 @@ packaged), zero failures/errors/skips, Spotless clean, in 10:34. Both dispute
 restores, both existing dispute/booking restart outcomes and the booking restore
 pass with final shared helpers. Temporary archives are removed; fixtures stay
 out of the application jar and existing project data is preserved.
+
+Branch `15-runtime-database-roles` builds on draft PR #52 at `4d2ad30`.
+It adds a guarded post-migration grants policy for a dedicated database and
+separates migration ownership from runtime DML. Invalid database/owner/elevated/
+member-role inputs fail before permissions change. Runtime cannot migrate,
+rewrite history, change schema/roles, truncate or create temporary tables. Actual
+packaged booking/dispute work and checkpoint restart pass after disabling the
+migration login. See [database roles](../operations/DATABASE_ROLES.md).
+Runtime defaults and existing project credentials/data are unchanged; selecting
+this setup requires explicit startup options and policy application after each
+migration. Hosted role adoption, migration runner, secret/session operations and
+the deferred CI/native gate remain open. Focused Java 21 verification passes
+seven scenarios (five ordinary + two packaged), zero failures/errors/skips,
+Spotless clean, in 1:28.
+Full Java 21 verification passes 89 scenarios (67 ordinary + 22 migration/
+packaged), zero failures/errors/skips, Spotless clean, in 11:43. Both role cases
+and all existing restart/restore, ownership, workload/outage, metrics and migration
+checks pass. Test/admin artifacts stay out of the application jar; existing
+project roles/data and prior drafts are preserved.

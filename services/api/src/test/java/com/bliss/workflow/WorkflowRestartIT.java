@@ -305,13 +305,18 @@ class WorkflowRestartIT {
     }
 
     void start(PostgreSQLContainer db, Map<String, String> oidc) throws Exception {
+        start(db, oidc, db.getUsername(), db.getPassword());
+    }
+
+    void start(PostgreSQLContainer db, Map<String, String> oidc, String username, String password)
+            throws Exception {
         var args = new ArrayList<String>();
         args.add(Path.of(System.getProperty("java.home"), "bin", "java").toString());
         args.add("-Dquarkus.http.port=" + port);
         // Explicit properties isolate this process from CI's unit-test database environment.
         args.add("-Dquarkus.datasource.jdbc.url=" + db.getJdbcUrl());
-        args.add("-Dquarkus.datasource.username=" + db.getUsername());
-        args.add("-Dquarkus.datasource.password=" + db.getPassword());
+        args.add("-Dquarkus.datasource.username=" + username);
+        args.add("-Dquarkus.datasource.password=" + password);
         oidc.forEach((k, v) -> args.add("-D" + k + "=" + v));
         args.add("-jar");
         args.add("target/quarkus-app/quarkus-run.jar");
