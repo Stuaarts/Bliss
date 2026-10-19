@@ -1,16 +1,14 @@
 package com.bliss.workflow;
 
+import static com.bliss.workflow.WorkflowBackup.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.bliss.identity.TestIdentityProvider;
 import java.net.ServerSocket;
-import java.nio.file.*;
-import java.sql.DriverManager;
 import java.util.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.testcontainers.postgresql.PostgreSQLContainer;
-import org.testcontainers.utility.MountableFile;
 
 /** Restore an actual paused workflow into a fresh owned database, then continue through HTTP. */
 class WorkflowBackupRestoreIT {
@@ -20,7 +18,6 @@ class WorkflowBackupRestoreIT {
     @Timeout(240)
     void restoredBackupRetainsWaitingWorkflowAndCancelsExactlyOnce() throws Exception {
         var identity = new TestIdentityProvider();
-        Path backup = Files.createTempFile(Path.of("target"), "workflow-backup-", ".dump");
         try (var source = new PostgreSQLContainer("postgres:17.6-alpine");
                 var restored = new PostgreSQLContainer("postgres:17.6-alpine")) {
             try {
@@ -91,46 +88,7 @@ class WorkflowBackupRestoreIT {
                 api.stop();
                 assertFalse(api.server.isAlive());
                 assertWaiting(source);
-                var original = snapshot(source);
-                assertTrue(
-                        original.size() >= 28,
-                        "Snapshot must include every public application table");
-                var dump =
-                        source.execInContainer(
-                                "pg_dump",
-                                "--username",
-                                source.getUsername(),
-                                "--dbname",
-                                source.getDatabaseName(),
-                                "--format=custom",
-                                "--no-owner",
-                                "--no-privileges",
-                                "--file=/tmp/bliss-workflow.dump");
-                assertEquals(0, dump.getExitCode(), "Owned database backup failed");
-                source.copyFileFromContainer("/tmp/bliss-workflow.dump", backup.toString());
-                assertTrue(Files.size(backup) > 0);
-                restored.start();
-                assertNotEquals(source.getContainerId(), restored.getContainerId());
-                assertNotEquals(source.getJdbcUrl(), restored.getJdbcUrl());
-                assertEquals(Map.of(), snapshot(restored), "Restore destination must be empty");
-                restored.copyFileToContainer(
-                        MountableFile.forHostPath(backup), "/tmp/bliss-workflow.dump");
-                var restore =
-                        restored.execInContainer(
-                                "pg_restore",
-                                "--username",
-                                restored.getUsername(),
-                                "--dbname",
-                                restored.getDatabaseName(),
-                                "--no-owner",
-                                "--no-privileges",
-                                "--exit-on-error",
-                                "/tmp/bliss-workflow.dump");
-                assertEquals(0, restore.getExitCode(), "Owned database restore failed");
-                assertEquals(
-                        original,
-                        snapshot(restored),
-                        "All public table row counts/digests must survive restore");
+                var original = WorkflowBackup.restore(api, source, restored);
                 assertWaiting(restored);
 
                 api.start(restored, oidc);
@@ -202,7 +160,9 @@ class WorkflowBackupRestoreIT {
                                             + status
                                             + "'"));
                 // The frozen source remains unchanged; only the restored copy executes.
-                assertEquals(original, snapshot(source));
+                assertTrue(
+                        original.equals(snapshot(source)),
+                        "Frozen source rows must remain unchanged");
                 assertWaiting(source);
                 System.out.printf(
                         "Workflow backup restore proof: tables=%d restored_waits=1 same_instance=true authorize=1 void=1 processed_cancel=1 source_unchanged=true; offline synthetic drill, no RPO/RTO claim.%n",
@@ -213,9 +173,7 @@ class WorkflowBackupRestoreIT {
         } finally {
             identity.stop();
             api.client.close();
-            Files.deleteIfExists(backup);
         }
-        assertFalse(Files.exists(backup), "Temporary synthetic backup must be removed");
     }
 
     private void assertWaiting(PostgreSQLContainer db) throws Exception {
@@ -231,47 +189,5 @@ class WorkflowBackupRestoreIT {
                 1,
                 scalar(db, "SELECT count(*) FROM payment_transaction WHERE operation='AUTHORIZE'"));
         assertEquals(0, scalar(db, "SELECT count(*) FROM booking_event"));
-    }
-
-    private long scalar(PostgreSQLContainer db, String sql) throws Exception {
-        try (var connection =
-                        DriverManager.getConnection(
-                                db.getJdbcUrl(), db.getUsername(), db.getPassword());
-                var statement = connection.createStatement()) {
-            statement.setQueryTimeout(10);
-            try (var rows = statement.executeQuery(sql)) {
-                assertTrue(rows.next());
-                return rows.getLong(1);
-            }
-        }
-    }
-
-    private Map<String, String> snapshot(PostgreSQLContainer db) throws Exception {
-        var result = new TreeMap<String, String>();
-        try (var connection =
-                        DriverManager.getConnection(
-                                db.getJdbcUrl(), db.getUsername(), db.getPassword());
-                var statement = connection.createStatement()) {
-            statement.setQueryTimeout(10);
-            var tables = new ArrayList<String>();
-            try (var rows =
-                    statement.executeQuery(
-                            "SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' ORDER BY table_name")) {
-                while (rows.next()) tables.add(rows.getString(1));
-            }
-            for (String table : tables) {
-                assertTrue(table.matches("[a-z_]+"));
-                // Digests stay in memory; never emit records or serialized Flow payloads.
-                try (var rows =
-                        statement.executeQuery(
-                                "SELECT count(*),md5(coalesce(string_agg(row_to_json(t)::text, E'\\n' ORDER BY row_to_json(t)::text),'')) FROM public.\""
-                                        + table
-                                        + "\" t")) {
-                    assertTrue(rows.next());
-                    result.put(table, rows.getLong(1) + ":" + rows.getString(2));
-                }
-            }
-        }
-        return result;
     }
 }

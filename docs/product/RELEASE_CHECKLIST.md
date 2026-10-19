@@ -19,7 +19,7 @@ the separate verified runs; no narrated video is claimed.
 | Chat | Persisted participant-scoped messages, retry/pagination, browser restart evidence |
 | Reviews | Completed-customer eligibility, one review per booking, public rating/privacy tests |
 | Disputes | Private evidence, independent admin decision, manual review wait and simulated refund verified |
-| Backend quality gates | Merged foundation: 63 scenarios. Booking failure branch locally passes 85: 67 ordinary + 18 migration/packaged-process scenarios; remote CI remains pending |
+| Backend quality gates | Merged foundation: 63 scenarios. Dispute restore branch locally passes 87: 67 ordinary + 20 migration/packaged-process scenarios; remote CI remains pending |
 | Flutter quality gates | Analysis, formatting, 46 tests; release web build and Android app/test-driver compilation are checked for each PR |
 | Operations and docs | Production health/metrics/OpenAPI/Swagger require an independent operator role; local tools remain available. See [management access](../operations/MANAGEMENT_ACCESS.md), action catalog, ADRs, workflow diagrams and [operations readiness plan](../operations/READINESS.md) for remaining hosting/privacy/abuse controls |
 | Native device validation | Real Android Keycloak login/recovery/logout, request-to-review, direct cancellation, customer/provider/admin dispute and catalog outage/retry pass. iOS app build, native session fixture and real customer/provider Keycloak browser login/recovery/logout/account switching pass. iOS request-to-review/chat/simulated capture/review recovery also pass. **Open #7:** secondary iOS cancellation/dispute/connection-recovery acceptance; other settlement branches retain API/web evidence |
@@ -142,6 +142,12 @@ the separate [paused workflow backup/restore drill](../operations/WORKFLOW_BACKU
 executes one restored WAIT_PROVIDER booking through idempotent simulated
 cancellation with the same workflow ID. Managed backup scheduling, broader
 workflow/external-effect recovery and operator acceptance remain open.
+The [dispute backup/restore drill](../operations/DISPUTE_BACKUP_RESTORE.md) adds
+fresh-database recovery of evidence/admin-review waits and an admitted decision,
+retains evidence/ownership/receipt replay, and records a single simulated
+CAPTURE/REFUND while the stopped source remains unchanged. Simultaneous cases,
+in-flight settlements, real-provider reconciliation and managed backup acceptance
+remain open.
 The [operations readiness plan](../operations/READINESS.md) records concrete
 evidence, gaps and delivery order under #15.
 The [database outage drill](../operations/DATABASE_OUTAGE.md) verifies readiness
