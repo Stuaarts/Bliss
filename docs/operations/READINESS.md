@@ -11,7 +11,7 @@ assign, not staffed services. Track delivery in [issue #15](https://github.com/S
 | Area | Implemented foundation | Evidence still required before product beta |
 | --- | --- | --- |
 | Deployment | Loopback API, PostgreSQL/Flyway, one API worker, durable BookingLifecycleFlow and DisputeFlow | Private database networking, TLS, release/rollback rehearsal, health-based deployment, resource sizing and assigned operator |
-| Identity and secrets | One OIDC issuer, audience/subject and server-side ownership checks; explicit packaged configuration; restricted runtime grants and separate-migrator workflow rehearsal | Managed identity availability, deployment adoption of separate roles, hosted migration runner/secret storage, rotation and session revocation drill |
+| Identity and secrets | One OIDC issuer, audience/subject and server-side ownership checks; explicit packaged configuration; restricted runtime grants, separate-migrator workflows and controlled credential/session revocation rehearsal | Managed identity availability, deployment adoption of separate roles, hosted migration runner/secret storage, operator rotation/ingress/recovery acceptance |
 | Diagnostics | JSON console logging; bounded REST response events; mapped errors omit throwables; Flow payload tracing disabled; operator-gated management; cached inbox/freshness, booking/dispute failures and wait/history metrics; durable booking failure guards | Private management ingress, credential operations, collection/dashboards/alerts, failures without persisted markers, engine-health classification, remaining log privacy review and tracing |
 | Recovery | Packaged crash/restart and outage drills; booking/dispute backups restored into fresh databases through simulated cancellation/CAPTURE/REFUND; preserved evidence and admitted decision; migrations/invariants tested | Managed backup scheduling, encrypted storage, access/retention, simultaneous/in-flight/external-effect recovery, agreed RPO/RTO and operator rehearsal |
 | Capacity | Bounded public category reads; eight-customer authenticated direct-booking/retry workload with four clients, eight restored waits and single-settlement checks | Broader endpoint/actor mixes, agreed dataset/arrival rates, long waits, saturation/soak and resource/backlog evidence against approved SLOs |
@@ -104,7 +104,14 @@ but no DDL, role escalation, TRUNCATE or history writes. A separate migrator
 applies schema changes; runtime startup explicitly disables migration and enables
 read-only validation. The test disables the migration login before either API
 starts. This does not change runtime defaults or adopt roles on any existing DB;
-the hosted runner, secure credential operations and operator acceptance remain.
+the hosted runner, managed secret delivery and operator acceptance remain.
+The [credential rotation rehearsal](CREDENTIAL_ROTATION.md) verifies SCRAM
+authentication refusal, existing-session survival, explicit session termination,
+old-pool readiness DOWN/liveness UP, and controlled restart with the replacement
+credential. The worker is fenced before revocation; the same persisted dispute
+continues once through simulated settlement. Hosted ingress fencing, managed
+secret distribution, active-workflow outage reconciliation and rotation/rollback
+acceptance remain open.
 
 Health, metrics, Swagger and OpenAPI share the HTTP server. The default packaged
 production profile now requires the dedicated `operator` OIDC role on the
@@ -239,6 +246,10 @@ business policy or settlement code.
 The runtime database-role slice builds on draft #52. Its grants policy is tested
 only against disposable dedicated databases, including migration denial and real
 workflow continuation; production role adoption remains an explicit deployment step.
+
+The credential/session revocation slice builds on draft #53. It reuses the
+restricted-role fixture, stops the active worker before revocation and proves
+controlled restart with the new password; runtime defaults remain unchanged.
 
 The final gate remains: account owner resolves the GitHub payment/spending-limit
 condition, required checks pass on each exact current PR head, native iOS secondary

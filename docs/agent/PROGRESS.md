@@ -1664,3 +1664,67 @@ closes migration connections first. No Flutter/native rerun, public/paid hosting
 live gateway, billing change or existing project database migration. Preserve
 drafts #39–#52 and keep #7/#12/#15 open; current-head CI/native acceptance remains
 at the deferred final gate.
+
+
+## 2026-10-19 — runtime password and session revocation rehearsal (#15)
+
+Branch `15-runtime-credential-rotation` builds on draft PR #53 at `3a7fb1b`
+in the existing managed checkout. Docker was already healthy; no repair/reset was
+needed. The new integration case uses generated disposable credentials and SCRAM
+host authentication. It creates a real booking and evidence-wait dispute with
+restricted runtime access, saves checkpoints and stops the sole worker. A paused
+probe API disables both dispatch and auto-restore before authentication changes.
+The replacement password rejects the old password; NOLOGIN rejects the new one.
+An established JDBC session and pooled API readiness remain usable after both
+changes. Explicit administrator termination is bound to the owned database and
+runtime role. The observer loses its connection; the old API becomes unready with
+HTTP 503/database DOWN, while its process and liveness remain UP. All public
+records retain their count/digest during the fenced interval.
+
+After stopping the old probe, the login is re-enabled and the old password still
+fails. A new packaged process uses the replacement runtime secret, with migration
+login still disabled, startup migration off and validation on. The same case/
+instance, transition age and evidence survive without a failure marker; provider
+evidence and an independent admin decision resolve once through simulated CAPTURE.
+Decision replay stays processed and privileged operations remain denied. A shared
+test-only role fixture replaces duplicated provisioning/grants/denial helpers;
+existing role tests retain their behavior. See
+[rotation procedure and limits](../operations/CREDENTIAL_ROTATION.md).
+
+The initial negative guard detected four host trust rules left by image initdb
+when only POSTGRES_HOST_AUTH_METHOD was selected. The owned fixture now also sets
+POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256; it requires all host rules to use
+SCRAM and actual server authentication SQLSTATEs. No project configuration or
+credentials were changed to correct the fixture.
+
+Corrected Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dtest=OperationsSmokeTest -Dit.test=RuntimeDatabaseRolesIT,RuntimeCredentialRotationIT
+-Dquarkus.http.test-port=0` passes eight scenarios (five ordinary + three
+packaged), zero failures/errors/skips, Spotless clean, in 2:27. Rotation passes in
+58.80 seconds and both existing role cases in 47.67 seconds. All authentication,
+revocation, unchanged-record, readiness, restored workflow and single-settlement
+assertions pass. Generated credentials are not printed in proof output.
+Full Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dquarkus.http.test-port=0` passes all 90 scenarios (67 ordinary + 23 migration/
+packaged), zero failures/errors/skips, Spotless clean, in 12:27, finishing at
+09:14:59 -04:00. Rotation passes again in 52.95 seconds, both role cases in
+48.79 seconds, dispute backup/restore in 122.5 seconds, both dispute restart
+outcomes in 119.3 seconds, metrics in 52.83 seconds, booking restore in 24.61
+seconds and both booking restart outcomes in 86.61 seconds. Spotless keeps 91
+Java files clean. All prior ownership, workload/outage, durable failure and
+migration evidence remains green. No Flow trace-listener messages occur. The
+application jar excludes role/rotation/recovery/identity/payment fixtures and
+administrator grants SQL. Temporary backup archives are absent; owned resources
+close and existing project services/data remain preserved. Documentation links,
+tracked/new-file hygiene and `git diff --check` pass. Logs remain in
+`services/api/target/credential-rotation-focused.log` and
+`credential-rotation-verify.log`. Exact pushed-head and remote-run evidence is
+recorded in the stacked draft PR and milestone updates on #15/#12.
+
+No application code/default, schema, dependency/upstream, business transition or
+settlement-policy change. This is controlled local revocation/restart evidence,
+not managed secret delivery, hosted ingress fencing, cluster-wide revocation,
+zero-downtime rotation, unfenced workflow outage recovery or operator acceptance.
+No Flutter/native rerun, public/paid hosting, live gateway, billing change or
+existing project database migration. Preserve drafts #39–#53 and keep #7/#12/#15
+open; required current-head CI/native acceptance remains at the deferred final gate.

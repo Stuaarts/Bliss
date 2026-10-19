@@ -154,8 +154,11 @@ The [database role rehearsal](../operations/DATABASE_ROLES.md) verifies separate
 migration ownership and restricted runtime permissions through actual packaged
 workflow execution/restoration. The grants policy refuses unsuitable targets;
 runtime cannot migrate or rewrite history. Existing database roles and runtime
-defaults remain unchanged. Hosted adoption, credential/session revocation and a
-release migration runner still need operator acceptance.
+defaults remain unchanged. The [credential rotation rehearsal](../operations/CREDENTIAL_ROTATION.md)
+adds real SCRAM refusal, existing-session/pooled readiness checks, explicit
+revocation and a fenced workflow restart using the new runtime password. Hosted
+adoption, managed secret delivery/rotation, ingress fencing and a release migration
+runner still need operator acceptance.
 The [database outage drill](../operations/DATABASE_OUTAGE.md) verifies readiness
 DOWN/UP with continued liveness, retained data and a successful update in the
 same API process. Active-workflow outage reconciliation and hosted incident
