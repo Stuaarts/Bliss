@@ -10,7 +10,7 @@ assign, not staffed services. Track delivery in [issue #15](https://github.com/S
 
 | Area | Implemented foundation | Evidence still required before product beta |
 | --- | --- | --- |
-| Deployment | Loopback API, PostgreSQL/Flyway, one API worker, durable BookingLifecycleFlow and DisputeFlow | Private database networking, TLS, release/rollback rehearsal, health-based deployment, resource sizing and assigned operator |
+| Deployment | Loopback API, PostgreSQL/Flyway, one API worker, durable BookingLifecycleFlow and DisputeFlow; optional REST write pause/readiness signal | Private database networking, TLS, release/rollback rehearsal, health-based deployment, resource sizing and assigned operator |
 | Identity and secrets | One OIDC issuer, audience/subject and server-side ownership checks; explicit packaged configuration; restricted runtime grants, standalone migration command, separate-migrator workflows and controlled credential/session revocation rehearsal | Managed identity availability, deployment adoption of separate roles, hosted migration orchestration/secret storage, operator rotation/ingress/recovery acceptance |
 | Diagnostics | JSON console logging; bounded REST response events; mapped errors omit throwables; Flow payload tracing disabled; operator-gated management; cached inbox/freshness, booking/dispute failures and wait/history metrics; durable booking failure guards | Private management ingress, credential operations, collection/dashboards/alerts, failures without persisted markers, engine-health classification, remaining log privacy review and tracing |
 | Recovery | Packaged crash/restart and outage drills; booking/dispute backups restored into fresh databases through simulated cancellation/CAPTURE/REFUND; preserved evidence and admitted decision; migrations/invariants tested | Managed backup scheduling, encrypted storage, access/retention, simultaneous/in-flight/external-effect recovery, agreed RPO/RTO and operator rehearsal |
@@ -131,6 +131,14 @@ listener or hosted network is implemented here. The [database outage drill](DATA
 verifies database readiness DOWN/UP while liveness remains UP, preserves the API
 process, and checks saved records and a successful update after recovery.
 Background workflow backlog/age is not proven by an UP health result.
+The [REST write-admission pause](MAINTENANCE_ADMISSION.md) is startup-configured
+and defaults false. It returns correlated, non-cacheable 503s for matched writes
+while retaining authorized reads; admission DOWN is separate from database health.
+For read-only maintenance, stop the old worker and explicitly disable both
+dispatch and auto-restore in the replacement process. The switch alone does not
+pause existing work, drain requests or fence ingress/other processes. A local
+restricted-role drill proves unchanged records and same-instance resumption;
+hosted draining, in-flight safety and operator acceptance remain open.
 
 The operations owner should implement private metric collection and dashboards
 for route-template/status request counts, error rate, latency, JVM/DB saturation
@@ -179,8 +187,9 @@ and escalation routes, distinguish identity/database/API failures, disable ingre
 or dispatch safely when necessary, preserve restricted diagnostic evidence and
 reconcile booking/ledger/workflow state before resuming. Never retry settlements
 by editing rows manually. The automated database outage drill measures detection
-and recovery locally, without active workflows. Hosted ingress/dispatch controls,
-alert delivery, human acknowledgement, escalation and settlement reconciliation
+and recovery locally, without active workflows. The REST admission control above supplies one local application guard. Hosted
+ingress/draining, worker coordination, alert delivery, human acknowledgement,
+escalation and settlement reconciliation
 still need a supervised rehearsal before declaring the runbook operational.
 
 ## Abuse and moderation work
@@ -260,6 +269,10 @@ controlled restart with the new password; runtime defaults remain unchanged.
 The standalone migration command slice builds on draft #54. It adds a separate
 Java entry point and PowerShell wrapper using the existing fast-jar dependencies;
 API startup defaults and existing project databases remain unchanged.
+
+The REST write-admission slice builds on draft #55. It adds an opt-in pause,
+readiness check and maintenance/reopen rehearsal; the existing default write and
+worker settings remain unchanged.
 
 The final gate remains: account owner resolves the GitHub payment/spending-limit
 condition, required checks pass on each exact current PR head, native iOS secondary

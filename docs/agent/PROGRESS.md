@@ -1807,3 +1807,64 @@ rollout/rollback and operator acceptance remain open. No public/paid hosting,
 live gateway, billing change, existing database migration or Flutter/native rerun.
 Preserve drafts #39–#54; #7/#12/#15 stay open and required current-head CI/native
 acceptance remains at the deferred final gate.
+
+
+## 2026-10-19 — REST write-admission pause and maintenance rehearsal (#15)
+
+Branch `15-maintenance-admission` builds on draft PR #55 at `daba8f9` in the
+existing managed checkout. Docker is healthy; no repair/reset is needed.
+The new startup setting `bliss.operations.writes-paused` defaults false. A REST
+request filter, after server correlation, refuses matched non-GET/HEAD/OPTIONS
+requests with a fixed application/problem+json 503 and no-store. It invokes no
+resource/body validation, admits no receipt, and includes no submitted values.
+The readiness check `API write admission` becomes DOWN independently from database
+health; liveness and existing management authorization remain unchanged. The
+filter shares the readiness-qualified configuration bean. Initial CDI validation
+caught the missing readiness qualifier at injection; explicit qualification fixes
+the wiring before any focused tests run.
+See [procedure and limits](../operations/MAINTENANCE_ADMISSION.md).
+
+Two ordinary tests cover public GET/HEAD/OPTIONS, anonymous private-read denial,
+readiness DOWN/database UP/liveness UP, multiple roles and correlated POST/PUT/
+DELETE refusal before malformed JSON parsing, with user count unchanged. The
+packaged restricted-role case disables the migrator login, creates a real booking
+and evidence-wait dispute, saves checkpoints and stops the worker. A separate
+maintenance process uses the admission flag plus disabled dispatch and engine
+auto-restore. Operator health/metrics and owned reads work; anonymous/outsider
+private reads remain denied. Six refused writes and two dispatch intervals leave
+all public table counts/digests unchanged. A normal process reopens admission and
+restores the same instance/evidence/age. Previously rejected evidence/decision
+keys are admitted, one simulated AUTHORIZE/CAPTURE settles the case and decision
+replay stays processed. Database privilege denials remain. The shared launcher
+can expect readiness 503; existing callers still require 200, and the new drill
+separately verifies admission DOWN/database UP.
+
+Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dtest=OperationsSmokeTest,WriteAdmissionTest -Dit.test=MaintenanceAdmissionIT
+-Dquarkus.http.test-port=0` passes eight scenarios (seven ordinary + one
+packaged), zero failures/errors/skips, Spotless clean, in 1:48. Both new ordinary
+cases pass in 10.28 seconds and the packaged maintenance case in 61.64 seconds.
+Full Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dquarkus.http.test-port=0` passes all 95 scenarios (69 ordinary + 26 migration/
+packaged), zero failures/errors/skips, Spotless clean, in 14:08, finishing at
+10:36:56 -04:00. The maintenance case passes in 58.72 seconds; both ordinary
+admission cases in 15.25 seconds. All prior role/rotation, migration-command,
+backup/restart, ownership, failure, workload/outage and metrics checks remain
+green through the shared launcher. Spotless keeps 97 Java files clean. The jar
+contains the admission controls with default false plus the existing migration
+command, and excludes maintenance/role/recovery/identity/payment fixtures and
+administrator SQL. No Flow trace-listener messages occur; temporary backup
+archives are absent. Documentation links, tracked/new-file hygiene and diff
+checks pass. Owned resources close and original project services/data remain
+preserved. Logs remain in `services/api/target/maintenance-admission-focused.log`
+and `maintenance-admission-verify.log`. Exact pushed-head and remote/backlog
+evidence is recorded in the stacked draft PR and milestone updates on #15/#12.
+
+No existing project credentials, database, volume, migration/schema, dependency,
+business transition, settlement policy or upstream change. Normal startup keeps
+write admission open and the prior dispatch/restore behavior. The flag alone does
+not stop active work, drain existing requests, fence ingress/another process,
+freeze deadlines or establish in-flight/external-effect safety. Hosted controls,
+operator rehearsal and production acceptance remain open. No public/paid hosting,
+live gateway, billing change or Flutter/native rerun. Preserve drafts #39–#55;
+#7/#12/#15 stay open and the required CI/native gate remains deferred.
