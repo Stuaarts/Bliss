@@ -83,13 +83,16 @@ the boundary; review them before deployment.
    tables do not automatically receive runtime access. Reapplying is tested.
 
 These are adoption steps for an operator to review, not commands executed against
-an existing project database by this task. Hosted secret storage, credential
-rotation, connection revocation, migration runners, release/rollback rehearsal,
-private networking and operator acceptance remain open. NOLOGIN prevents new
-connections; it does not terminate existing sessions. The test first closes the
+an existing project database by this task. Hosted secret storage, migration
+runners, release/rollback rehearsal, private networking and operator acceptance remain open. The separate
+[credential rotation rehearsal](CREDENTIAL_ROTATION.md) now tests password changes,
+NOLOGIN, explicit runtime session termination and a controlled workflow restart
+with a replacement secret. Managed credential delivery and operator adoption
+still remain open. NOLOGIN prevents new connections; it does not terminate existing sessions. The test first closes the
 migration connection, disables its login, verifies connection refusal and requires
-zero migration sessions while the API runs. A real revocation drill must address
-existing pools and sessions separately.
+zero migration sessions while the API runs. The runtime revocation rehearsal
+addresses existing pools and sessions explicitly; it does not claim cluster-wide revocation
+or a hosted secret-management service.
 
 ## Reproduce local verification
 

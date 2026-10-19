@@ -295,3 +295,25 @@ packaged), zero failures/errors/skips, Spotless clean, in 11:43. Both role cases
 and all existing restart/restore, ownership, workload/outage, metrics and migration
 checks pass. Test/admin artifacts stay out of the application jar; existing
 project roles/data and prior drafts are preserved.
+
+
+Branch `15-runtime-credential-rotation` builds on draft PR #53 at `3a7fb1b`.
+It rehearses SCRAM password rotation, NOLOGIN and explicit runtime-session
+termination in an owned database with the sole worker fenced. Existing sessions
+and pooled readiness remain usable until termination; the old API then reports
+readiness DOWN/liveness UP. A controlled restart uses only the new runtime
+password and restores the same dispute/evidence/age through one simulated
+CAPTURE with processed decision replay. All public records remain unchanged while
+fenced. The extracted test-only role fixture also serves the prior permission
+cases. See [credential rotation](../operations/CREDENTIAL_ROTATION.md).
+No application/default/schema/business/settlement change. Managed secret delivery,
+hosted ingress fencing, active-workflow outage reconciliation, rotation/rollback
+operator acceptance and the deferred CI/native gate remain open.
+Focused Java 21 verification passes eight scenarios (five ordinary + three
+packaged), zero failures/errors/skips, Spotless clean, in 2:27. The rotation case
+passes in 58.80 seconds; both existing role cases pass in 47.67 seconds.
+Full Java 21 verification passes 90 scenarios (67 ordinary + 23 migration/
+packaged), zero failures/errors/skips, Spotless clean, in 12:27. Rotation passes
+again with final shared helpers; all prior role, restart/restore, metrics, outage,
+workload and migration checks remain green. Test fixtures stay out of the jar;
+existing project credentials/data and prior drafts remain preserved.
