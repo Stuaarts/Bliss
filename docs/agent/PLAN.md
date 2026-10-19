@@ -347,3 +347,24 @@ Spotless clean, in 1:56. Full Java 21 verification with this final source passes
 in 12:23. The corrected metrics drill passes alongside the shipped command and
 all prior recovery, role/rotation, ownership and migration checks. Test-only and
 administrator artifacts stay out of the jar; existing project data is preserved.
+
+
+Branch `15-maintenance-admission` builds on draft PR #55 at `daba8f9`.
+An opt-in startup flag blocks matched REST writes with a correlated no-store 503
+and reports admission readiness DOWN; authorized reads and liveness remain.
+The default is false. Dispatch and auto-restore remain independent, explicit
+controls; the restricted-role maintenance drill stops the old worker and disables
+both in its inspection process. All public records remain unchanged across reads,
+six rejected writes and two dispatch intervals. A normal replacement retains the
+same dispute/evidence/age and admits the rejected keys through one simulated
+CAPTURE. See [maintenance admission](../operations/MAINTENANCE_ADMISSION.md).
+No schema, dependency, settlement policy or upstream change. Hosted ingress,
+draining, in-flight safety, distributed fencing and operator acceptance remain
+open, with required current-head CI/native acceptance at the deferred final gate.
+Focused Java 21 verification passes eight scenarios (seven ordinary + one
+packaged), zero failures/errors/skips, Spotless clean, in 1:48; the maintenance
+case passes in 61.64 seconds. Full Java 21 verification passes 95 scenarios (69 ordinary + 26 migration/
+packaged), zero failures/errors/skips, Spotless clean, in 14:08. The new maintenance
+case and both ordinary admission cases pass; all prior workflow, backup/restart,
+role/rotation, migration, metrics and ownership checks remain green. Test/admin
+artifacts stay out of the jar and existing project data is preserved.

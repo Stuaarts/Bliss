@@ -162,6 +162,10 @@ operator acceptance. The [standalone migration command](../operations/DATABASE_M
 adds guarded fresh/populated upgrades and validation using separate credentials,
 without launching the API or demo seeds. Hosted job orchestration and rollout/
 rollback acceptance remain open.
+The [REST admission pause](../operations/MAINTENANCE_ADMISSION.md) adds correlated
+write 503s, admission readiness DOWN and authorized inspection, with an opt-in
+three-control maintenance/reopen drill. The flag alone does not stop workflows;
+existing requests, hosted ingress/draining and in-flight safety need acceptance.
 The [database outage drill](../operations/DATABASE_OUTAGE.md) verifies readiness
 DOWN/UP with continued liveness, retained data and a successful update in the
 same API process. Active-workflow outage reconciliation and hosted incident

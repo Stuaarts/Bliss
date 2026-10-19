@@ -310,6 +310,17 @@ class WorkflowRestartIT {
 
     void start(PostgreSQLContainer db, Map<String, String> oidc, String username, String password)
             throws Exception {
+        startExpectingReadiness(db, oidc, username, password, 200);
+    }
+
+    void startExpectingReadiness(
+            PostgreSQLContainer db,
+            Map<String, String> oidc,
+            String username,
+            String password,
+            int readinessStatus)
+            throws Exception {
+        assertTrue(readinessStatus == 200 || readinessStatus == 503);
         var args = new ArrayList<String>();
         args.add(Path.of(System.getProperty("java.home"), "bin", "java").toString());
         args.add("-Dquarkus.http.port=" + port);
@@ -342,12 +353,13 @@ class WorkflowRestartIT {
                                         .GET()
                                         .build(),
                                 HttpResponse.BodyHandlers.ofString());
-                if (response.statusCode() == 200) return;
+                if (response.statusCode() == readinessStatus) return;
             } catch (java.io.IOException ignored) {
             }
             Thread.sleep(150);
         }
-        fail("Packaged API did not become ready; inspect target/restart-check-server.log");
+        fail(
+                "Packaged API did not reach expected readiness; inspect target/restart-check-server.log");
     }
 
     void stop() throws InterruptedException {
