@@ -1596,3 +1596,71 @@ database roles, RPO/RTO or operator acceptance. No Flutter/native rerun, public/
 hosting, live payment, billing change or existing project database migration.
 Preserve drafts #39–#51 and keep #7/#12/#15 open; required CI/native acceptance
 remains at the deferred final gate.
+
+## 2026-10-19 — restricted runtime database-role rehearsal (#15)
+
+Branch `15-runtime-database-roles` builds on draft PR #52 at `4d2ad30` in the
+existing managed checkout. A new guarded `psql` policy applies post-migration
+runtime grants to a dedicated database. It checks the connected database,
+restricted distinct roles, no runtime role memberships/ownership, exact migration
+schema ownership and the existing history table. It removes PUBLIC/direct runtime
+CREATE/TEMP and table/sequence rights before granting CONNECT, schema USAGE,
+application DML and sequence use. Flyway history is SELECT-only. No credentials
+are embedded or provisioned by the policy; no existing database/role is changed.
+See [database role contract](../operations/DATABASE_ROLES.md).
+
+The first integration case creates separate generated logins in its owned
+PostgreSQL container, migrates to V10 with the owner, applies grants and verifies
+runtime migration fails with V10/history/column state intact. The migrator then
+applies V11; reapplying the policy succeeds. Wrong database, owner, privileged and
+member roles are refused without changing the booking ACL. Twelve actual runtime
+operations fail with SQLSTATE 42501, covering schema/table creation, ALTER/DROP,
+TEMP, TRUNCATE, role switch/grant/elevation and three history writes. An initial
+negative test caught PostgreSQL 17 psql returning success for `\quit 3`; deliberate
+SQL refusal under ON_ERROR_STOP now returns status 3. The corrected focused run
+passes, including the refusal/unchanged-permission assertions.
+
+The second integration case disables the migration login before API startup and
+verifies new migration connections fail. The packaged API receives runtime
+credentials, explicitly disables startup migration and enables read-only Flyway
+validation. Server session checks require runtime connections and zero migrator
+connections. Actual HTTP identity/provider/offering, booking authorization/work
+and dispute admission persist checkpoints. A distinct API process retains the
+same dispute instance, wait age and evidence; provider evidence and an independent
+admin decision settle with one AUTHORIZE/one CAPTURE and processed receipt replay.
+Privileged-operation denial still holds afterward. The shared test launcher has
+an explicit credentials overload; existing callers retain their prior behavior.
+
+Docker was stopped at turn start; the guarded helper preserved stale socket-only
+runtime directories and started the daemon without reset/reinstall or volume
+changes. Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dtest=OperationsSmokeTest -Dit.test=RuntimeDatabaseRolesIT
+-Dquarkus.http.test-port=0` passed seven scenarios (five ordinary + two packaged),
+zero failures/errors/skips, Spotless clean, in 1:28. Both role cases passed in
+49.05 seconds. Generated passwords stay in the test process/owned containers and
+are not printed in proof output.
+
+Full Java 21 `mvnw.cmd -B -ntp spotless:apply verify
+-Dquarkus.http.test-port=0` passed all 89 scenarios (67 ordinary + 22 migration/
+packaged), zero failures/errors/skips, Spotless clean, in 11:43, finishing at
+08:52:13 -04:00. Both role cases pass in 49.71 seconds with twelve denied runtime
+operations before/after actual writes, repeatable policy application and all
+refusal guards. Existing dispute restores/restarts, booking restore/restarts,
+durable failures, management, diagnostics, workload/outage, all 28 metrics samples
+and migrations remain green through the launcher overload. Spotless keeps 89
+Java files clean. No Flow trace-listener messages occur. Role/recovery/identity/
+payment fixtures and administrator grants SQL are excluded from the application
+jar. Temporary backup archives are absent; owned resources are cleaned up and
+existing project services/data preserved. Documentation links, tracked/new-file
+hygiene and `git diff --check` pass. Logs remain in
+`services/api/target/runtime-roles-focused.log` and `runtime-roles-verify.log`.
+
+No application code/default, schema, dependency/upstream, business transition or
+settlement-policy change. This is tested role separation for the current public
+schema, not per-tenant isolation, a compromised-runtime data boundary, managed
+secret storage, hosted migration orchestration, credential/session revocation or
+production acceptance. NOLOGIN does not terminate existing sessions; the test
+closes migration connections first. No Flutter/native rerun, public/paid hosting,
+live gateway, billing change or existing project database migration. Preserve
+drafts #39–#52 and keep #7/#12/#15 open; current-head CI/native acceptance remains
+at the deferred final gate.

@@ -11,7 +11,7 @@ assign, not staffed services. Track delivery in [issue #15](https://github.com/S
 | Area | Implemented foundation | Evidence still required before product beta |
 | --- | --- | --- |
 | Deployment | Loopback API, PostgreSQL/Flyway, one API worker, durable BookingLifecycleFlow and DisputeFlow | Private database networking, TLS, release/rollback rehearsal, health-based deployment, resource sizing and assigned operator |
-| Identity and secrets | One OIDC issuer, audience/subject and server-side role/ownership checks; explicit packaged DB and issuer configuration | Managed identity availability, least-privilege runtime/migration credentials, secret storage, rotation and revocation drill |
+| Identity and secrets | One OIDC issuer, audience/subject and server-side ownership checks; explicit packaged configuration; restricted runtime grants and separate-migrator workflow rehearsal | Managed identity availability, deployment adoption of separate roles, hosted migration runner/secret storage, rotation and session revocation drill |
 | Diagnostics | JSON console logging; bounded REST response events; mapped errors omit throwables; Flow payload tracing disabled; operator-gated management; cached inbox/freshness, booking/dispute failures and wait/history metrics; durable booking failure guards | Private management ingress, credential operations, collection/dashboards/alerts, failures without persisted markers, engine-health classification, remaining log privacy review and tracing |
 | Recovery | Packaged crash/restart and outage drills; booking/dispute backups restored into fresh databases through simulated cancellation/CAPTURE/REFUND; preserved evidence and admitted decision; migrations/invariants tested | Managed backup scheduling, encrypted storage, access/retention, simultaneous/in-flight/external-effect recovery, agreed RPO/RTO and operator rehearsal |
 | Capacity | Bounded public category reads; eight-customer authenticated direct-booking/retry workload with four clients, eight restored waits and single-settlement checks | Broader endpoint/actor mixes, agreed dataset/arrival rates, long waits, saturation/soak and resource/backlog evidence against approved SLOs |
@@ -98,6 +98,13 @@ install and populated upgrade before routing traffic. A failed migration must
 stop rollout; never assume an older binary can read a changed schema. Rehearse
 rollback against the proposed schema and use a verified restore if incompatible.
 Do not run local/demo seeds or reuse generated demo credentials in a hosted tier.
+The [database role rehearsal](DATABASE_ROLES.md) now supplies an explicit grants
+policy and verifies actual packaged workflow writes/restoration with runtime DML
+but no DDL, role escalation, TRUNCATE or history writes. A separate migrator
+applies schema changes; runtime startup explicitly disables migration and enables
+read-only validation. The test disables the migration login before either API
+starts. This does not change runtime defaults or adopt roles on any existing DB;
+the hosted runner, secure credential operations and operator acceptance remain.
 
 Health, metrics, Swagger and OpenAPI share the HTTP server. The default packaged
 production profile now requires the dedicated `operator` OIDC role on the
@@ -229,6 +236,9 @@ business transition/settlement rules. See its rollback restriction above.
 The dispute backup/restore slice builds on draft #51. It adds isolated recovery
 evidence and shared test helpers without changing runtime defaults, schema,
 business policy or settlement code.
+The runtime database-role slice builds on draft #52. Its grants policy is tested
+only against disposable dedicated databases, including migration denial and real
+workflow continuation; production role adoption remains an explicit deployment step.
 
 The final gate remains: account owner resolves the GitHub payment/spending-limit
 condition, required checks pass on each exact current PR head, native iOS secondary
