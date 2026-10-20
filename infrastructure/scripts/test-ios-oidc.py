@@ -20,6 +20,8 @@ import time
 import urllib.error
 import urllib.request
 
+from ios_simulator import select_simulator
+
 ROOT = Path(__file__).resolve().parents[2]
 KEYCLOAK = "26.7.4"
 KEYCLOAK_SHA256 = "04823c336b797a7e18889a44262a7a64e6bf624cbbcc518c85e2622176ff2eee"
@@ -216,15 +218,13 @@ class Runner:
         print("Real Bliss API and fresh PostgreSQL ready", flush=True)
 
     def simulator(self):
-        inventory = json.loads(self.run(["xcrun", "simctl", "list", "--json"], "simulator-inventory", 30))
-        runtimes = [r for r in inventory["runtimes"] if r.get("isAvailable") and ".iOS-" in r["identifier"]]
-        runtime = max(runtimes, key=lambda r: tuple(map(int, r["version"].split("."))))
-        parts = [int(p) for p in runtime["version"].split(".")]
-        parts += [0] * (3 - len(parts))
-        version = (parts[0] << 16) | (parts[1] << 8) | parts[2]
-        types = [d for d in inventory["devicetypes"] if d["name"].startswith("iPhone")
-                 and d.get("minRuntimeVersion", 0) <= version <= d.get("maxRuntimeVersion", 0xFFFFFFFF)]
-        device_type = types[-1]
+        # Fresh macOS runners can exceed 30 seconds on the first CoreSimulator
+        # inventory. Keep discovery bounded separately from boot and UI tests.
+        inventory = json.loads(self.run(["xcrun", "simctl", "list", "--json"], "simulator-inventory", 180))
+        sdk = self.run(["xcrun", "--sdk", "iphonesimulator", "--show-sdk-version"],
+                       "simulator-sdk", 30).strip()
+        device_type, runtime = select_simulator(inventory, sdk)
+        print(f"Selected iOS {runtime['version']} for SDK {sdk}", flush=True)
         device = self.run(["xcrun", "simctl", "create", f"Bliss_Auth_iOS_{os.getpid()}",
                            device_type["identifier"], runtime["identifier"]], "simulator-create", 60).strip()
         if not re.fullmatch(r"[A-Fa-f0-9-]{36}", device):
@@ -244,12 +244,18 @@ class Runner:
         self.run(["flutter", "pub", "get"], "flutter-pub", 300, mobile)
         self.run(["flutter", "build", "ios", "--config-only", "--simulator", "--debug", "--target", "lib/main.dart",
                   "--dart-define=OIDC_ISSUER=http://localhost:8180/realms/bliss",
-                  "--dart-define=API_BASE_URL=http://localhost:8088"], "flutter-config", 120, mobile)
+                  "--dart-define=API_BASE_URL=http://localhost:8088"], "flutter-config", 300, mobile)
         env = dict(os.environ, TEST_RUNNER_BLISS_IOS_AUTH_OPT_IN="isolated-local",
                    TEST_RUNNER_BLISS_CUSTOMER_PASSWORD=self.passwords["customer"],
                    TEST_RUNNER_BLISS_PROVIDER_PASSWORD=self.passwords["provider"],
                    TEST_RUNNER_BLISS_IOS_MARKETPLACE_RUN_ID=self.run_id)
         (self.evidence / "scenario.txt").write_text(f"{self.scenario}\n{self.run_id}\n{test_class}/{test_name}\n")
+        build = ["xcodebuild", "-workspace", "ios/Runner.xcworkspace", "-scheme", "BlissAuth",
+                 "-configuration", "Debug", "-destination", f"platform=iOS Simulator,id={self.device}",
+                 "-destination-timeout", "60"]
+        # Keep cold compilation outside the UI execution budget. Start the
+        # marketplace observer only after compilation, before any UI writes.
+        self.run([*build, "build-for-testing"], "xctest-build", 600, mobile, env)
         stop = threading.Event()
         self.workflow_checkpoint = None
         self.workflow_error = None
@@ -257,11 +263,10 @@ class Runner:
         if observer:
             observer.start()
         try:
-            log = self.run(["xcodebuild", "-workspace", "ios/Runner.xcworkspace", "-scheme", "BlissAuth",
-                            "-configuration", "Debug", "-destination", f"platform=iOS Simulator,id={self.device}",
-                            "-destination-timeout", "60", "-parallel-testing-enabled", "NO",
+            log = self.run([*build, "-parallel-testing-enabled", "NO",
                             f"-only-testing:RunnerUITests/{test_class}/{test_name}",
-                            "-resultBundlePath", self.private / "auth.xcresult", "test"], "xctest", 900 if marketplace else 600, mobile, env)
+                            "-resultBundlePath", self.private / "auth.xcresult", "test-without-building"],
+                           "xctest", 900, mobile, env)
         finally:
             stop.set()
             if observer:

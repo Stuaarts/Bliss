@@ -1,4 +1,5 @@
 import XCTest
+import CoreGraphics
 
 /// Drives the unmodified Flutter app and Apple's authentication browser from a
 /// separate process. Credentials belong only to the runner's disposable realm.
@@ -47,7 +48,25 @@ class NativeDemoTest: XCTestCase {
     }
 
     func account(_ displayName: String) {
-        XCTAssertTrue(element("Hello, \(displayName)").waitForExistence(timeout: 30),
+        let profile = element("Hello, \(displayName)")
+        let deadline = Date().addingTimeInterval(30)
+        repeat {
+            if profile.exists { break }
+            // A completed callback may dispose of the optional prompt. Avoid
+            // tapping stale/off-screen AX elements after the profile is ready.
+            for surface in [app, springboard] {
+                let skip = surface.alerts["Save Password?"].buttons["Not Now"].firstMatch
+                if skip.exists && skip.isHittable {
+                    let frame = skip.frame
+                    if !frame.isEmpty && app.frame.contains(frame) {
+                        skip.tap()
+                        break
+                    }
+                }
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+        } while Date() < deadline
+        XCTAssertTrue(profile.exists,
                       "Expected authenticated profile after browser callback or refresh")
         XCTAssertTrue(element("customer").exists)
         reveal("Sign out")
@@ -80,7 +99,9 @@ class NativeDemoTest: XCTestCase {
 
     func signIn(_ username: String, displayName: String) {
         tap("Sign in")
-        let deadline = Date().addingTimeInterval(30)
+        // Cold hosted simulators can still be loading the first browser page
+        // after consent. Require the real form within a bounded startup wait.
+        let deadline = Date().addingTimeInterval(90)
         var field: (XCUIApplication, XCUIElement)?
         repeat {
             consent()

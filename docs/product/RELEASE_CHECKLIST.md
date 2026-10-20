@@ -19,11 +19,15 @@ the separate verified runs; no narrated video is claimed.
 | Chat | Persisted participant-scoped messages, retry/pagination, browser restart evidence |
 | Reviews | Completed-customer eligibility, one review per booking, public rating/privacy tests |
 | Disputes | Private evidence, independent admin decision, manual review wait and simulated refund verified |
-| Backend quality gates | Merged foundation: 63 scenarios. Runtime-role branch locally passes 89: 67 ordinary + 22 migration/packaged-process scenarios; remote CI remains pending |
-| Flutter quality gates | Analysis, formatting, 46 tests; release web build and Android app/test-driver compilation are checked for each PR |
+| Backend quality gates | Merged foundation: 63 scenarios. Maintenance-admission draft #56 locally passes 95: 69 ordinary + 26 migration/packaged-process scenarios; runtime unchanged in the client recovery slice, with a metrics-fixture synchronization fix; final current-head CI remains pending |
+| Flutter quality gates | Client maintenance recovery: clean analysis/formatting and 57 tests; release web and debug Android app compilation checked locally. Historical native driver/acceptance evidence is listed below |
 | Operations and docs | Production health/metrics/OpenAPI/Swagger require an independent operator role; local tools remain available. See [management access](../operations/MANAGEMENT_ACCESS.md), action catalog, ADRs, workflow diagrams and [operations readiness plan](../operations/READINESS.md) for remaining hosting/privacy/abuse controls |
 | Native device validation | Real Android Keycloak login/recovery/logout, request-to-review, direct cancellation, customer/provider/admin dispute and catalog outage/retry pass. iOS app build, native session fixture and real customer/provider Keycloak browser login/recovery/logout/account switching pass. iOS request-to-review/chat/simulated capture/review recovery also pass. **Open #7:** secondary iOS cancellation/dispute/connection-recovery acceptance; other settlement branches retain API/web evidence |
 | Full portfolio sign-off | **Open #12:** retain until the remaining native platform gate is resolved or an explicit web-only scope is agreed |
+
+The [client maintenance guide](../operations/CLIENT_MAINTENANCE.md) records the
+profile fallback and manual retry contracts, including in-memory pending-write
+limits and the remaining real-backend/native acceptance.
 
 ## Evidence index
 

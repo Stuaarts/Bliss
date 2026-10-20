@@ -1868,3 +1868,178 @@ freeze deadlines or establish in-flight/external-effect safety. Hosted controls,
 operator rehearsal and production acceptance remain open. No public/paid hosting,
 live gateway, billing change or Flutter/native rerun. Preserve drafts #39–#55;
 #7/#12/#15 stay open and the required CI/native gate remains deferred.
+
+
+## 2026-10-20 - Flutter maintenance access and explicit retry (#15)
+
+Branch `15-client-maintenance-recovery` builds on draft PR #56 at
+`ca2bc527d328743d225dc97efdf661e055c42ed5` in the existing managed checkout.
+Normal sign-in/restore keeps POST bootstrap first. Only HTTP 503 triggers the
+current-token GET profile fallback, allowing an existing account to enter its
+authorized read screens while writes are paused. A missing/unavailable profile
+shows a fixed unavailability message plus Retry account access and Sign out;
+retry does not start another interactive sign-in. Non-503 bootstrap refusals do
+not trigger the read fallback, and 401 clears the local session/retry state.
+The shared HTTP 503 message contains no server response body. Existing
+idempotent submission code is unchanged; a new evidence widget test proves
+original body/key retention across 503, no automatic retry while waiting, and
+manual retry after reopening followed by pending-entry removal. Pending writes
+remain in memory only and are cleared on sign-out/session clearing.
+See [behavior and limits](../operations/CLIENT_MAINTENANCE.md).
+
+Eleven new tests cover fallback/denials/retry, account retry at 320-pixel phone
+width, sign-out, safe messages and evidence replay. Focused tests pass 21 cases.
+After fixing three new-test brace lint findings, Flutter 3.47.5 analysis reports
+no issues, formatting checks 35 Dart files without changes, and the full machine
+run passes all 57 tests with zero failures/errors/skips. Release web compilation
+passes (24.8 seconds), including the Wasm dry run; the existing optional Cupertino
+font-family notice remains non-fatal. Java 21/Android SDK debug APK compilation
+passes (assembleDebug 44.9 seconds). No dependency upgrades or lockfile changes.
+Logs are retained under ignored `.work/client-maintenance-*` paths. Backend
+source is unchanged: the parent maintenance branch's 95 passing scenarios remain
+historical evidence and were not rerun. Docker's daemon is stopped; no Docker
+repair/start, database, credential or volume change is required for this slice.
+
+These are synthetic token/HTTP unit/widget checks and normal app compilation;
+no real backend maintenance UI, Keycloak or native/iOS execution is claimed.
+Ordinary authorization, server write admission, business transitions and settlement
+policy remain unchanged. Hosted ingress/worker safety, production maintenance
+acceptance and the required current-head CI/native gate remain open. Preserve
+prior drafts, the original checkout and #7/#12/#15. GitHub's payment/spending-limit
+issue stays at the user's deferred final gate. The stacked draft PR and milestone
+updates on #15/#12 record the pushed head and freshly inspected remote results.
+
+
+The first automatic checks at `677931b` execute normally rather than receiving
+payment-limit rejections: both Flutter and Android CI jobs pass. Both iOS
+browser/marketplace jobs start real PostgreSQL, Keycloak and the packaged API,
+then fail the shared runner's first simulator inventory at its 30-second
+deadline, before UI execution. The runner now allows a bounded 180 seconds for
+inventory, retaining process-group cleanup and existing boot/test deadlines and
+assertions. Python syntax compilation passes locally without writing bytecode;
+macOS execution must be established by the new pushed-head runs. No app behavior,
+backend source, ownership check or native assertion is relaxed. Exact final
+remote results and any remaining failures are recorded in the PR and backlog.
+
+
+At `e7df284`, both complete push/PR CI runs pass: each verifies 95 backend cases
+(69 ordinary + 26 packaged, zero failures/errors/skips), 57 Flutter tests, clean
+formatting/analysis, web build and Android app/native-driver compilation. The
+separate iOS app/session workflow passes at the initial unchanged Flutter source
+`677931b`. The browser run confirms simulator inventory completes in 51.63 seconds,
+then compiles and runs XCTest. The first Keycloak page remains at 10% loading
+when the old 30-second credential-form wait expires. The shared UI helper now
+allows bounded 90-second first-form discovery, retaining the real form, realm,
+profile, logout and account-switch requirements. This changes test timing only;
+no silent SSO, credential injection or application retry is added. New pushed-head
+native/CI results must verify it; no browser/marketplace acceptance is inferred.
+
+
+At `f8079bf`, PR CI passes all 95 backend scenarios while the identical push run
+passes 94/95: WorkflowBacklogMetricsIT observes zero pending counts with an old
+age gauge (9.773826 seconds) at line 178. The existing metric contract explicitly
+permits a scrape to span a sampler refresh. The fixture now awaits zero ages for
+all four queues as well as zero pending counts before its unchanged zero-age,
+queue, replay and restart assertions. This is a test synchronization correction;
+backend runtime, SQL, metric sampling and settlement behavior remain unchanged.
+After the initial client-only checks, this fixture required Docker. The guarded
+startup helper preserves stale runtime directories and starts the engine without
+resetting data or volumes. Java 21 focused `spotless:apply verify` with
+`-Dtest=OperationsSmokeTest -Dit.test=WorkflowBacklogMetricsIT
+-Dquarkus.http.test-port=0` passes six scenarios (five ordinary + one packaged),
+zero failures/errors/skips, Spotless clean across 97 Java files, in 1:31. The
+metrics drill passes in 54.72 seconds. Owned containers close; the unrelated
+`t36_comp3078_w26-db-1` remains running. No project database migration or credential
+change. Logs are retained in `services/api/target/client-maintenance-metrics-focused.log`.
+Final pushed-head remote results remain in the PR/backlog, with all native and
+required-check gates retained until verified.
+
+
+Final native diagnostics at `f8079bf` identify a named Save Password? / Not Now
+system dialog blocking the marketplace browser callback; real credentials were
+submitted but no profile could load while the dialog remained. The shared native
+account wait now declines only that optional password-saving prompt on the app or
+SpringBoard surface, retaining the 30-second profile expectation and role checks.
+The auth command spent most of its combined 600-second budget compiling, then
+was interrupted during first-form discovery. Its combined compile/test limit is
+now 900 seconds, matching the existing marketplace limit; actual login, realm,
+profile, refresh, logout and switch assertions remain. These Mac-only adjustments
+require remote execution; local Python syntax validation passes.
+The independent session workflow passes seed, then its restore invocation builds
+but reports no test start before the existing 300-second command deadline. That
+launch stall remains a distinct open native gate; its deadline/assertions are not
+changed. Prior successful session evidence is retained, not treated as proof of
+this failed attempt. No real maintenance/native acceptance is inferred.
+
+
+At `3219fc6`, both complete core CI runs pass API/mobile/Android again, including
+the corrected metrics fixture. Native auth exceeds the 180-second inventory
+bound; marketplace inventory completes in 50 seconds but boot readiness exceeds
+its unchanged 180-second bound. Artifact device metadata shows iPhone 11 / iOS
+26.2 while Xcode is 16.4 / SDK 18.5: the scripts blindly chose the newest installed
+runtime. A shared selector now requires the installed SDK's major/minor runtime
+release, chooses a compatible iPhone type and fails clearly if missing. This is
+a reproducible configuration policy, not a proven diagnosis or blanket claim that
+newer runtimes cannot run. Both native scripts share the helper, session inventory
+is bounded, all native workflow path filters include it, and normal mobile CI
+runs nine Python contract/CLI tests before Flutter setup. Local Python 3.13 passes
+all nine, including competing 18.5/26.2 releases, compatible ranges, refusal and
+CLI paths with spaces. Import/CLI help and Git Bash syntax checks pass; no runtime
+download, existing-device reset or native assertion relaxation. Generated Python
+bytecode is ignored. See [native runner policy](../operations/IOS_RUNNER.md).
+Final pushed-head macOS results remain required; previous startup/restore failures
+and remaining #7/#12/#15 acceptance gates are retained.
+
+
+At `9fb970c`, marketplace logs confirm the new selector uses iOS 18.5 for SDK 18.5
+and the owned simulator boots successfully. Flutter configuration then exceeds
+its old 120-second deadline while resolving Swift packages/enumerating the Xcode
+project (packages are resolved before process-group termination). Both native
+scripts now permit bounded 300-second configuration, retaining job/step limits,
+all native assertions and the existing per-test execution deadlines. Python
+syntax, all nine selector/CLI tests and Bash syntax pass locally. This is a cold
+configuration allowance, not an assertion relaxation or automatic retry. Current
+native results remain the acceptance evidence; no earlier failed run is relabeled.
+
+
+Final `9fb970c` CI logs verify both complete runs pass 95 backend tests (69+26),
+57 Flutter tests and nine Python tests, zero failures/errors/skips, web and
+Android app/driver builds. The SDK-matched iOS 18.5 session workflow
+(run 39440277090) passes app compilation, callback registration and all three
+independent Seed/Restore/SignedOut XCTest phases, including Keychain/AppAuth
+refresh/rotation and local logout. Real browser auth run 39440277113 verifies
+seven of eight identity checkpoints, including customer/provider login, recovery,
+logout and switch-back. Named Not Now handling is exercised. The combined
+900-second build/test command interrupts the final logout assertion; this is
+partial evidence, not a passing browser gate. Compilation is now a separate
+bounded 600-second build-for-testing action, followed by bounded 900-second
+test-without-building with the same scheme/destination and unchanged exact-case,
+zero-failure, checkpoint and screenshot requirements. Marketplace observation
+starts after compilation but before UI execution to avoid competing build-time
+polling; real persisted-wait/ledger corroboration remains mandatory. Python
+syntax/import, all nine tool tests and Bash syntax pass locally. Existing job and
+step deadlines remain in force; final new-head native results remain required.
+
+
+At `4a43579`, the separated build succeeds and browser XCTest runs to a concrete
+125-second failure after six verified checkpoints. On switch-back to customer,
+the profile is already present, but optional-prompt handling attempts a stale
+Not Now element whose AX frame is below the screen; XCTest records no-match /
+scroll-to-visible failure. The helper now checks the expected profile first,
+requires the named prompt button's non-empty frame inside app bounds, and stops
+checking other surfaces after one dismissal. Its final profile/role assertions
+and 30-second account wait remain. No expected XCTest failures or ignored errors
+are introduced. This Mac-only helper correction still requires actual remote
+execution; no failed or partial run is counted as acceptance.
+
+
+The `4a43579` marketplace run reaches real UI-created request and provider quote,
+then fails Sign in discovery on switch-back. Its switch helper accepted the
+brief disabled sign-in action during restoration (three-second existence check),
+skipped logout, and later found the correctly restored Alex Demo profile instead.
+It now waits up to 30 seconds for a settled session: enabled sign-in, or an
+existing account followed by actual sign-out. Fresh form/realm/credentials and
+all business assertions remain. The independent session workflow passes again
+on the SDK-matched baseline; both full CI runs also pass all API/mobile/Android
+gates. The optional-prompt and settled-switch corrections now require new-head
+Mac execution. No partial request/quote attempt counts as marketplace acceptance.

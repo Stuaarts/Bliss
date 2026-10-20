@@ -368,3 +368,35 @@ packaged), zero failures/errors/skips, Spotless clean, in 14:08. The new mainten
 case and both ordinary admission cases pass; all prior workflow, backup/restart,
 role/rotation, migration, metrics and ownership checks remain green. Test/admin
 artifacts stay out of the jar and existing project data is preserved.
+
+
+Branch `15-client-maintenance-recovery` builds on draft PR #56 at `ca2bc52`.
+The Flutter session attempts the normal bootstrap first, then reads the owned
+profile only after HTTP 503. Existing accounts retain read access during the
+optional write pause; unavailable/new accounts can retry bootstrap without a new
+interactive sign-in or sign out. HTTP 401 clears retry/session state. A fixed
+503 message never includes the server body. A widget scenario verifies paused
+evidence keeps its original body/key until an explicit retry after reopening,
+with no automatic POST retry. Pending entries remain in memory only.
+See [client maintenance recovery](../operations/CLIENT_MAINTENANCE.md).
+Flutter 3.47.5 analysis and formatting pass; all 57 unit/widget tests pass without
+failures or skips, including 11 added cases. Release web build and debug Android
+APK compilation pass. Backend runtime/dependencies are unchanged; the parent
+95-scenario backend result is retained, not rerun. Docker is stopped and is not
+needed for these client checks. Real backend/native maintenance acceptance,
+required exact-head CI, remaining iOS scenarios and production adoption stay open.
+
+A later automatic push run exposes an existing empty-backlog scrape race: counts
+can update before ages within one scrape. The metrics fixture now waits for
+both before its unchanged assertions. Six focused Java scenarios pass locally
+(five ordinary + one packaged), zero failures/errors/skips and Spotless clean,
+in 1:31 after guarded Docker startup. Owned test containers close and the
+unrelated database remains running. Final current-head CI/native results remain
+the exit evidence in the draft PR and issue updates.
+
+Native runner reproducibility now uses a shared installed-runtime selector matched
+to the selected SDK release, with explicit missing-runtime refusal and compatible
+new iPhone creation. Nine Python contract/CLI tests pass locally; Bash syntax and
+CLI/import checks pass. Mobile CI runs those tests and helper changes trigger all
+native workflows. This configuration policy does not prove the cause of prior
+startup/restore stalls or waive final native acceptance.

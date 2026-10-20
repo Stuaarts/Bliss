@@ -111,3 +111,8 @@ login returned a valid profile named `provider`, failing the expected seeded
 profile, so the runtime local profile could not add the build-time Flyway demo
 location. This is a failing attempt, not full browser acceptance. The runner now
 packages with the local profile and verifies the seed before native execution.
+
+
+The native scripts now use [shared SDK-matched runtime selection](../operations/IOS_RUNNER.md)
+with explicit missing-runtime refusal. Historical acceptance above retains its
+original configuration; current-head native results remain a separate gate.

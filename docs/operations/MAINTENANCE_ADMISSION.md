@@ -101,3 +101,11 @@ Use `mvnw.cmd` on Windows. See [progress](../agent/PROGRESS.md) for executed res
 and [readiness](READINESS.md) for deferred CI/native and production gates. Existing
 project credentials, databases and volumes are untouched; identity and payment
 in the drill are synthetic.
+
+
+## Flutter client recovery
+
+The [client maintenance guide](CLIENT_MAINTENANCE.md) describes the 503-only
+profile read fallback, manual account retry, fixed error message and pending
+submission retention. Those client checks use synthetic HTTP responses; the
+backend drill above remains the evidence for actual admission and reopening.
