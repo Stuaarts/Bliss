@@ -1868,3 +1868,43 @@ freeze deadlines or establish in-flight/external-effect safety. Hosted controls,
 operator rehearsal and production acceptance remain open. No public/paid hosting,
 live gateway, billing change or Flutter/native rerun. Preserve drafts #39–#55;
 #7/#12/#15 stay open and the required CI/native gate remains deferred.
+
+
+## 2026-10-20 - Flutter maintenance access and explicit retry (#15)
+
+Branch `15-client-maintenance-recovery` builds on draft PR #56 at
+`ca2bc527d328743d225dc97efdf661e055c42ed5` in the existing managed checkout.
+Normal sign-in/restore keeps POST bootstrap first. Only HTTP 503 triggers the
+current-token GET profile fallback, allowing an existing account to enter its
+authorized read screens while writes are paused. A missing/unavailable profile
+shows a fixed unavailability message plus Retry account access and Sign out;
+retry does not start another interactive sign-in. Non-503 bootstrap refusals do
+not trigger the read fallback, and 401 clears the local session/retry state.
+The shared HTTP 503 message contains no server response body. Existing
+idempotent submission code is unchanged; a new evidence widget test proves
+original body/key retention across 503, no automatic retry while waiting, and
+manual retry after reopening followed by pending-entry removal. Pending writes
+remain in memory only and are cleared on sign-out/session clearing.
+See [behavior and limits](../operations/CLIENT_MAINTENANCE.md).
+
+Eleven new tests cover fallback/denials/retry, account retry at 320-pixel phone
+width, sign-out, safe messages and evidence replay. Focused tests pass 21 cases.
+After fixing three new-test brace lint findings, Flutter 3.47.5 analysis reports
+no issues, formatting checks 35 Dart files without changes, and the full machine
+run passes all 57 tests with zero failures/errors/skips. Release web compilation
+passes (24.8 seconds), including the Wasm dry run; the existing optional Cupertino
+font-family notice remains non-fatal. Java 21/Android SDK debug APK compilation
+passes (assembleDebug 44.9 seconds). No dependency upgrades or lockfile changes.
+Logs are retained under ignored `.work/client-maintenance-*` paths. Backend
+source is unchanged: the parent maintenance branch's 95 passing scenarios remain
+historical evidence and were not rerun. Docker's daemon is stopped; no Docker
+repair/start, database, credential or volume change is required for this slice.
+
+These are synthetic token/HTTP unit/widget checks and normal app compilation;
+no real backend maintenance UI, Keycloak or native/iOS execution is claimed.
+Ordinary authorization, server write admission, business transitions and settlement
+policy remain unchanged. Hosted ingress/worker safety, production maintenance
+acceptance and the required current-head CI/native gate remain open. Preserve
+prior drafts, the original checkout and #7/#12/#15. GitHub's payment/spending-limit
+issue stays at the user's deferred final gate. The stacked draft PR and milestone
+updates on #15/#12 record the pushed head and freshly inspected remote results.
