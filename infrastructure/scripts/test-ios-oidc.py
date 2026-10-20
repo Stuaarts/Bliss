@@ -216,7 +216,9 @@ class Runner:
         print("Real Bliss API and fresh PostgreSQL ready", flush=True)
 
     def simulator(self):
-        inventory = json.loads(self.run(["xcrun", "simctl", "list", "--json"], "simulator-inventory", 30))
+        # Fresh macOS runners can exceed 30 seconds on the first CoreSimulator
+        # inventory. Keep discovery bounded separately from boot and UI tests.
+        inventory = json.loads(self.run(["xcrun", "simctl", "list", "--json"], "simulator-inventory", 180))
         runtimes = [r for r in inventory["runtimes"] if r.get("isAvailable") and ".iOS-" in r["identifier"]]
         runtime = max(runtimes, key=lambda r: tuple(map(int, r["version"].split("."))))
         parts = [int(p) for p in runtime["version"].split(".")]

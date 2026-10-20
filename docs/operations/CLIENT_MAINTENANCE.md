@@ -57,3 +57,11 @@ maintenance drill remains the evidence for actual REST admission, database
 preservation and workflow reopening; no backend source changes are needed here.
 See [progress](../agent/PROGRESS.md) for executed checks and
 [readiness](READINESS.md) for required CI/native/production gates.
+
+
+On the first pushed head, both hosted iOS browser/marketplace jobs reached the
+real API and then exceeded the runner's 30-second simulator inventory deadline,
+before any UI test. Discovery now has a bounded 180-second allowance, retaining
+its process-group termination and all existing boot/UI deadlines and assertions.
+The PR records subsequent remote results; local Windows compilation does not
+verify this macOS startup adjustment.

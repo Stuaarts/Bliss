@@ -1908,3 +1908,15 @@ acceptance and the required current-head CI/native gate remain open. Preserve
 prior drafts, the original checkout and #7/#12/#15. GitHub's payment/spending-limit
 issue stays at the user's deferred final gate. The stacked draft PR and milestone
 updates on #15/#12 record the pushed head and freshly inspected remote results.
+
+
+The first automatic checks at `677931b` execute normally rather than receiving
+payment-limit rejections: both Flutter and Android CI jobs pass. Both iOS
+browser/marketplace jobs start real PostgreSQL, Keycloak and the packaged API,
+then fail the shared runner's first simulator inventory at its 30-second
+deadline, before UI execution. The runner now allows a bounded 180 seconds for
+inventory, retaining process-group cleanup and existing boot/test deadlines and
+assertions. Python syntax compilation passes locally without writing bytecode;
+macOS execution must be established by the new pushed-head runs. No app behavior,
+backend source, ownership check or native assertion is relaxed. Exact final
+remote results and any remaining failures are recorded in the PR and backlog.
