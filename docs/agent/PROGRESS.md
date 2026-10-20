@@ -1989,3 +1989,14 @@ download, existing-device reset or native assertion relaxation. Generated Python
 bytecode is ignored. See [native runner policy](../operations/IOS_RUNNER.md).
 Final pushed-head macOS results remain required; previous startup/restore failures
 and remaining #7/#12/#15 acceptance gates are retained.
+
+
+At `9fb970c`, marketplace logs confirm the new selector uses iOS 18.5 for SDK 18.5
+and the owned simulator boots successfully. Flutter configuration then exceeds
+its old 120-second deadline while resolving Swift packages/enumerating the Xcode
+project (packages are resolved before process-group termination). Both native
+scripts now permit bounded 300-second configuration, retaining job/step limits,
+all native assertions and the existing per-test execution deadlines. Python
+syntax, all nine selector/CLI tests and Bash syntax pass locally. This is a cold
+configuration allowance, not an assertion relaxation or automatic retry. Current
+native results remain the acceptance evidence; no earlier failed run is relabeled.

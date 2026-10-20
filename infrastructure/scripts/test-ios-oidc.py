@@ -244,7 +244,7 @@ class Runner:
         self.run(["flutter", "pub", "get"], "flutter-pub", 300, mobile)
         self.run(["flutter", "build", "ios", "--config-only", "--simulator", "--debug", "--target", "lib/main.dart",
                   "--dart-define=OIDC_ISSUER=http://localhost:8180/realms/bliss",
-                  "--dart-define=API_BASE_URL=http://localhost:8088"], "flutter-config", 120, mobile)
+                  "--dart-define=API_BASE_URL=http://localhost:8088"], "flutter-config", 300, mobile)
         env = dict(os.environ, TEST_RUNNER_BLISS_IOS_AUTH_OPT_IN="isolated-local",
                    TEST_RUNNER_BLISS_CUSTOMER_PASSWORD=self.passwords["customer"],
                    TEST_RUNNER_BLISS_PROVIDER_PASSWORD=self.passwords["provider"],

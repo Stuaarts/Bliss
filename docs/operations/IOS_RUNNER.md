@@ -23,7 +23,9 @@ missing-runtime diagnostics and paths containing spaces.
 
 ## Deadlines and authentication
 
-Inventory is bounded to 180 seconds. Browser credential-form discovery allows
+Flutter configuration allows 300 seconds for cold Swift-package resolution and
+Xcode project enumeration; expiry still fails the check. Inventory is bounded to
+180 seconds. Browser credential-form discovery allows
 90 seconds; combined browser/marketplace build and XCTest allows 900 seconds.
 Boot readiness remains bounded to 180 seconds. The independent session workflow
 retains its 300-second per-phase XCTest command deadline and all three separate
