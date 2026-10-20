@@ -2019,3 +2019,15 @@ starts after compilation but before UI execution to avoid competing build-time
 polling; real persisted-wait/ledger corroboration remains mandatory. Python
 syntax/import, all nine tool tests and Bash syntax pass locally. Existing job and
 step deadlines remain in force; final new-head native results remain required.
+
+
+At `4a43579`, the separated build succeeds and browser XCTest runs to a concrete
+125-second failure after six verified checkpoints. On switch-back to customer,
+the profile is already present, but optional-prompt handling attempts a stale
+Not Now element whose AX frame is below the screen; XCTest records no-match /
+scroll-to-visible failure. The helper now checks the expected profile first,
+requires the named prompt button's non-empty frame inside app bounds, and stops
+checking other surfaces after one dismissal. Its final profile/role assertions
+and 30-second account wait remain. No expected XCTest failures or ignored errors
+are introduced. This Mac-only helper correction still requires actual remote
+execution; no failed or partial run is counted as acceptance.

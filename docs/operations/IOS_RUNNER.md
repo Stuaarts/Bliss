@@ -38,7 +38,9 @@ workflow/job deadlines remain in force. Expiry fails the gate and does not
 silently retry a scenario.
 
 The browser helper declines only the observed Save Password? / Not Now prompt
-while awaiting the authenticated profile. It still requires the real local
+only while the expected profile is absent and the button is visibly within the
+app bounds. It stops inspecting optional prompts once the profile exists,
+avoiding stale AX taps after callback completion. It still requires the real local
 Keycloak form, realm identity, credentials, profile/capabilities, refresh, logout
 and account switching. No cookie clearing, token injection or silent-login bypass
 is added. Only the simulator created by the invocation is shut down/deleted.
