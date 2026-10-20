@@ -2000,3 +2000,22 @@ all native assertions and the existing per-test execution deadlines. Python
 syntax, all nine selector/CLI tests and Bash syntax pass locally. This is a cold
 configuration allowance, not an assertion relaxation or automatic retry. Current
 native results remain the acceptance evidence; no earlier failed run is relabeled.
+
+
+Final `9fb970c` CI logs verify both complete runs pass 95 backend tests (69+26),
+57 Flutter tests and nine Python tests, zero failures/errors/skips, web and
+Android app/driver builds. The SDK-matched iOS 18.5 session workflow
+(run 39440277090) passes app compilation, callback registration and all three
+independent Seed/Restore/SignedOut XCTest phases, including Keychain/AppAuth
+refresh/rotation and local logout. Real browser auth run 39440277113 verifies
+seven of eight identity checkpoints, including customer/provider login, recovery,
+logout and switch-back. Named Not Now handling is exercised. The combined
+900-second build/test command interrupts the final logout assertion; this is
+partial evidence, not a passing browser gate. Compilation is now a separate
+bounded 600-second build-for-testing action, followed by bounded 900-second
+test-without-building with the same scheme/destination and unchanged exact-case,
+zero-failure, checkpoint and screenshot requirements. Marketplace observation
+starts after compilation but before UI execution to avoid competing build-time
+polling; real persisted-wait/ledger corroboration remains mandatory. Python
+syntax/import, all nine tool tests and Bash syntax pass locally. Existing job and
+step deadlines remain in force; final new-head native results remain required.

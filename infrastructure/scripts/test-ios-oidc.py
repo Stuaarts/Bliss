@@ -250,6 +250,12 @@ class Runner:
                    TEST_RUNNER_BLISS_PROVIDER_PASSWORD=self.passwords["provider"],
                    TEST_RUNNER_BLISS_IOS_MARKETPLACE_RUN_ID=self.run_id)
         (self.evidence / "scenario.txt").write_text(f"{self.scenario}\n{self.run_id}\n{test_class}/{test_name}\n")
+        build = ["xcodebuild", "-workspace", "ios/Runner.xcworkspace", "-scheme", "BlissAuth",
+                 "-configuration", "Debug", "-destination", f"platform=iOS Simulator,id={self.device}",
+                 "-destination-timeout", "60"]
+        # Keep cold compilation outside the UI execution budget. Start the
+        # marketplace observer only after compilation, before any UI writes.
+        self.run([*build, "build-for-testing"], "xctest-build", 600, mobile, env)
         stop = threading.Event()
         self.workflow_checkpoint = None
         self.workflow_error = None
@@ -257,11 +263,10 @@ class Runner:
         if observer:
             observer.start()
         try:
-            log = self.run(["xcodebuild", "-workspace", "ios/Runner.xcworkspace", "-scheme", "BlissAuth",
-                            "-configuration", "Debug", "-destination", f"platform=iOS Simulator,id={self.device}",
-                            "-destination-timeout", "60", "-parallel-testing-enabled", "NO",
+            log = self.run([*build, "-parallel-testing-enabled", "NO",
                             f"-only-testing:RunnerUITests/{test_class}/{test_name}",
-                            "-resultBundlePath", self.private / "auth.xcresult", "test"], "xctest", 900, mobile, env)
+                            "-resultBundlePath", self.private / "auth.xcresult", "test-without-building"],
+                           "xctest", 900, mobile, env)
         finally:
             stop.set()
             if observer:

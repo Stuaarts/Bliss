@@ -59,7 +59,7 @@ See [progress](../agent/PROGRESS.md) for executed checks and
 [readiness](READINESS.md) for required CI/native/production gates.
 
 Native automation uses [shared SDK-matched runtime selection](IOS_RUNNER.md),
-bounded startup waits and named password-save prompt handling. Those test-runner
+bounded setup/build/execution stages and named password-save prompt handling. Those test-runner
 changes preserve real identity assertions and do not establish maintenance UI
 acceptance. The backend metrics fixture also awaits zero counts and ages before
 its unchanged assertions, matching the documented cross-metric scrape contract;

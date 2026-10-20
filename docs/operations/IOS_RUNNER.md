@@ -26,7 +26,11 @@ missing-runtime diagnostics and paths containing spaces.
 Flutter configuration allows 300 seconds for cold Swift-package resolution and
 Xcode project enumeration; expiry still fails the check. Inventory is bounded to
 180 seconds. Browser credential-form discovery allows
-90 seconds; combined browser/marketplace build and XCTest allows 900 seconds.
+90 seconds. Browser/marketplace compilation uses bounded 600-second
+`build-for-testing`, then bounded 900-second `test-without-building` on the same
+scheme/destination. See [Apple's command-line test actions](https://developer.apple.com/library/archive/technotes/tn2339/_index.html).
+The marketplace observer starts after compilation and before UI execution, so
+its polling does not compete with the build. All workflow corroboration remains.
 Boot readiness remains bounded to 180 seconds. The independent session workflow
 retains its 300-second per-phase XCTest command deadline and all three separate
 processes; app data and Keychain survive the owned simulator reboots. Existing
