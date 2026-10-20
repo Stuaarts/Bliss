@@ -66,30 +66,10 @@ print('Built app callback registration verified.')
 PY
 
 # Always create a disposable simulator; never select or erase an existing one.
-xcrun simctl list --json > "$evidence/simulator-inventory.json"
-selection="$(python3 - "$evidence/simulator-inventory.json" <<'PY'
-import json
-import sys
-
-with open(sys.argv[1]) as source:
-    inventory = json.load(source)
-runtimes = [item for item in inventory['runtimes']
-            if item.get('isAvailable') and '.iOS-' in item['identifier']]
-if not runtimes:
-    sys.exit('No available iOS Simulator runtime; install one through Xcode.')
-runtime = max(runtimes, key=lambda item: tuple(map(int, item['version'].split('.'))))
-parts = list(map(int, runtime['version'].split('.')))
-parts += [0] * (3 - len(parts))
-version = (parts[0] << 16) | (parts[1] << 8) | parts[2]
-types = [item for item in inventory['devicetypes']
-         if item['name'].startswith('iPhone')
-         and item.get('minRuntimeVersion', 0) <= version
-         and item.get('maxRuntimeVersion', 0xFFFFFFFF) >= version]
-if not types:
-    sys.exit('No iPhone simulator device type found.')
-print(types[-1]['identifier'], runtime['identifier'])
-PY
-)"
+run_bounded 30 xcrun --sdk iphonesimulator --show-sdk-version > "$evidence/simulator-sdk.txt"
+run_bounded 180 xcrun simctl list --json > "$evidence/simulator-inventory.json"
+selection="$(python3 "$root/infrastructure/scripts/ios_simulator.py" \
+  "$evidence/simulator-inventory.json" "$evidence/simulator-sdk.txt")"
 read -r device_type runtime <<< "$selection"
 device="$(xcrun simctl create "Bliss_Test_iOS_$$" "$device_type" "$runtime")"
 [[ "$device" =~ ^[A-Fa-f0-9-]{36}$ ]] || { echo "Invalid created simulator UUID" >&2; exit 1; }

@@ -1970,3 +1970,22 @@ but reports no test start before the existing 300-second command deadline. That
 launch stall remains a distinct open native gate; its deadline/assertions are not
 changed. Prior successful session evidence is retained, not treated as proof of
 this failed attempt. No real maintenance/native acceptance is inferred.
+
+
+At `3219fc6`, both complete core CI runs pass API/mobile/Android again, including
+the corrected metrics fixture. Native auth exceeds the 180-second inventory
+bound; marketplace inventory completes in 50 seconds but boot readiness exceeds
+its unchanged 180-second bound. Artifact device metadata shows iPhone 11 / iOS
+26.2 while Xcode is 16.4 / SDK 18.5: the scripts blindly chose the newest installed
+runtime. A shared selector now requires the installed SDK's major/minor runtime
+release, chooses a compatible iPhone type and fails clearly if missing. This is
+a reproducible configuration policy, not a proven diagnosis or blanket claim that
+newer runtimes cannot run. Both native scripts share the helper, session inventory
+is bounded, all native workflow path filters include it, and normal mobile CI
+runs nine Python contract/CLI tests before Flutter setup. Local Python 3.13 passes
+all nine, including competing 18.5/26.2 releases, compatible ranges, refusal and
+CLI paths with spaces. Import/CLI help and Git Bash syntax checks pass; no runtime
+download, existing-device reset or native assertion relaxation. Generated Python
+bytecode is ignored. See [native runner policy](../operations/IOS_RUNNER.md).
+Final pushed-head macOS results remain required; previous startup/restore failures
+and remaining #7/#12/#15 acceptance gates are retained.

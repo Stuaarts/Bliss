@@ -58,33 +58,10 @@ preservation and workflow reopening; no backend runtime changes are needed for c
 See [progress](../agent/PROGRESS.md) for executed checks and
 [readiness](READINESS.md) for required CI/native/production gates.
 
-
-On the first pushed head, both hosted iOS browser/marketplace jobs reached the
-real API and then exceeded the runner's 30-second simulator inventory deadline,
-before any UI test. Discovery now has a bounded 180-second allowance, retaining
-its process-group termination and all existing boot/UI deadlines and assertions.
-The PR records subsequent remote results; local Windows compilation does not
-verify this macOS startup adjustment.
-
-The next hosted browser run confirms inventory completes in about 52 seconds and
-reaches XCTest. Its first Keycloak page is still at 10% loading when the original
-30-second credential-form wait expires. That shared UI helper now permits a
-bounded 90 seconds for the actual form; it still requires fresh credentials,
-realm identity, authenticated profile, logout and account-switch assertions.
-No silent SSO or sign-in bypass is accepted. The separate native session workflow
-passes at the initial unchanged Flutter app source; exact-head follow-up results
-remain recorded in the PR/backlog.
-
-The automatic backend runs also expose an existing metrics-fixture race while
-checking an empty backlog. The fixture now waits for zero counts and ages before
-its unchanged assertions, matching the documented non-transactional cross-metric
-scrape contract. Six focused Java cases pass locally after guarded Docker startup;
-this adjustment changes no backend runtime or database behavior.
-
-Hosted marketplace diagnostics also show Safari's optional Save Password? dialog
-blocking return to the app. The native helper chooses Not Now only on that named
-prompt while awaiting the authenticated profile; real credentials and identity
-checks remain required. The auth command permits bounded 900 seconds for build
-and test, matching marketplace, because the previous combined build budget
-interrupted the running test. Independent session restore launch stalls remain
-an open native gate; no runtime timeout, auth policy or native assertion changes.
+Native automation uses [shared SDK-matched runtime selection](IOS_RUNNER.md),
+bounded startup waits and named password-save prompt handling. Those test-runner
+changes preserve real identity assertions and do not establish maintenance UI
+acceptance. The backend metrics fixture also awaits zero counts and ages before
+its unchanged assertions, matching the documented cross-metric scrape contract;
+this changes no backend runtime or database behavior. Current native/CI results
+remain in the PR and canonical backlog.

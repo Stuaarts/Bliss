@@ -4,6 +4,7 @@ on:
     branches: ['**']
     paths:
       - 'apps/mobile/**'
+      - 'infrastructure/scripts/ios_simulator.py'
       - 'infrastructure/scripts/test-ios-session.sh'
       - '.github/workflows/ios.yml'
   workflow_dispatch:

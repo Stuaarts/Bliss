@@ -148,3 +148,8 @@ two-way chat, scheduled work, simulated capture and saved-review/process recover
 - Direct cancellation, dispute and connection recovery remain separate iOS checks.
 - Physical-device and signed-distribution validation are separate from simulator
   acceptance; neither is implied by a successful simulator job.
+
+
+The native scripts now use [shared SDK-matched runtime selection](../operations/IOS_RUNNER.md)
+with explicit missing-runtime refusal. Historical acceptance above retains its
+original configuration; current-head native results remain a separate gate.

@@ -393,3 +393,10 @@ both before its unchanged assertions. Six focused Java scenarios pass locally
 in 1:31 after guarded Docker startup. Owned test containers close and the
 unrelated database remains running. Final current-head CI/native results remain
 the exit evidence in the draft PR and issue updates.
+
+Native runner reproducibility now uses a shared installed-runtime selector matched
+to the selected SDK release, with explicit missing-runtime refusal and compatible
+new iPhone creation. Nine Python contract/CLI tests pass locally; Bash syntax and
+CLI/import checks pass. Mobile CI runs those tests and helper changes trigger all
+native workflows. This configuration policy does not prove the cause of prior
+startup/restore stalls or waive final native acceptance.

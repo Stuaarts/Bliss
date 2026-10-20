@@ -20,6 +20,8 @@ import time
 import urllib.error
 import urllib.request
 
+from ios_simulator import select_simulator
+
 ROOT = Path(__file__).resolve().parents[2]
 KEYCLOAK = "26.7.4"
 KEYCLOAK_SHA256 = "04823c336b797a7e18889a44262a7a64e6bf624cbbcc518c85e2622176ff2eee"
@@ -219,14 +221,10 @@ class Runner:
         # Fresh macOS runners can exceed 30 seconds on the first CoreSimulator
         # inventory. Keep discovery bounded separately from boot and UI tests.
         inventory = json.loads(self.run(["xcrun", "simctl", "list", "--json"], "simulator-inventory", 180))
-        runtimes = [r for r in inventory["runtimes"] if r.get("isAvailable") and ".iOS-" in r["identifier"]]
-        runtime = max(runtimes, key=lambda r: tuple(map(int, r["version"].split("."))))
-        parts = [int(p) for p in runtime["version"].split(".")]
-        parts += [0] * (3 - len(parts))
-        version = (parts[0] << 16) | (parts[1] << 8) | parts[2]
-        types = [d for d in inventory["devicetypes"] if d["name"].startswith("iPhone")
-                 and d.get("minRuntimeVersion", 0) <= version <= d.get("maxRuntimeVersion", 0xFFFFFFFF)]
-        device_type = types[-1]
+        sdk = self.run(["xcrun", "--sdk", "iphonesimulator", "--show-sdk-version"],
+                       "simulator-sdk", 30).strip()
+        device_type, runtime = select_simulator(inventory, sdk)
+        print(f"Selected iOS {runtime['version']} for SDK {sdk}", flush=True)
         device = self.run(["xcrun", "simctl", "create", f"Bliss_Auth_iOS_{os.getpid()}",
                            device_type["identifier"], runtime["identifier"]], "simulator-create", 60).strip()
         if not re.fullmatch(r"[A-Fa-f0-9-]{36}", device):
