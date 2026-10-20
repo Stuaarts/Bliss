@@ -65,3 +65,12 @@ before any UI test. Discovery now has a bounded 180-second allowance, retaining
 its process-group termination and all existing boot/UI deadlines and assertions.
 The PR records subsequent remote results; local Windows compilation does not
 verify this macOS startup adjustment.
+
+The next hosted browser run confirms inventory completes in about 52 seconds and
+reaches XCTest. Its first Keycloak page is still at 10% loading when the original
+30-second credential-form wait expires. That shared UI helper now permits a
+bounded 90 seconds for the actual form; it still requires fresh credentials,
+realm identity, authenticated profile, logout and account-switch assertions.
+No silent SSO or sign-in bypass is accepted. The separate native session workflow
+passes at the initial unchanged Flutter app source; exact-head follow-up results
+remain recorded in the PR/backlog.

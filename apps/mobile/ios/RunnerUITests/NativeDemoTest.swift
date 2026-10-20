@@ -80,7 +80,9 @@ class NativeDemoTest: XCTestCase {
 
     func signIn(_ username: String, displayName: String) {
         tap("Sign in")
-        let deadline = Date().addingTimeInterval(30)
+        // Cold hosted simulators can still be loading the first browser page
+        // after consent. Require the real form within a bounded startup wait.
+        let deadline = Date().addingTimeInterval(90)
         var field: (XCUIApplication, XCUIElement)?
         repeat {
             consent()

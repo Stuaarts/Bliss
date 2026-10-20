@@ -1920,3 +1920,16 @@ assertions. Python syntax compilation passes locally without writing bytecode;
 macOS execution must be established by the new pushed-head runs. No app behavior,
 backend source, ownership check or native assertion is relaxed. Exact final
 remote results and any remaining failures are recorded in the PR and backlog.
+
+
+At `e7df284`, both complete push/PR CI runs pass: each verifies 95 backend cases
+(69 ordinary + 26 packaged, zero failures/errors/skips), 57 Flutter tests, clean
+formatting/analysis, web build and Android app/native-driver compilation. The
+separate iOS app/session workflow passes at the initial unchanged Flutter source
+`677931b`. The browser run confirms simulator inventory completes in 51.63 seconds,
+then compiles and runs XCTest. The first Keycloak page remains at 10% loading
+when the old 30-second credential-form wait expires. The shared UI helper now
+allows bounded 90-second first-form discovery, retaining the real form, realm,
+profile, logout and account-switch requirements. This changes test timing only;
+no silent SSO, credential injection or application retry is added. New pushed-head
+native/CI results must verify it; no browser/marketplace acceptance is inferred.
