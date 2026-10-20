@@ -121,10 +121,25 @@ final class NativeMarketplaceTests: NativeDemoTest {
 
     private func switchAccount(_ username: String, _ displayName: String) {
         restart()
-        if !element("Sign in").waitForExistence(timeout: 3) {
-            reveal("Sign out")
-            signOut()
-        }
+        let deadline = Date().addingTimeInterval(30)
+        var settled = false
+        repeat {
+            // Restore briefly renders a disabled sign-in action. Wait for the
+            // actual session outcome before deciding whether logout is needed.
+            if element("Sign out").exists {
+                reveal("Sign out")
+                signOut()
+                settled = true
+                break
+            }
+            let entry = element("Sign in")
+            if entry.exists && entry.isEnabled && entry.isHittable {
+                settled = true
+                break
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+        } while Date() < deadline
+        XCTAssertTrue(settled, "Account restoration did not settle before switching")
         signIn(username, displayName: displayName)
     }
 

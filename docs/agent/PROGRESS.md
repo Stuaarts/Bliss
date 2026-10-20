@@ -2031,3 +2031,15 @@ checking other surfaces after one dismissal. Its final profile/role assertions
 and 30-second account wait remain. No expected XCTest failures or ignored errors
 are introduced. This Mac-only helper correction still requires actual remote
 execution; no failed or partial run is counted as acceptance.
+
+
+The `4a43579` marketplace run reaches real UI-created request and provider quote,
+then fails Sign in discovery on switch-back. Its switch helper accepted the
+brief disabled sign-in action during restoration (three-second existence check),
+skipped logout, and later found the correctly restored Alex Demo profile instead.
+It now waits up to 30 seconds for a settled session: enabled sign-in, or an
+existing account followed by actual sign-out. Fresh form/realm/credentials and
+all business assertions remain. The independent session workflow passes again
+on the SDK-matched baseline; both full CI runs also pass all API/mobile/Android
+gates. The optional-prompt and settled-switch corrections now require new-head
+Mac execution. No partial request/quote attempt counts as marketplace acceptance.

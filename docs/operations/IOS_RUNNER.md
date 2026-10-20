@@ -42,8 +42,9 @@ only while the expected profile is absent and the button is visibly within the
 app bounds. It stops inspecting optional prompts once the profile exists,
 avoiding stale AX taps after callback completion. It still requires the real local
 Keycloak form, realm identity, credentials, profile/capabilities, refresh, logout
-and account switching. No cookie clearing, token injection or silent-login bypass
-is added. Only the simulator created by the invocation is shut down/deleted.
+and account switching. Account switching waits for either an enabled sign-in action or a restored
+account to sign out; a transient disabled sign-in button cannot skip logout.
+No cookie clearing, token injection or silent-login bypass is added. Only the simulator created by the invocation is shut down/deleted.
 
 ## Verification
 
