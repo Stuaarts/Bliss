@@ -1933,3 +1933,23 @@ allows bounded 90-second first-form discovery, retaining the real form, realm,
 profile, logout and account-switch requirements. This changes test timing only;
 no silent SSO, credential injection or application retry is added. New pushed-head
 native/CI results must verify it; no browser/marketplace acceptance is inferred.
+
+
+At `f8079bf`, PR CI passes all 95 backend scenarios while the identical push run
+passes 94/95: WorkflowBacklogMetricsIT observes zero pending counts with an old
+age gauge (9.773826 seconds) at line 178. The existing metric contract explicitly
+permits a scrape to span a sampler refresh. The fixture now awaits zero ages for
+all four queues as well as zero pending counts before its unchanged zero-age,
+queue, replay and restart assertions. This is a test synchronization correction;
+backend runtime, SQL, metric sampling and settlement behavior remain unchanged.
+After the initial client-only checks, this fixture required Docker. The guarded
+startup helper preserves stale runtime directories and starts the engine without
+resetting data or volumes. Java 21 focused `spotless:apply verify` with
+`-Dtest=OperationsSmokeTest -Dit.test=WorkflowBacklogMetricsIT
+-Dquarkus.http.test-port=0` passes six scenarios (five ordinary + one packaged),
+zero failures/errors/skips, Spotless clean across 97 Java files, in 1:31. The
+metrics drill passes in 54.72 seconds. Owned containers close; the unrelated
+`t36_comp3078_w26-db-1` remains running. No project database migration or credential
+change. Logs are retained in `services/api/target/client-maintenance-metrics-focused.log`.
+Final pushed-head remote results remain in the PR/backlog, with all native and
+required-check gates retained until verified.

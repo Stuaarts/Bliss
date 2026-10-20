@@ -173,7 +173,14 @@ class WorkflowBacklogMetricsIT {
                                 values ->
                                         value(values, "snapshot_available") == 1
                                                 && pending(values, "booking_start") == 0
-                                                && pending(values, "booking_action") == 0);
+                                                && pending(values, "booking_action") == 0
+                                                // A scrape can span a sampler refresh: await both
+                                                // count and age gauges reaching their empty state.
+                                                && QUEUES.stream()
+                                                        .allMatch(
+                                                                queue ->
+                                                                        oldest(values, queue)
+                                                                                == 0));
                 assertQueues(drained, 0, 0);
                 for (String queue : QUEUES) assertEquals(0, oldest(drained, queue));
                 var replay =

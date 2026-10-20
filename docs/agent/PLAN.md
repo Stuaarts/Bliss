@@ -381,7 +381,15 @@ with no automatic POST retry. Pending entries remain in memory only.
 See [client maintenance recovery](../operations/CLIENT_MAINTENANCE.md).
 Flutter 3.47.5 analysis and formatting pass; all 57 unit/widget tests pass without
 failures or skips, including 11 added cases. Release web build and debug Android
-APK compilation pass. Backend source/dependencies are unchanged; the parent
+APK compilation pass. Backend runtime/dependencies are unchanged; the parent
 95-scenario backend result is retained, not rerun. Docker is stopped and is not
 needed for these client checks. Real backend/native maintenance acceptance,
 required exact-head CI, remaining iOS scenarios and production adoption stay open.
+
+A later automatic push run exposes an existing empty-backlog scrape race: counts
+can update before ages within one scrape. The metrics fixture now waits for
+both before its unchanged assertions. Six focused Java scenarios pass locally
+(five ordinary + one packaged), zero failures/errors/skips and Spotless clean,
+in 1:31 after guarded Docker startup. Owned test containers close and the
+unrelated database remains running. Final current-head CI/native results remain
+the exit evidence in the draft PR and issue updates.

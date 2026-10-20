@@ -54,7 +54,7 @@ These are unit/widget tests with synthetic tokens and HTTP responses. Release we
 and debug Android compilation are separate checks; they do not establish real
 Keycloak, native-device, iOS or hosted maintenance acceptance. The parent backend
 maintenance drill remains the evidence for actual REST admission, database
-preservation and workflow reopening; no backend source changes are needed here.
+preservation and workflow reopening; no backend runtime changes are needed for client recovery.
 See [progress](../agent/PROGRESS.md) for executed checks and
 [readiness](READINESS.md) for required CI/native/production gates.
 
@@ -74,3 +74,9 @@ realm identity, authenticated profile, logout and account-switch assertions.
 No silent SSO or sign-in bypass is accepted. The separate native session workflow
 passes at the initial unchanged Flutter app source; exact-head follow-up results
 remain recorded in the PR/backlog.
+
+The automatic backend runs also expose an existing metrics-fixture race while
+checking an empty backlog. The fixture now waits for zero counts and ages before
+its unchanged assertions, matching the documented non-transactional cross-metric
+scrape contract. Six focused Java cases pass locally after guarded Docker startup;
+this adjustment changes no backend runtime or database behavior.
