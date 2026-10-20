@@ -263,7 +263,7 @@ class Runner:
                             "-configuration", "Debug", "-destination", f"platform=iOS Simulator,id={self.device}",
                             "-destination-timeout", "60", "-parallel-testing-enabled", "NO",
                             f"-only-testing:RunnerUITests/{test_class}/{test_name}",
-                            "-resultBundlePath", self.private / "auth.xcresult", "test"], "xctest", 900 if marketplace else 600, mobile, env)
+                            "-resultBundlePath", self.private / "auth.xcresult", "test"], "xctest", 900, mobile, env)
         finally:
             stop.set()
             if observer:

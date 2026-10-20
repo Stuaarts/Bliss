@@ -1953,3 +1953,20 @@ metrics drill passes in 54.72 seconds. Owned containers close; the unrelated
 change. Logs are retained in `services/api/target/client-maintenance-metrics-focused.log`.
 Final pushed-head remote results remain in the PR/backlog, with all native and
 required-check gates retained until verified.
+
+
+Final native diagnostics at `f8079bf` identify a named Save Password? / Not Now
+system dialog blocking the marketplace browser callback; real credentials were
+submitted but no profile could load while the dialog remained. The shared native
+account wait now declines only that optional password-saving prompt on the app or
+SpringBoard surface, retaining the 30-second profile expectation and role checks.
+The auth command spent most of its combined 600-second budget compiling, then
+was interrupted during first-form discovery. Its combined compile/test limit is
+now 900 seconds, matching the existing marketplace limit; actual login, realm,
+profile, refresh, logout and switch assertions remain. These Mac-only adjustments
+require remote execution; local Python syntax validation passes.
+The independent session workflow passes seed, then its restore invocation builds
+but reports no test start before the existing 300-second command deadline. That
+launch stall remains a distinct open native gate; its deadline/assertions are not
+changed. Prior successful session evidence is retained, not treated as proof of
+this failed attempt. No real maintenance/native acceptance is inferred.

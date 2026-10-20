@@ -80,3 +80,11 @@ checking an empty backlog. The fixture now waits for zero counts and ages before
 its unchanged assertions, matching the documented non-transactional cross-metric
 scrape contract. Six focused Java cases pass locally after guarded Docker startup;
 this adjustment changes no backend runtime or database behavior.
+
+Hosted marketplace diagnostics also show Safari's optional Save Password? dialog
+blocking return to the app. The native helper chooses Not Now only on that named
+prompt while awaiting the authenticated profile; real credentials and identity
+checks remain required. The auth command permits bounded 900 seconds for build
+and test, matching marketplace, because the previous combined build budget
+interrupted the running test. Independent session restore launch stalls remain
+an open native gate; no runtime timeout, auth policy or native assertion changes.

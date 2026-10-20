@@ -47,7 +47,19 @@ class NativeDemoTest: XCTestCase {
     }
 
     func account(_ displayName: String) {
-        XCTAssertTrue(element("Hello, \(displayName)").waitForExistence(timeout: 30),
+        let profile = element("Hello, \(displayName)")
+        let deadline = Date().addingTimeInterval(30)
+        repeat {
+            // Safari may offer to save this disposable realm's password before
+            // returning the callback. Decline only that named system prompt.
+            for surface in [app, springboard] {
+                let skip = surface.alerts["Save Password?"].buttons["Not Now"].firstMatch
+                if skip.exists && skip.isHittable { skip.tap() }
+            }
+            if profile.exists { break }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+        } while Date() < deadline
+        XCTAssertTrue(profile.exists,
                       "Expected authenticated profile after browser callback or refresh")
         XCTAssertTrue(element("customer").exists)
         reveal("Sign out")
