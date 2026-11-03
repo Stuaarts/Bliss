@@ -16,17 +16,22 @@ a successful check establishes acceptance only for that selected configuration.
 
 Both `test-ios-oidc.py` (real browser/marketplace) and `test-ios-session.sh`
 (synthetic session persistence) use the same selector. Shared-helper changes
-trigger all three native workflows. The ordinary mobile CI job first runs nine
-platform-independent selection/CLI tests, including 18.5 alongside newer 26.2,
+trigger all three native workflows. The ordinary mobile CI job first runs twelve
+Python tests: nine selection/CLI cases, including 18.5 alongside newer 26.2,
 patch preference, unavailable/wrong-platform refusal, compatible device ranges,
-missing-runtime diagnostics and paths containing spaces.
+missing-runtime diagnostics and paths containing spaces, plus three diagnostic
+redaction cases for full/truncated secrets, JWTs and protocol query strings.
 
 ## Deadlines and authentication
 
 Flutter configuration allows 300 seconds for cold Swift-package resolution and
 Xcode project enumeration; expiry still fails the check. Inventory is bounded to
 180 seconds. Browser credential-form discovery allows
-90 seconds. Browser/marketplace compilation uses bounded 600-second
+90 seconds and requires the realm heading, username/password fields and named
+submit button before credentials are typed. The submit button is resolved again
+across live browser surfaces after typing, within 30 seconds. This avoids a
+single immediate lookup against a stale or loading accessibility hierarchy.
+Browser/marketplace compilation uses bounded 600-second
 `build-for-testing`, then bounded 900-second `test-without-building` on the same
 scheme/destination. See [Apple's command-line test actions](https://developer.apple.com/library/archive/technotes/tn2339/_index.html).
 The disposable JVM services start after compilation and establish fresh readiness
@@ -61,9 +66,17 @@ Keycloak logs cookie handling about 53 seconds after the tap. This is consistent
 with slow OIDC handling; it does not prove a completed logout callback. The next
 run must establish that outcome. This changes the bounded wait, not
 the required logout outcome or the overall test/job deadlines.
+Authenticated-profile recovery also allows 90 seconds: at `feaba91`, actual
+token and profile-bootstrap 200 responses arrive after the former 30-second
+account deadline. The expected profile/capabilities must still appear, and no
+credentials, callbacks or API calls are injected to satisfy that assertion.
 The disposable [Keycloak access log](https://www.keycloak.org/server/logging)
-records only method, [URL path and response status](https://quarkus.io/guides/http-reference/#access-log).
-It excludes query strings, headers, cookies and bodies, allowing completed OIDC
+uses method, [relative path and response status](https://quarkus.io/guides/http-reference/#access-log).
+The former `%U` formatter includes query data in observed output, so `%R`
+replaces it and the artifact scrubber independently removes any access-log query.
+It also removes XCTest's truncated secure-field keystrokes, beyond full-password
+and JWT masking. Three regression cases run in ordinary CI. Logs exclude
+protocol queries, headers, cookies and bodies, allowing completed OIDC
 responses to be correlated with UI timing without recording protocol tokens.
 
 Before browser scenarios, a simulator-side ephemeral `URLSession` reads the
@@ -94,7 +107,7 @@ defaults, browser consent and all identity/business assertions remain unchanged.
 On any supported Python host, from the repository root:
 
 ```sh
-python3 -m unittest discover -s infrastructure/scripts/tests -p 'test_ios_simulator.py'
+python3 -m unittest discover -s infrastructure/scripts/tests
 python3 infrastructure/scripts/test-ios-oidc.py --help
 bash -n infrastructure/scripts/test-ios-session.sh
 ```

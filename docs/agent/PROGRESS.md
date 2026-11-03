@@ -2121,3 +2121,29 @@ Actions execute again without asserting an owner billing change or main pass.
 Nine Python tests, runner help/import, diff and documentation hygiene pass
 (286 local links/336 tracked files). New-head Mac execution remains required;
 no partial browser scenario is counted as acceptance. Refs #7/#12/#15, draft #57.
+
+
+At `feaba9179211bb01407e53b7cb31c77a2ea97a64`, both full CI runs pass again
+(41684290466 PR / 41684280120 push), with 95 backend (69+26), 57 Flutter and nine
+Python cases per run, clean analysis/web/Android builds. Session run 41684280144
+passes again. Both browser jobs fail: auth 41684280096 checks Sign In once after
+password entry and misses it, while the later UI tree shows the real named form
+button and correctly entered customer username. It now requires the complete
+realm form up front and resolves the named submit control again across live
+browser surfaces for up to 30 seconds after typing.
+Marketplace 41684280027 successfully declines the optional password prompt by
+window coordinate, without the previous stale-element failure. Its profile wait
+expires at 30 seconds; access logs then show token 200 and profile bootstrap 200
+after that window. Profile/capability recovery now allows a bounded 90 seconds,
+retaining the same expected identity, roles and UI outcome. No new native pass is
+claimed and all overall deadlines remain unchanged.
+Observed access-log `%U` output includes protocol queries despite its documented
+path description. The formatter now uses relative path `%R`, and independent
+scrubbing removes access-log queries before artifacts are retained. Scrubbing
+also removes XCTest secure-field keystroke prefixes, which full-password matching
+alone cannot catch. Three regression tests verify full-password/JWT masking,
+ASCII/Unicode truncated secure entries, protocol-query removal and retained
+nonsecret username/path/status/checkpoint diagnostics. Normal mobile CI now runs
+all twelve Python tests. All twelve pass locally, as do CLI/import, Bash syntax,
+diff and documentation hygiene checks. New-head native execution remains required;
+all partial/failed attempts and #7/#12/#15 release gates remain open.

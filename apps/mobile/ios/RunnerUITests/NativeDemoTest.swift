@@ -94,7 +94,7 @@ class NativeDemoTest: XCTestCase {
 
     func account(_ displayName: String) {
         let profile = element("Hello, \(displayName)")
-        let deadline = Date().addingTimeInterval(30)
+        let deadline = Date().addingTimeInterval(90)
         repeat {
             if profile.exists { break }
             // A completed callback may dispose of the optional prompt. Avoid
@@ -139,12 +139,29 @@ class NativeDemoTest: XCTestCase {
         }
     }
 
+    private var browserSurfaces: [XCUIApplication] {
+        [app, XCUIApplication(bundleIdentifier: "com.apple.SafariViewService"),
+         XCUIApplication(bundleIdentifier: "com.apple.AuthenticationServicesUI.AuthenticationServicesAgent")]
+    }
+
     func browserField() -> (XCUIApplication, XCUIElement)? {
-        let surfaces = [app, XCUIApplication(bundleIdentifier: "com.apple.SafariViewService"),
-                        XCUIApplication(bundleIdentifier: "com.apple.AuthenticationServicesUI.AuthenticationServicesAgent")]
-        for surface in surfaces {
+        for surface in browserSurfaces {
             let field = surface.webViews.textFields.firstMatch
-            if field.exists && field.isHittable { return (surface, field) }
+            if field.exists && field.isHittable && surface.staticTexts["BLISS"].exists
+                && surface.webViews.secureTextFields.firstMatch.exists
+                && surface.webViews.buttons["Sign In"].firstMatch.exists {
+                return (surface, field)
+            }
+        }
+        return nil
+    }
+
+    private func browserSubmit() -> XCUIElement? {
+        for surface in browserSurfaces {
+            let submit = surface.webViews.buttons["Sign In"].firstMatch
+            if submit.exists && submit.isEnabled && submit.isHittable && surface.staticTexts["BLISS"].exists {
+                return submit
+            }
         }
         return nil
     }
@@ -174,8 +191,19 @@ class NativeDemoTest: XCTestCase {
         XCTAssertTrue(secret.exists)
         secret.tap()
         secret.typeText(password(username.uppercased()))
-        let submit = browser.webViews.buttons["Sign In"].firstMatch
-        XCTAssertTrue(submit.exists, "Expected local Keycloak submit control")
+        // Keyboard/browser transitions can move the live AX hierarchy between
+        // surfaces. Resolve the named real form control again after typing.
+        let submitDeadline = Date().addingTimeInterval(30)
+        var currentSubmit: XCUIElement?
+        repeat {
+            currentSubmit = browserSubmit()
+            if currentSubmit != nil { break }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+        } while Date() < submitDeadline
+        guard let submit = currentSubmit else {
+            XCTFail("Expected local Keycloak submit control")
+            return
+        }
         submit.tap()
         account(displayName)
     }

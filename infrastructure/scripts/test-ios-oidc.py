@@ -75,6 +75,13 @@ class Runner:
     def scrub(self, text):
         for password in self.passwords.values():
             text = text.replace(password, "[REDACTED]")
+        # XCTest truncates secure keystrokes before logging them, so matching
+        # only the full generated value does not remove its displayed prefix.
+        text = re.sub(r"Type '[^'\n]*' into [^\n]*SecureTextField[^\n]*",
+                      "Type '[REDACTED]' into SecureTextField", text)
+        # Defense in depth if an access-log formatter includes protocol queries.
+        text = re.sub(r"(\[org\.keycloak\.http\.access-log\][^\n]*?\b[A-Z]+ [^?\s]+)\?[^\s]*(?=\s+\d{3}(?:\s|$))",
+                      r"\1", text)
         # Defense in depth for diagnostics: never retain token-shaped values.
         return re.sub(r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+", "[REDACTED JWT]", text)
 
@@ -192,7 +199,7 @@ class Runner:
         kc_env = dict(os.environ, JAVA_OPTS_KC_HEAP="-Xms128m -Xmx768m")
         kc = self.start([keycloak / "bin/kc.sh", "start-dev", "--import-realm", "--http-host=127.0.0.1",
                          "--http-port=8180", "--hostname=http://127.0.0.1:8180", "--health-enabled=true",
-                         "--http-access-log-enabled=true", "--http-access-log-pattern=%m %U %s",
+                         "--http-access-log-enabled=true", "--http-access-log-pattern=%m %R %s",
                          "--http-management-host=127.0.0.1", "--http-management-port=9190"], "keycloak", kc_env)
         discovery = self.wait_url(ISSUER + "/.well-known/openid-configuration", kc)
         if discovery["issuer"] != ISSUER:
