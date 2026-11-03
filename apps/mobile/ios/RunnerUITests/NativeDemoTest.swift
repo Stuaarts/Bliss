@@ -30,12 +30,12 @@ class NativeDemoTest: XCTestCase {
         ProcessInfo.processInfo.environment["BLISS_\(role)_PASSWORD"] ?? ""
     }
 
-    private func probe(_ url: String) -> [String: Any]? {
+    private func probe(_ url: String, timeout: TimeInterval = 10) -> [String: Any]? {
         // Run inside the simulator, independently of the host's readiness GET.
         // No shared cookies/credentials or authentication requests are used.
         let configuration = URLSessionConfiguration.ephemeral
-        configuration.timeoutIntervalForRequest = 10
-        configuration.timeoutIntervalForResource = 10
+        configuration.timeoutIntervalForRequest = timeout
+        configuration.timeoutIntervalForResource = timeout
         let session = URLSession(configuration: configuration)
         defer { session.invalidateAndCancel() }
         let finished = expectation(description: "Local transport: \(url)")
@@ -51,14 +51,29 @@ class NativeDemoTest: XCTestCase {
                 document = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
             }
         }.resume()
-        wait(for: [finished], timeout: 15)
+        wait(for: [finished], timeout: timeout + 5)
         return document
     }
 
     private func verifyLocalTransport() throws {
         let discoveryPath = "/realms/bliss/.well-known/openid-configuration"
-        let discovery = probe("http://127.0.0.1:8180" + discoveryPath)
-        let readiness = probe("http://127.0.0.1:8088/q/health/ready")
+        // Readiness can recover after a short transport timeout. Poll only these
+        // unauthenticated GETs within one shared bound; never retry a UI write.
+        let deadline = Date().addingTimeInterval(90)
+        var discovery: [String: Any]?
+        var readiness: [String: Any]?
+        repeat {
+            if discovery == nil && Date() < deadline {
+                discovery = probe("http://127.0.0.1:8180" + discoveryPath,
+                                  timeout: min(10, max(0.1, deadline.timeIntervalSinceNow)))
+            }
+            if readiness == nil && Date() < deadline {
+                readiness = probe("http://127.0.0.1:8088/q/health/ready",
+                                  timeout: min(10, max(0.1, deadline.timeIntervalSinceNow)))
+            }
+            if discovery != nil && readiness != nil { break }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+        } while Date() < deadline
         // The stack intentionally listens on IPv4 loopback. Record both address
         // families without treating absent IPv6 service as a failed requirement.
         for host in ["localhost", "[::1]"] {

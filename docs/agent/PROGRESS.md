@@ -2174,3 +2174,28 @@ All fifteen Python tests pass locally, with import/help, Bash syntax, diff and
 hygiene checks. Current-head Mac acceptance remains required, including an explicit
 session workflow dispatch because that unchanged runner is outside push path
 filters for this Python-only change. All draft/release gates remain intact.
+
+
+At `58a642477b3aabefd6dd3d96d22d32f7a0ac1d28`, both complete CI runs pass
+(41691553175 PR / 41691543030 push):95 backend,57 Flutter,15 Python tests each,
+clean analysis/web/Android app and driver builds. All three native jobs fail.
+The host-only real Keycloak form preparation passes in both browser artifacts.
+Auth41691543053 then fails the new one-shot simulator discovery/readiness probes:
+both ten-second IPv4 GETs time out (-1001), while later service responses appear.
+Canonical probes now poll only unauthenticated GETs within one shared90-second
+window, with per-attempt limits capped to the remaining time. The exact issuer
+and readinessUP remain required; no sign-in or business write is retried.
+Marketplace41691542997 verifies actual customer request creation, then provider
+login. Open opportunities is tapped while initial activity loading finishes;
+the later tree still shows Bookings selected and no opportunities GET occurs.
+Filter navigation now waits for the page's Refresh activity control to become
+enabled before its single chip tap. All row/identity/business assertions remain.
+Session41691542562 (explicit dispatch) compiles Seed but exceeds the unchanged
+300-second execution deadline before any native/Dart test starts. This remains
+an intermittent platform launch/attach gate, not a passing current-head session.
+Earlier exact-head full session passes are retained as historical evidence.
+A new Mac run must still establish all three phases; no deadline or assertion is
+relaxed to turn that failed attempt into acceptance. Further launch diagnostics
+must include CoreSimulator/XCTest/FrontBoard services if the stall recurs.
+Fifteen Python tests, import/help, Bash syntax, diff and documentation hygiene pass
+locally. New-head Mac execution remains required. Refs #7/#12/#15, draft #57.

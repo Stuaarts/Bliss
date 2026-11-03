@@ -161,6 +161,18 @@ final class NativeMarketplaceTests: NativeDemoTest {
     }
 
     private func button(_ label: String) {
+        if ["Bookings", "Messages", "Disputes", "My requests", "Open opportunities", "My quotes"].contains(label) {
+            let refresh = app.buttons["Refresh activity"].firstMatch
+            if refresh.exists {
+                // A ChoiceChip can retain its prior AX enabled state briefly
+                // while Flutter disables selection for the initial page load.
+                let deadline = Date().addingTimeInterval(90)
+                while !refresh.isEnabled && Date() < deadline {
+                    RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+                }
+                XCTAssertTrue(refresh.isEnabled, "Activity loading did not finish before filter selection")
+            }
+        }
         let control = app.buttons.matching(NSPredicate(format: "label == %@", label)).firstMatch
         XCTAssertTrue(control.waitForExistence(timeout: 30), "Missing button: \(label)")
         for _ in 0..<8 {

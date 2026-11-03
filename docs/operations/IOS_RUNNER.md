@@ -97,8 +97,11 @@ canonical IPv4 OIDC discovery and API readiness URLs. The fixture uses
 Flutter build defines and host probes, matching the services' IPv4-only binding.
 It requires the expected issuer and readiness UP. It also records localhost and IPv6 loopback probe
 status/error codes for both services; absent IPv6 listeners are diagnostic only.
-Each request has a ten-second resource deadline, with a fifteen-second XCTest
-completion bound. Bodies, headers, credentials and tokens are not logged, and
+Canonical discovery/readiness GETs poll within one shared 90-second readiness
+window. Each request has at most ten seconds (capped to the remaining window),
+with five seconds of XCTest completion allowance. Both expected issuer and UP
+remain mandatory. The additional hostname/family probes are diagnostic only.
+Bodies, headers, credentials and tokens are not logged, and
 the probe does not share or clear browser cookies. Host readiness alone cannot
 establish simulator reachability. A passing probe still requires all original
 fresh-form, identity, UI, screenshot and database checks; it cannot establish
@@ -113,6 +116,14 @@ the exact full accessibility value, retaining the equality assertion and never
 retyping/truncating the text. Explicit IPv4 fixture addresses remove hostname
 ambiguity; they do not prove IPv6 alone caused the Safari error. Application
 defaults, browser consent and all identity/business assertions remain unchanged.
+
+Activity filter selection waits up to 90 seconds for the page's Refresh activity
+button to become enabled, before its single chip tap. At `58a6424`, an initial
+provider/activity GET completes just after the Open opportunities tap; the page
+remains on Bookings and no opportunities GET occurs. The chip's sampled AX
+enabled state did not establish settled page readiness. Waiting on the page's
+actual loading control avoids a lost filter selection without retrying any
+navigation or business write. The requested row must still load and be tapped.
 
 ## Verification
 
