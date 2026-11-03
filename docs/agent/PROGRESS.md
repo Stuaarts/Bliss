@@ -2066,3 +2066,29 @@ Local Python selector/CLI tests pass all nine, runner help/import and Bash synta
 pass, and diff checks pass. Mac-only compilation/execution awaits current-head
 Actions; no failed run is counted as acceptance. Job/step limits are unchanged.
 Refs #7, #12 and #15. All draft-stack, native/maintenance and release gates remain.
+
+
+At follow-up head `8edd30dd4fdcd82c3d66000df564b39625783e4b`, both full
+CI runs (41677075280 PR, 41677065061 push) pass: independently parsed logs verify
+95 backend (69+26), 57 Flutter and nine Python tests per run, with clean analysis,
+web/Android app and native-driver builds. Session run 41677065304 passes all three
+separate Seed/Restore/SignedOut XTests, build and final markers on SDK/runtime
+18.5; downloaded evidence confirms the exact commit. Splitting compilation from
+execution resolves the previously observed combined-deadline failure.
+Browser runs 41677065259 and 41677065018 both pass native transport preflight:
+localhost and explicit IPv4 return 200 for discovery/readiness; IPv6 is refused
+(-1004). Auth then shows Safari's server-response error before a credential form.
+Marketplace actually signs in and reaches request creation; its immediate title
+assertion reads a prefix, while the later UI counter reports the expected full
+length (137/160 remaining). These two runs fail and are not acceptance.
+The fixture now pins issuer/hostname, API OIDC validation, Flutter build defines,
+JDBC and probes to the existing IPv4 listeners, removing hostname ambiguity.
+Disposable JVM services now start after cold Xcode compilation and establish
+fresh readiness before UI execution, avoiding competition during compilation.
+This does not establish IPv6 as the sole Safari failure cause. Marketplace field
+input waits up to ten seconds for the original exact full value, retains equality,
+and never retypes or shortens the input. Application defaults, credentials,
+consent, browser/business assertions and overall job deadlines are unchanged.
+Nine Python tests, import/help, Bash syntax and documentation hygiene pass again
+(285 local links/336 tracked files). These Mac-only adjustments require new-head
+execution; first follow-up 7/9 does not imply all native gates are green.

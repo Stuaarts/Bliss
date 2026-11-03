@@ -57,17 +57,17 @@ class NativeDemoTest: XCTestCase {
 
     private func verifyLocalTransport() throws {
         let discoveryPath = "/realms/bliss/.well-known/openid-configuration"
-        let discovery = probe("http://localhost:8180" + discoveryPath)
-        let readiness = probe("http://localhost:8088/q/health/ready")
+        let discovery = probe("http://127.0.0.1:8180" + discoveryPath)
+        let readiness = probe("http://127.0.0.1:8088/q/health/ready")
         // The stack intentionally listens on IPv4 loopback. Record both address
         // families without treating absent IPv6 service as a failed requirement.
-        for host in ["127.0.0.1", "[::1]"] {
+        for host in ["localhost", "[::1]"] {
             _ = probe("http://\(host):8180" + discoveryPath)
             _ = probe("http://\(host):8088/q/health/ready")
         }
         let issuer = try XCTUnwrap(discovery?["issuer"] as? String,
                                   "Simulator cannot read canonical OIDC discovery")
-        XCTAssertEqual(issuer, "http://localhost:8180/realms/bliss")
+        XCTAssertEqual(issuer, "http://127.0.0.1:8180/realms/bliss")
         XCTAssertEqual(readiness?["status"] as? String, "UP",
                        "Simulator cannot reach the ready API")
         print("Verified iOS transport: canonical discovery and API readiness")

@@ -29,7 +29,9 @@ Xcode project enumeration; expiry still fails the check. Inventory is bounded to
 90 seconds. Browser/marketplace compilation uses bounded 600-second
 `build-for-testing`, then bounded 900-second `test-without-building` on the same
 scheme/destination. See [Apple's command-line test actions](https://developer.apple.com/library/archive/technotes/tn2339/_index.html).
-The marketplace observer starts after compilation and before UI execution, so
+The disposable JVM services start after compilation and establish fresh readiness
+before UI execution, avoiding competition with cold Xcode builds. The
+marketplace observer starts after service readiness and before UI execution, so
 its polling does not compete with the build. All workflow corroboration remains.
 Boot readiness remains bounded to 180 seconds. The independent session workflow
 builds each phase with a bounded 600-second `build-for-testing` action, then
@@ -49,8 +51,10 @@ account to sign out; a transient disabled sign-in button cannot skip logout.
 No cookie clearing, token injection or silent-login bypass is added. Only the simulator created by the invocation is shut down/deleted.
 
 Before browser scenarios, a simulator-side ephemeral `URLSession` reads the
-canonical localhost OIDC discovery and API readiness URLs. It requires the
-expected issuer and readiness UP. It also records IPv4 and IPv6 loopback probe
+canonical IPv4 OIDC discovery and API readiness URLs. The fixture uses
+`127.0.0.1` consistently for Keycloak's issuer/hostname, API OIDC validation,
+Flutter build defines and host probes, matching the services' IPv4-only binding.
+It requires the expected issuer and readiness UP. It also records localhost and IPv6 loopback probe
 status/error codes for both services; absent IPv6 listeners are diagnostic only.
 Each request has a ten-second resource deadline, with a fifteen-second XCTest
 completion bound. Bodies, headers, credentials and tokens are not logged, and
@@ -58,6 +62,16 @@ the probe does not share or clear browser cookies. Host readiness alone cannot
 establish simulator reachability. A passing probe still requires all original
 fresh-form, identity, UI, screenshot and database checks; it cannot establish
 that Safari's separate transport will succeed.
+
+At `8edd30d`, both simulator probes read localhost/IPv4 successfully while IPv6
+connections are refused; browser auth still shows Safari's server-response error.
+Marketplace instead signs in and reaches request creation, where an immediate
+field assertion sees a prefix while the later UI tree's counter reports the full
+expected length (137 of 160 characters remaining). Field input now waits up to ten seconds for
+the exact full accessibility value, retaining the equality assertion and never
+retyping/truncating the text. Explicit IPv4 fixture addresses remove hostname
+ambiguity; they do not prove IPv6 alone caused the Safari error. Application
+defaults, browser consent and all identity/business assertions remain unchanged.
 
 ## Verification
 

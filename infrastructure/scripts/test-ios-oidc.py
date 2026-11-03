@@ -25,6 +25,8 @@ from ios_simulator import select_simulator
 ROOT = Path(__file__).resolve().parents[2]
 KEYCLOAK = "26.7.4"
 KEYCLOAK_SHA256 = "04823c336b797a7e18889a44262a7a64e6bf624cbbcc518c85e2622176ff2eee"
+ISSUER = "http://127.0.0.1:8180/realms/bliss"
+API_URL = "http://127.0.0.1:8088"
 CHECKPOINTS = [
     "customer browser PKCE callback and authenticated profile",
     "customer refresh-token recovery after process termination",
@@ -189,14 +191,14 @@ class Runner:
         (imports / "bliss-realm.json").write_text(json.dumps(realm))
         kc_env = dict(os.environ, JAVA_OPTS_KC_HEAP="-Xms128m -Xmx768m")
         kc = self.start([keycloak / "bin/kc.sh", "start-dev", "--import-realm", "--http-host=127.0.0.1",
-                         "--http-port=8180", "--hostname=http://localhost:8180", "--health-enabled=true",
+                         "--http-port=8180", "--hostname=http://127.0.0.1:8180", "--health-enabled=true",
                          "--http-management-host=127.0.0.1", "--http-management-port=9190"], "keycloak", kc_env)
-        discovery = self.wait_url("http://localhost:8180/realms/bliss/.well-known/openid-configuration", kc)
-        if discovery["issuer"] != "http://localhost:8180/realms/bliss":
+        discovery = self.wait_url(ISSUER + "/.well-known/openid-configuration", kc)
+        if discovery["issuer"] != ISSUER:
             raise RuntimeError("Unexpected local issuer")
         print("Real local Keycloak discovery ready", flush=True)
 
-        api_env = dict(os.environ, BLISS_DB_URL="jdbc:postgresql://localhost:5439/bliss", BLISS_DB_USER="bliss_ci",
+        api_env = dict(os.environ, BLISS_DB_URL="jdbc:postgresql://127.0.0.1:5439/bliss", BLISS_DB_USER="bliss_ci",
                        BLISS_DB_PASSWORD=self.passwords["db"], BLISS_OIDC_URL=discovery["issuer"], BLISS_API_PORT="8088")
         # Flyway locations are fixed during Quarkus augmentation. Build and run
         # with the same local profile so the real demo migrations are included.
@@ -204,7 +206,7 @@ class Runner:
                  "api-package", 600, ROOT / "services/api", api_env)
         api = self.start(["java", "-Dquarkus.profile=local", "-jar", ROOT / "services/api/target/quarkus-app/quarkus-run.jar"],
                          "api", api_env)
-        readiness = self.wait_url("http://localhost:8088/q/health/ready", api)
+        readiness = self.wait_url(API_URL + "/q/health/ready", api)
         if readiness["status"] != "UP":
             raise RuntimeError("API did not become healthy")
         seeded = self.run([self.pg_bin / "psql", "-h", "127.0.0.1", "-p", "5439", "-U", "bliss_ci", "-d", "bliss",
@@ -243,8 +245,8 @@ class Runner:
         mobile = ROOT / "apps/mobile"
         self.run(["flutter", "pub", "get"], "flutter-pub", 300, mobile)
         self.run(["flutter", "build", "ios", "--config-only", "--simulator", "--debug", "--target", "lib/main.dart",
-                  "--dart-define=OIDC_ISSUER=http://localhost:8180/realms/bliss",
-                  "--dart-define=API_BASE_URL=http://localhost:8088"], "flutter-config", 300, mobile)
+                  f"--dart-define=OIDC_ISSUER={ISSUER}",
+                  f"--dart-define=API_BASE_URL={API_URL}"], "flutter-config", 300, mobile)
         env = dict(os.environ, TEST_RUNNER_BLISS_IOS_AUTH_OPT_IN="isolated-local",
                    TEST_RUNNER_BLISS_CUSTOMER_PASSWORD=self.passwords["customer"],
                    TEST_RUNNER_BLISS_PROVIDER_PASSWORD=self.passwords["provider"],
@@ -256,6 +258,9 @@ class Runner:
         # Keep cold compilation outside the UI execution budget. Start the
         # marketplace observer only after compilation, before any UI writes.
         self.run([*build, "build-for-testing"], "xctest-build", 600, mobile, env)
+        # Keep JVM services out of cold Xcode compilation, and establish fresh
+        # service readiness immediately before the actual browser scenario.
+        self.services()
         stop = threading.Event()
         self.workflow_checkpoint = None
         self.workflow_error = None
@@ -413,7 +418,6 @@ def main():
         runner.run(["git", "rev-parse", "HEAD"], "commit", 30)
         runner.run(["xcodebuild", "-version"], "xcode-version", 30)
         runner.run(["flutter", "--version"], "flutter-version", 30)
-        runner.services()
         runner.simulator()
         runner.test()
     finally:

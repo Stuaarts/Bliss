@@ -210,6 +210,12 @@ final class NativeMarketplaceTests: NativeDemoTest {
         XCTAssertTrue(control.exists && control.isHittable, "Missing field: \(label)")
         control.tap()
         control.typeText(value)
+        // Flutter may publish the final accessibility value after typeText
+        // returns. Wait for the complete original value without retyping it.
+        let entered = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "value == %@", value), object: control)
+        XCTAssertEqual(XCTWaiter.wait(for: [entered], timeout: 10), .completed,
+                       "Field value did not settle: \(label)")
         XCTAssertEqual(control.value as? String, value, "Field value mismatch: \(label)")
     }
 }
