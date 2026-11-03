@@ -2,6 +2,7 @@
 """Real browser OIDC acceptance against a disposable, loopback-only Mac stack."""
 import hashlib
 import argparse
+from html.parser import HTMLParser
 import json
 import os
 from pathlib import Path
@@ -19,6 +20,7 @@ import tempfile
 import time
 import urllib.error
 import urllib.request
+import urllib.parse
 
 from ios_simulator import select_simulator
 
@@ -49,6 +51,28 @@ MARKETPLACE_CHECKPOINTS = [
 MARKETPLACE_SCREENSHOTS = ["marketplace-" + name for name in [
     "request", "quote", "customer-chat", "chat", "provider-complete", "completed", "review", "restored", "signed-out",
 ]]
+
+
+class LoginForm(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.username = self.password = self.submit = self.realm = False
+
+    def handle_starttag(self, tag, attributes):
+        attributes = dict(attributes)
+        if tag == "input":
+            self.username |= attributes.get("name") == "username"
+            self.password |= attributes.get("name") == "password" and attributes.get("type") == "password"
+        if tag in ("input", "button"):
+            self.submit |= attributes.get("type") == "submit"
+
+    def handle_data(self, data):
+        self.realm |= data.strip().casefold() == "bliss"
+
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, message, headers, new_url):
+        return None
 
 
 class Runner:
@@ -244,6 +268,33 @@ class Runner:
         self.run(["xcrun", "simctl", "boot", device], "simulator-boot", 60)
         self.run(["xcrun", "simctl", "bootstatus", device, "-b"], "simulator-ready", 180)
 
+    def warm_login_form(self):
+        # Initialize the cold authorization/theme route before Safari's own
+        # request deadline. This host-only GET submits no credentials, accepts
+        # no redirects and shares no cookies with the native browser.
+        query = urllib.parse.urlencode({
+            "client_id": "bliss-mobile", "redirect_uri": "com.bliss.mobile:/oauthredirect",
+            "response_type": "code", "scope": "openid profile email", "prompt": "login",
+            "code_challenge_method": "S256", "code_challenge": secrets.token_urlsafe(32),
+            "state": secrets.token_urlsafe(24), "nonce": secrets.token_urlsafe(24),
+        })
+        request = urllib.request.Request(ISSUER + "/protocol/openid-connect/auth?" + query,
+                                         headers={"Accept": "text/html"})
+        try:
+            with urllib.request.build_opener(NoRedirect()).open(request, timeout=120) as response:
+                if response.status != 200:
+                    raise RuntimeError("Cold Keycloak form did not return HTTP 200")
+                form = LoginForm()
+                form.feed(response.read(1_000_000).decode("utf-8", errors="replace"))
+        except (urllib.error.URLError, OSError):
+            raise RuntimeError("Cold Keycloak login-form readiness failed") from None
+        if not all((form.username, form.password, form.submit, form.realm)):
+            raise RuntimeError("Cold Keycloak login-form controls are incomplete")
+        (self.evidence / "login-form-ready.txt").write_text(
+            "PASS: real Keycloak fresh login form HTTP 200; realm, username, password and submit verified.\n"
+            "Host-only unauthenticated GET; no credentials, redirects or browser cookies used.\n")
+        print("Real Keycloak login-form readiness verified before native UI", flush=True)
+
     def test(self):
         marketplace = self.scenario == "marketplace"
         test_class = "NativeMarketplaceTests" if marketplace else "NativeOidcTests"
@@ -269,6 +320,7 @@ class Runner:
         # Keep JVM services out of cold Xcode compilation, and establish fresh
         # service readiness immediately before the actual browser scenario.
         self.services()
+        self.warm_login_form()
         stop = threading.Event()
         self.workflow_checkpoint = None
         self.workflow_error = None

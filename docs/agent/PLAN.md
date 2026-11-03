@@ -504,3 +504,30 @@ nonsecret username/path/status/checkpoint diagnostics. Normal mobile CI now runs
 all twelve Python tests. All twelve pass locally, as do CLI/import, Bash syntax,
 diff and documentation hygiene checks. New-head native execution remains required;
 all partial/failed attempts and #7/#12/#15 release gates remain open.
+
+
+At `778a4541537ccd9ac75f5dadf2c4837c1866f9e4`, eight of nine jobs pass.
+Both complete CI runs (41687532245 PR / 41687522422 push) independently verify
+95 backend (69+26), 57 Flutter and twelve Python cases, with clean analysis,
+web and Android app/native-driver builds. Real browser auth 41687521905 passes
+one XCTest, all eight checkpoints and eight PNGs on SDK/runtime18.5. Exact-head
+artifacts verify fresh customer/provider PKCE login, recovery, background/resume,
+logout and account switching. The provider screenshot is visually reviewed.
+All57 retained Keycloak access lines exclude queries, and all three secure input
+lines are redacted. Session41687521990 passes all three independent native phases.
+Marketplace41687522324 fails before the first credential form: Safari shows a
+server-response error while the canonical preflight succeeds. Keycloak's completed
+authorization-page200 is logged only after the browser has already failed, so a
+longer UI wait cannot recover that particular request. No business writes occur.
+The disposable runner now prepares that cold authorization/theme route with one
+bounded120-second host-only GET before native UI. It uses fresh PKCE/state/nonce,
+submits no credentials, refuses redirects and shares no cookies/browser sessions.
+The200 HTML must contain the Bliss realm and username/password/submit controls;
+only fixed readiness metadata is saved. Every native flow must still independently
+render and submit its fresh real form and satisfy all original assertions.
+Three readiness regression tests cover GET parameters/no credentials/cookies,
+wrong/incomplete realm refusal, and redirect/error refusal without query disclosure.
+All fifteen Python tests pass locally, with import/help, Bash syntax, diff and
+hygiene checks. Current-head Mac acceptance remains required, including an explicit
+session workflow dispatch because that unchanged runner is outside push path
+filters for this Python-only change. All draft/release gates remain intact.

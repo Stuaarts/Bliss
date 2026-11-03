@@ -16,11 +16,13 @@ a successful check establishes acceptance only for that selected configuration.
 
 Both `test-ios-oidc.py` (real browser/marketplace) and `test-ios-session.sh`
 (synthetic session persistence) use the same selector. Shared-helper changes
-trigger all three native workflows. The ordinary mobile CI job first runs twelve
+trigger all three native workflows. The ordinary mobile CI job first runs fifteen
 Python tests: nine selection/CLI cases, including 18.5 alongside newer 26.2,
 patch preference, unavailable/wrong-platform refusal, compatible device ranges,
 missing-runtime diagnostics and paths containing spaces, plus three diagnostic
-redaction cases for full/truncated secrets, JWTs and protocol query strings.
+redaction cases for full/truncated secrets, JWTs and protocol query strings, and
+three login-page readiness cases (fresh PKCE GET, incomplete/wrong realm refusal,
+and redirect/error refusal).
 
 ## Deadlines and authentication
 
@@ -36,7 +38,17 @@ Browser/marketplace compilation uses bounded 600-second
 scheme/destination. See [Apple's command-line test actions](https://developer.apple.com/library/archive/technotes/tn2339/_index.html).
 The disposable JVM services start after compilation and establish fresh readiness
 before UI execution, avoiding competition with cold Xcode builds. The
-marketplace observer starts after service readiness and before UI execution, so
+runner then performs one bounded 120-second host-only authorization-page GET to
+initialize the cold Keycloak route/theme. It requires HTTP 200, the Bliss realm
+heading, username/password inputs and a submit control. The request has a fresh
+PKCE challenge/state/nonce and submits no credentials. A separate opener refuses
+redirects and has no cookie processor; no browser cookies or sessions are shared.
+Only fixed readiness metadata is retained. This is preparation of the disposable
+server; every native scenario still must display and submit its own fresh form.
+At `778a454`, Safari already showed its server-response error before the cold
+authorization route's HTTP 200 arrived; increasing the UI wait cannot recover
+that failed browser request. The host GET moves that initialization before it.
+The marketplace observer starts after service/form readiness and before UI execution, so
 its polling does not compete with the build. All workflow corroboration remains.
 Boot readiness remains bounded to 180 seconds. The independent session workflow
 builds each phase with a bounded 600-second `build-for-testing` action, then
