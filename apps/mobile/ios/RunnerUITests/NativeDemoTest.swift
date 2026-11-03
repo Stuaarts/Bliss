@@ -103,8 +103,15 @@ class NativeDemoTest: XCTestCase {
                 let skip = surface.alerts["Save Password?"].buttons["Not Now"].firstMatch
                 if skip.exists && skip.isHittable {
                     let frame = skip.frame
-                    if !frame.isEmpty && app.frame.contains(frame) {
-                        skip.tap()
+                    let window = app.windows.firstMatch
+                    let viewport = window.frame
+                    if !frame.isEmpty && !viewport.isEmpty && viewport.contains(frame) && !profile.exists {
+                        // The browser sheet can animate away after this check.
+                        // Use the visible window coordinates so XCTest cannot
+                        // re-resolve and auto-scroll a disappearing alert button.
+                        window.coordinate(withNormalizedOffset: .zero).withOffset(
+                            CGVector(dx: frame.midX - viewport.minX,
+                                     dy: frame.midY - viewport.minY)).tap()
                         break
                     }
                 }
@@ -175,7 +182,9 @@ class NativeDemoTest: XCTestCase {
 
     func signOut() {
         tap("Sign out")
-        let deadline = Date().addingTimeInterval(30)
+        // The hosted browser was still loading at the old 30-second deadline.
+        // Require the real callback and enabled action within a bounded 90s.
+        let deadline = Date().addingTimeInterval(90)
         repeat {
             consent()
             let signIn = element("Sign in")

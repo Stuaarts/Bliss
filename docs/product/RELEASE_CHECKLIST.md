@@ -212,14 +212,19 @@ master prompt requests. See [security](../architecture/SECURITY.md),
 
 ## Deferred final CI and native gate
 
-At the user's October 10 direction, continue independent verifiable work and
-resolve the external account blocker at the end. Post-merge main CI cannot start:
-GitHub reports an account payment or spending-limit problem
+At the user's October 10 direction, independent verifiable work continued while
+the external account blocker was deferred. Post-merge main CI was rejected:
+GitHub reported an account payment or spending-limit problem
 ([rejected CI](https://github.com/Stuaarts/Bliss/actions/runs/37956907374)). All nine
 checks passed on PR #38's final code revision before merge; no post-merge pass
 is claimed. Draft [PR #39](https://github.com/Stuaarts/Bliss/pull/39) prepares iOS
 cancellation/dispute/connection recovery; its actual macOS execution remains open.
-The account owner must resolve the GitHub condition, then all required checks
-must pass on current heads before merge and on main afterward. Preserve drafts
-#39/#40 and keep #7/#12 open until those gates are satisfied. Local operations
+By November 3, Actions execute again without any billing settings changed here.
+Both full CI runs at draft #57 head `7667a62` pass API/mobile/Android, and all
+three synthetic native-session phases pass. Real browser auth and marketplace
+still fail at distinct UI transitions; neither is counted as acceptance. See
+[native runner evidence](../operations/IOS_RUNNER.md) and the current draft PR
+for exact-head results. This does not establish the owner's billing state or a
+post-merge main pass. All required checks must pass on current heads before merge
+and on main afterward. Preserve the draft stack and keep #7/#12 open until those gates are satisfied. Local operations
 evidence does not waive CI, native acceptance or the product-beta controls above.

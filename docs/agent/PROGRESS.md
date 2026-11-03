@@ -2092,3 +2092,32 @@ consent, browser/business assertions and overall job deadlines are unchanged.
 Nine Python tests, import/help, Bash syntax and documentation hygiene pass again
 (285 local links/336 tracked files). These Mac-only adjustments require new-head
 execution; first follow-up 7/9 does not imply all native gates are green.
+
+
+At `7667a62f5b812e73f2d1c5bfb6432eb89515d261`, both full CI runs pass again
+(41680757713 PR / 41680745120 push): 95 backend, 57 Flutter, nine Python tests
+per run, clean analysis, web and Android app/native-driver builds. Session run
+41680745156 again passes all three exact phases on SDK/runtime 18.5, independently
+verified from downloaded artifacts. Seven of nine jobs pass; both browser jobs
+fail despite successful transport probes and actual authenticated progress.
+Auth run 41680745310 verifies login, refresh/process recovery and background/resume
+(3/8 checkpoints), then fails its 30-second logout wait while Safari is loading.
+Keycloak cookie handling occurs about 53 seconds after the logout tap; a delayed
+OIDC response is an inference, not proof of callback completion. The bounded
+logout wait now allows 90 seconds while still requiring enabled sign-in, real
+consent/callback and subsequent fresh-account login. Overall deadlines remain.
+Marketplace run 41680745305 verifies request, quote, acceptance/customer chat,
+two-way chat and provider completion (5/9 checkpoints). The field synchronization
+gets past the previous title failure. A later customer login hits the existing
+optional-prompt race: XCTest re-resolves Not Now during its dismissal animation,
+tries to scroll an AX frame at y=1371.6, then fails because it disappears.
+The helper now uses main-window viewport bounds instead of the application's
+transitioning union frame, rechecks the expected profile, and taps the observed
+visible prompt coordinate without re-resolving/scrolling the alert element.
+All profile, identity, role and business assertions remain. Disposable Keycloak
+logs method/path/status only to identify completed responses without protocol
+query strings, headers/cookies or bodies. Release checklist now records that
+Actions execute again without asserting an owner billing change or main pass.
+Nine Python tests, runner help/import, diff and documentation hygiene pass
+(286 local links/336 tracked files). New-head Mac execution remains required;
+no partial browser scenario is counted as acceptance. Refs #7/#12/#15, draft #57.

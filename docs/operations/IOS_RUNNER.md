@@ -43,12 +43,28 @@ silently retry a scenario.
 
 The browser helper declines only the observed Save Password? / Not Now prompt
 only while the expected profile is absent and the button is visibly within the
-app bounds. It stops inspecting optional prompts once the profile exists,
+main window bounds. A named prompt is tapped at its observed window coordinate;
+XCTest must not re-resolve/auto-scroll its disappearing AX button during the
+browser animation. The application frame can include the transitioning sheet's
+off-screen extents, so it is not a viewport guard. The helper rechecks the profile
+before the coordinate tap. It stops inspecting optional prompts once the profile exists,
 avoiding stale AX taps after callback completion. It still requires the real local
 Keycloak form, realm identity, credentials, profile/capabilities, refresh, logout
 and account switching. Account switching waits for either an enabled sign-in action or a restored
 account to sign out; a transient disabled sign-in button cannot skip logout.
 No cookie clearing, token injection or silent-login bypass is added. Only the simulator created by the invocation is shut down/deleted.
+
+Logout allows 90 seconds for the real browser response and enabled sign-in
+action, retaining consent, callback and subsequent fresh-login assertions. At
+`7667a62`, the browser remains on a loading page at the 30-second deadline and
+Keycloak logs cookie handling about 53 seconds after the tap. This is consistent
+with slow OIDC handling; it does not prove a completed logout callback. The next
+run must establish that outcome. This changes the bounded wait, not
+the required logout outcome or the overall test/job deadlines.
+The disposable [Keycloak access log](https://www.keycloak.org/server/logging)
+records only method, [URL path and response status](https://quarkus.io/guides/http-reference/#access-log).
+It excludes query strings, headers, cookies and bodies, allowing completed OIDC
+responses to be correlated with UI timing without recording protocol tokens.
 
 Before browser scenarios, a simulator-side ephemeral `URLSession` reads the
 canonical IPv4 OIDC discovery and API readiness URLs. The fixture uses

@@ -192,6 +192,7 @@ class Runner:
         kc_env = dict(os.environ, JAVA_OPTS_KC_HEAP="-Xms128m -Xmx768m")
         kc = self.start([keycloak / "bin/kc.sh", "start-dev", "--import-realm", "--http-host=127.0.0.1",
                          "--http-port=8180", "--hostname=http://127.0.0.1:8180", "--health-enabled=true",
+                         "--http-access-log-enabled=true", "--http-access-log-pattern=%m %U %s",
                          "--http-management-host=127.0.0.1", "--http-management-port=9190"], "keycloak", kc_env)
         discovery = self.wait_url(ISSUER + "/.well-known/openid-configuration", kc)
         if discovery["issuer"] != ISSUER:
