@@ -66,30 +66,10 @@ print('Built app callback registration verified.')
 PY
 
 # Always create a disposable simulator; never select or erase an existing one.
-xcrun simctl list --json > "$evidence/simulator-inventory.json"
-selection="$(python3 - "$evidence/simulator-inventory.json" <<'PY'
-import json
-import sys
-
-with open(sys.argv[1]) as source:
-    inventory = json.load(source)
-runtimes = [item for item in inventory['runtimes']
-            if item.get('isAvailable') and '.iOS-' in item['identifier']]
-if not runtimes:
-    sys.exit('No available iOS Simulator runtime; install one through Xcode.')
-runtime = max(runtimes, key=lambda item: tuple(map(int, item['version'].split('.'))))
-parts = list(map(int, runtime['version'].split('.')))
-parts += [0] * (3 - len(parts))
-version = (parts[0] << 16) | (parts[1] << 8) | parts[2]
-types = [item for item in inventory['devicetypes']
-         if item['name'].startswith('iPhone')
-         and item.get('minRuntimeVersion', 0) <= version
-         and item.get('maxRuntimeVersion', 0xFFFFFFFF) >= version]
-if not types:
-    sys.exit('No iPhone simulator device type found.')
-print(types[-1]['identifier'], runtime['identifier'])
-PY
-)"
+run_bounded 30 xcrun --sdk iphonesimulator --show-sdk-version > "$evidence/simulator-sdk.txt"
+run_bounded 180 xcrun simctl list --json > "$evidence/simulator-inventory.json"
+selection="$(python3 "$root/infrastructure/scripts/ios_simulator.py" \
+  "$evidence/simulator-inventory.json" "$evidence/simulator-sdk.txt")"
 read -r device_type runtime <<< "$selection"
 device="$(xcrun simctl create "Bliss_Test_iOS_$$" "$device_type" "$runtime")"
 [[ "$device" =~ ^[A-Fa-f0-9-]{36}$ ]] || { echo "Invalid created simulator UUID" >&2; exit 1; }
@@ -102,7 +82,7 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 printf 'device=%s\ntype=%s\nruntime=%s\n' "$device" "$device_type" "$runtime" | tee "$evidence/device.txt"
 for phase in seed restore signed-out; do
-  run_bounded 120 flutter build ios --config-only --simulator --debug \
+  run_bounded 300 flutter build ios --config-only --simulator --debug \
     --target integration_test/native_session_test.dart \
     --dart-define=OIDC_ISSUER=http://localhost:18180 \
     --dart-define=NATIVE_XCTEST=true \
@@ -111,10 +91,14 @@ for phase in seed restore signed-out; do
   run_bounded 180 xcrun simctl bootstatus "$device" -b
   # The same app data and Keychain must survive all three independent processes.
   # XCTest reads integration_test results natively, without VM-service discovery.
-  if ! run_bounded 300 xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner \
+  build=(xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner \
     -configuration Debug -destination "platform=iOS Simulator,id=$device" \
-    -destination-timeout 60 -parallel-testing-enabled NO -only-testing:RunnerTests \
-    -resultBundlePath "$evidence/$phase.xcresult" test 2>&1 | tee "$evidence/$phase.log"; then
+    -destination-timeout 60 -parallel-testing-enabled NO -only-testing:RunnerTests)
+  # Each phase has a different compiled Dart entry point. Build it before
+  # starting the unchanged 300-second execution/final-result deadline.
+  run_bounded 600 "${build[@]}" build-for-testing 2>&1 | tee "$evidence/$phase-build.log"
+  if ! run_bounded 300 "${build[@]}" \
+    -resultBundlePath "$evidence/$phase.xcresult" test-without-building 2>&1 | tee "$evidence/$phase.log"; then
     run_bounded 30 xcrun simctl spawn "$device" log show --last 2m \
       --predicate 'process == "Runner"' > "$evidence/$phase-simulator.log" 2>&1 || true
     exit 1

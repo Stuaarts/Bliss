@@ -86,3 +86,8 @@ it expected an active workflow row after completion. Flow intentionally removes
 completed instance/task rows; Bliss retains the booking's correlation and audit
 history. The runner now observes the real scheduled human wait and requires that
 same persisted correlation at completion. Neither failed job counts as full acceptance.
+
+
+The native scripts now use [shared SDK-matched runtime selection](../operations/IOS_RUNNER.md)
+with explicit missing-runtime refusal. Historical acceptance above retains its
+original configuration; current-head native results remain a separate gate.

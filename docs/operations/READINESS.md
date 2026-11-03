@@ -274,6 +274,12 @@ The REST write-admission slice builds on draft #55. It adds an opt-in pause,
 readiness check and maintenance/reopen rehearsal; the existing default write and
 worker settings remain unchanged.
 
+The [Flutter maintenance recovery](CLIENT_MAINTENANCE.md) slice builds on draft
+#56. Existing accounts can read their profile after a bootstrap 503; unavailable
+accounts can retry without another sign-in, and evidence retries preserve the
+original in-memory submission key. Real backend/native maintenance acceptance
+remains separate from the synthetic client checks.
+
 The final gate remains: account owner resolves the GitHub payment/spending-limit
 condition, required checks pass on each exact current PR head, native iOS secondary
 scenarios execute on macOS, branches are current with main, and main checks pass

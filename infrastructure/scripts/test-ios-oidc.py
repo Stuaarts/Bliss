@@ -2,6 +2,7 @@
 """Real browser OIDC acceptance against a disposable, loopback-only Mac stack."""
 import hashlib
 import argparse
+from html.parser import HTMLParser
 import json
 import os
 from pathlib import Path
@@ -19,10 +20,15 @@ import tempfile
 import time
 import urllib.error
 import urllib.request
+import urllib.parse
+
+from ios_simulator import select_simulator
 
 ROOT = Path(__file__).resolve().parents[2]
 KEYCLOAK = "26.7.4"
 KEYCLOAK_SHA256 = "04823c336b797a7e18889a44262a7a64e6bf624cbbcc518c85e2622176ff2eee"
+ISSUER = "http://127.0.0.1:8180/realms/bliss"
+API_URL = "http://127.0.0.1:8088"
 CHECKPOINTS = [
     "customer browser PKCE callback and authenticated profile",
     "customer refresh-token recovery after process termination",
@@ -45,6 +51,28 @@ MARKETPLACE_CHECKPOINTS = [
 MARKETPLACE_SCREENSHOTS = ["marketplace-" + name for name in [
     "request", "quote", "customer-chat", "chat", "provider-complete", "completed", "review", "restored", "signed-out",
 ]]
+
+
+class LoginForm(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.username = self.password = self.submit = self.realm = False
+
+    def handle_starttag(self, tag, attributes):
+        attributes = dict(attributes)
+        if tag == "input":
+            self.username |= attributes.get("name") == "username"
+            self.password |= attributes.get("name") == "password" and attributes.get("type") == "password"
+        if tag in ("input", "button"):
+            self.submit |= attributes.get("type") == "submit"
+
+    def handle_data(self, data):
+        self.realm |= data.strip().casefold() == "bliss"
+
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, message, headers, new_url):
+        return None
 
 
 class Runner:
@@ -71,6 +99,13 @@ class Runner:
     def scrub(self, text):
         for password in self.passwords.values():
             text = text.replace(password, "[REDACTED]")
+        # XCTest truncates secure keystrokes before logging them, so matching
+        # only the full generated value does not remove its displayed prefix.
+        text = re.sub(r"Type '[^'\n]*' into [^\n]*SecureTextField[^\n]*",
+                      "Type '[REDACTED]' into SecureTextField", text)
+        # Defense in depth if an access-log formatter includes protocol queries.
+        text = re.sub(r"(\[org\.keycloak\.http\.access-log\][^\n]*?\b[A-Z]+ [^?\s]+)\?[^\s]*(?=\s+\d{3}(?:\s|$))",
+                      r"\1", text)
         # Defense in depth for diagnostics: never retain token-shaped values.
         return re.sub(r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+", "[REDACTED JWT]", text)
 
@@ -187,14 +222,15 @@ class Runner:
         (imports / "bliss-realm.json").write_text(json.dumps(realm))
         kc_env = dict(os.environ, JAVA_OPTS_KC_HEAP="-Xms128m -Xmx768m")
         kc = self.start([keycloak / "bin/kc.sh", "start-dev", "--import-realm", "--http-host=127.0.0.1",
-                         "--http-port=8180", "--hostname=http://localhost:8180", "--health-enabled=true",
+                         "--http-port=8180", "--hostname=http://127.0.0.1:8180", "--health-enabled=true",
+                         "--http-access-log-enabled=true", "--http-access-log-pattern=%m %R %s",
                          "--http-management-host=127.0.0.1", "--http-management-port=9190"], "keycloak", kc_env)
-        discovery = self.wait_url("http://localhost:8180/realms/bliss/.well-known/openid-configuration", kc)
-        if discovery["issuer"] != "http://localhost:8180/realms/bliss":
+        discovery = self.wait_url(ISSUER + "/.well-known/openid-configuration", kc)
+        if discovery["issuer"] != ISSUER:
             raise RuntimeError("Unexpected local issuer")
         print("Real local Keycloak discovery ready", flush=True)
 
-        api_env = dict(os.environ, BLISS_DB_URL="jdbc:postgresql://localhost:5439/bliss", BLISS_DB_USER="bliss_ci",
+        api_env = dict(os.environ, BLISS_DB_URL="jdbc:postgresql://127.0.0.1:5439/bliss", BLISS_DB_USER="bliss_ci",
                        BLISS_DB_PASSWORD=self.passwords["db"], BLISS_OIDC_URL=discovery["issuer"], BLISS_API_PORT="8088")
         # Flyway locations are fixed during Quarkus augmentation. Build and run
         # with the same local profile so the real demo migrations are included.
@@ -202,7 +238,7 @@ class Runner:
                  "api-package", 600, ROOT / "services/api", api_env)
         api = self.start(["java", "-Dquarkus.profile=local", "-jar", ROOT / "services/api/target/quarkus-app/quarkus-run.jar"],
                          "api", api_env)
-        readiness = self.wait_url("http://localhost:8088/q/health/ready", api)
+        readiness = self.wait_url(API_URL + "/q/health/ready", api)
         if readiness["status"] != "UP":
             raise RuntimeError("API did not become healthy")
         seeded = self.run([self.pg_bin / "psql", "-h", "127.0.0.1", "-p", "5439", "-U", "bliss_ci", "-d", "bliss",
@@ -216,15 +252,13 @@ class Runner:
         print("Real Bliss API and fresh PostgreSQL ready", flush=True)
 
     def simulator(self):
-        inventory = json.loads(self.run(["xcrun", "simctl", "list", "--json"], "simulator-inventory", 30))
-        runtimes = [r for r in inventory["runtimes"] if r.get("isAvailable") and ".iOS-" in r["identifier"]]
-        runtime = max(runtimes, key=lambda r: tuple(map(int, r["version"].split("."))))
-        parts = [int(p) for p in runtime["version"].split(".")]
-        parts += [0] * (3 - len(parts))
-        version = (parts[0] << 16) | (parts[1] << 8) | parts[2]
-        types = [d for d in inventory["devicetypes"] if d["name"].startswith("iPhone")
-                 and d.get("minRuntimeVersion", 0) <= version <= d.get("maxRuntimeVersion", 0xFFFFFFFF)]
-        device_type = types[-1]
+        # Fresh macOS runners can exceed 30 seconds on the first CoreSimulator
+        # inventory. Keep discovery bounded separately from boot and UI tests.
+        inventory = json.loads(self.run(["xcrun", "simctl", "list", "--json"], "simulator-inventory", 180))
+        sdk = self.run(["xcrun", "--sdk", "iphonesimulator", "--show-sdk-version"],
+                       "simulator-sdk", 30).strip()
+        device_type, runtime = select_simulator(inventory, sdk)
+        print(f"Selected iOS {runtime['version']} for SDK {sdk}", flush=True)
         device = self.run(["xcrun", "simctl", "create", f"Bliss_Auth_iOS_{os.getpid()}",
                            device_type["identifier"], runtime["identifier"]], "simulator-create", 60).strip()
         if not re.fullmatch(r"[A-Fa-f0-9-]{36}", device):
@@ -233,6 +267,33 @@ class Runner:
         (self.evidence / "device.txt").write_text(f"{device}\n{device_type['name']}\n{runtime['version']}\n")
         self.run(["xcrun", "simctl", "boot", device], "simulator-boot", 60)
         self.run(["xcrun", "simctl", "bootstatus", device, "-b"], "simulator-ready", 180)
+
+    def warm_login_form(self):
+        # Initialize the cold authorization/theme route before Safari's own
+        # request deadline. This host-only GET submits no credentials, accepts
+        # no redirects and shares no cookies with the native browser.
+        query = urllib.parse.urlencode({
+            "client_id": "bliss-mobile", "redirect_uri": "com.bliss.mobile:/oauthredirect",
+            "response_type": "code", "scope": "openid profile email", "prompt": "login",
+            "code_challenge_method": "S256", "code_challenge": secrets.token_urlsafe(32),
+            "state": secrets.token_urlsafe(24), "nonce": secrets.token_urlsafe(24),
+        })
+        request = urllib.request.Request(ISSUER + "/protocol/openid-connect/auth?" + query,
+                                         headers={"Accept": "text/html"})
+        try:
+            with urllib.request.build_opener(NoRedirect()).open(request, timeout=120) as response:
+                if response.status != 200:
+                    raise RuntimeError("Cold Keycloak form did not return HTTP 200")
+                form = LoginForm()
+                form.feed(response.read(1_000_000).decode("utf-8", errors="replace"))
+        except (urllib.error.URLError, OSError):
+            raise RuntimeError("Cold Keycloak login-form readiness failed") from None
+        if not all((form.username, form.password, form.submit, form.realm)):
+            raise RuntimeError("Cold Keycloak login-form controls are incomplete")
+        (self.evidence / "login-form-ready.txt").write_text(
+            "PASS: real Keycloak fresh login form HTTP 200; realm, username, password and submit verified.\n"
+            "Host-only unauthenticated GET; no credentials, redirects or browser cookies used.\n")
+        print("Real Keycloak login-form readiness verified before native UI", flush=True)
 
     def test(self):
         marketplace = self.scenario == "marketplace"
@@ -243,13 +304,23 @@ class Runner:
         mobile = ROOT / "apps/mobile"
         self.run(["flutter", "pub", "get"], "flutter-pub", 300, mobile)
         self.run(["flutter", "build", "ios", "--config-only", "--simulator", "--debug", "--target", "lib/main.dart",
-                  "--dart-define=OIDC_ISSUER=http://localhost:8180/realms/bliss",
-                  "--dart-define=API_BASE_URL=http://localhost:8088"], "flutter-config", 120, mobile)
+                  f"--dart-define=OIDC_ISSUER={ISSUER}",
+                  f"--dart-define=API_BASE_URL={API_URL}"], "flutter-config", 300, mobile)
         env = dict(os.environ, TEST_RUNNER_BLISS_IOS_AUTH_OPT_IN="isolated-local",
                    TEST_RUNNER_BLISS_CUSTOMER_PASSWORD=self.passwords["customer"],
                    TEST_RUNNER_BLISS_PROVIDER_PASSWORD=self.passwords["provider"],
                    TEST_RUNNER_BLISS_IOS_MARKETPLACE_RUN_ID=self.run_id)
         (self.evidence / "scenario.txt").write_text(f"{self.scenario}\n{self.run_id}\n{test_class}/{test_name}\n")
+        build = ["xcodebuild", "-workspace", "ios/Runner.xcworkspace", "-scheme", "BlissAuth",
+                 "-configuration", "Debug", "-destination", f"platform=iOS Simulator,id={self.device}",
+                 "-destination-timeout", "60"]
+        # Keep cold compilation outside the UI execution budget. Start the
+        # marketplace observer only after compilation, before any UI writes.
+        self.run([*build, "build-for-testing"], "xctest-build", 600, mobile, env)
+        # Keep JVM services out of cold Xcode compilation, and establish fresh
+        # service readiness immediately before the actual browser scenario.
+        self.services()
+        self.warm_login_form()
         stop = threading.Event()
         self.workflow_checkpoint = None
         self.workflow_error = None
@@ -257,11 +328,10 @@ class Runner:
         if observer:
             observer.start()
         try:
-            log = self.run(["xcodebuild", "-workspace", "ios/Runner.xcworkspace", "-scheme", "BlissAuth",
-                            "-configuration", "Debug", "-destination", f"platform=iOS Simulator,id={self.device}",
-                            "-destination-timeout", "60", "-parallel-testing-enabled", "NO",
+            log = self.run([*build, "-parallel-testing-enabled", "NO",
                             f"-only-testing:RunnerUITests/{test_class}/{test_name}",
-                            "-resultBundlePath", self.private / "auth.xcresult", "test"], "xctest", 900 if marketplace else 600, mobile, env)
+                            "-resultBundlePath", self.private / "auth.xcresult", "test-without-building"],
+                           "xctest", 900, mobile, env)
         finally:
             stop.set()
             if observer:
@@ -272,6 +342,8 @@ class Runner:
             raise RuntimeError("Expected native XCTest did not pass")
         if "Executed 1 test, with 0 failures" not in log:
             raise RuntimeError("Expected exactly one successful browser XCTest")
+        if "Verified iOS transport: canonical discovery and API readiness" not in log:
+            raise RuntimeError("Simulator transport preflight did not pass")
         for checkpoint in checkpoints:
             if f"Verified iOS: {checkpoint}" not in log:
                 raise RuntimeError(f"Missing acceptance checkpoint: {checkpoint}")
@@ -406,7 +478,6 @@ def main():
         runner.run(["git", "rev-parse", "HEAD"], "commit", 30)
         runner.run(["xcodebuild", "-version"], "xcode-version", 30)
         runner.run(["flutter", "--version"], "flutter-version", 30)
-        runner.services()
         runner.simulator()
         runner.test()
     finally:

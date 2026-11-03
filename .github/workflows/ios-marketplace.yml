@@ -4,6 +4,7 @@ on:
     branches: ['**']
     paths:
       - 'apps/mobile/**'
+      - 'infrastructure/scripts/ios_simulator.py'
       - 'services/api/**'
       - 'infrastructure/local/keycloak/bliss-realm.template.json'
       - 'infrastructure/scripts/test-ios-oidc.py'

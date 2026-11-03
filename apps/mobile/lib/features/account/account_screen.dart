@@ -63,16 +63,35 @@ class _AccountScreenState extends State<AccountScreen> {
                   ),
                 if (!session.signedIn) ...[
                   Text(
-                    'Make yourself at home.',
+                    session.canRetryProfile
+                        ? 'Your account is not loaded yet.'
+                        : 'Make yourself at home.',
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   const SizedBox(height: 12),
-                  const Text('Sign in to manage your Bliss profile.'),
+                  Text(
+                    session.canRetryProfile
+                        ? 'Try again, or sign out to use another account.'
+                        : 'Sign in to manage your Bliss profile.',
+                  ),
                   const SizedBox(height: 24),
                   FilledButton(
-                    onPressed: session.busy ? null : session.signIn,
-                    child: const Text('Sign in'),
+                    onPressed: session.busy
+                        ? null
+                        : session.canRetryProfile
+                        ? session.retryProfile
+                        : session.signIn,
+                    child: Text(
+                      session.canRetryProfile
+                          ? 'Retry account access'
+                          : 'Sign in',
+                    ),
                   ),
+                  if (session.canRetryProfile)
+                    TextButton(
+                      onPressed: session.busy ? null : session.signOut,
+                      child: const Text('Sign out'),
+                    ),
                 ] else ...[
                   Text(
                     'Hello, ${session.profile!['displayName']}',

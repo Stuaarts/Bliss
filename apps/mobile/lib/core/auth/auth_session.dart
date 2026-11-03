@@ -21,10 +21,13 @@ class AuthSession extends ChangeNotifier {
   int _generation = 0;
   int get generation => _generation;
   final Map<String, ({String key, String body})> _pending = {};
+  bool _canRetryProfile = false;
+  bool get canRetryProfile => _canRetryProfile;
 
   void _clear() {
     _generation++;
     _pending.clear();
+    _canRetryProfile = false;
     profile = null;
     notifyListeners();
   }
@@ -79,9 +82,32 @@ class AuthSession extends ChangeNotifier {
   });
 
   Future<void> _bootstrap() async {
-    profile =
-        await request('POST', '/api/v1/me/bootstrap') as Map<String, dynamic>;
+    _canRetryProfile = true;
+    try {
+      Object? result;
+      try {
+        result = await request('POST', '/api/v1/me/bootstrap');
+      } on AccountRequestException catch (e) {
+        if (e.status != 503) rethrow;
+        // A paused bootstrap need not prevent an existing account from reading.
+        // New accounts still require bootstrap after write admission reopens.
+        try {
+          result = await request('GET', '/api/v1/me');
+        } on AccountRequestException catch (readError) {
+          if (readError.status == 404) throw e;
+          rethrow;
+        }
+      }
+      profile = result as Map<String, dynamic>;
+      _canRetryProfile = false;
+    } on AccountRequestException catch (e) {
+      if (e.status < 500) _canRetryProfile = false;
+      rethrow;
+    }
   }
+
+  Future<void> retryProfile() =>
+      _canRetryProfile ? _run(_bootstrap) : Future<void>.value();
 
   Future<void> rename(String name) => _run(() async {
     profile = await request('PUT', '/api/v1/me', {
@@ -147,6 +173,8 @@ class AuthSession extends ChangeNotifier {
     notifyListeners();
     try {
       await action();
+    } on AccountRequestException catch (e) {
+      error = e.message;
     } catch (_) {
       error = 'We couldn’t complete that action. Please try again or sign in again.';
     } finally {
@@ -170,6 +198,7 @@ class AccountRequestException implements Exception {
     401 => 'Your session ended. Please sign in again.',
     403 || 404 => 'This item is not available to your account.',
     409 => 'This item changed or an action is pending. Refresh and review it before trying again.',
+    503 => 'Bliss is temporarily unavailable. Please try again later.',
     _ => 'We couldn’t complete that action. Please try again.',
   };
 }

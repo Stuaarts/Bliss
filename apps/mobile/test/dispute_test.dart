@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:bliss_mobile/features/dispute/dispute_screen.dart';
+import 'package:bliss_mobile/core/auth/auth_session.dart';
 import 'package:bliss_mobile/features/marketplace/marketplace_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -142,6 +143,67 @@ void main() {
         sent[0].headers['Idempotency-Key'],
         sent[1].headers['Idempotency-Key'],
       );
+      expect(find.text('Waiting for admin review'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Add evidence'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      s.dispose();
+    },
+  );
+
+  testWidgets(
+    'maintenance 503 keeps evidence and key until an explicit retry after reopening',
+    (tester) async {
+      var paused = true;
+      var d = Map<String, dynamic>.from(detail);
+      final sent = <http.Request>[];
+      final s = session((r) async {
+        if (r.method == 'POST') {
+          sent.add(r);
+          if (paused) {
+            return json({
+              'detail': 'Private maintenance response must not render',
+            }, 503);
+          }
+          d = {...detail, 'status': 'UNDER_REVIEW', 'canAddEvidence': false};
+          return json(evidence);
+        }
+        return reads(r, d);
+      });
+      await tester.pumpWidget(
+        host(s, DisputeScreen(session: s, disputeId: 'case')),
+      );
+      await tester.pumpAndSettle();
+      await clickButton(tester, 'Add evidence');
+      await tester.enterText(
+        find.byType(TextFormField),
+        'Provider response during maintenance',
+      );
+      await clickButton(tester, 'Add evidence');
+      expect(
+        find.text(const AccountRequestException(503).message),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Private maintenance response'), findsNothing);
+      expect(
+        tester.widget<TextFormField>(find.byType(TextFormField)).enabled,
+        isFalse,
+      );
+      expect(s.signedIn, isTrue);
+      expect(s.hasPending('/api/v1/disputes/case/evidence'), isTrue);
+      await tester.pump(const Duration(seconds: 6));
+      expect(sent.length, 1);
+      paused = false;
+      await clickButton(tester, 'Retry original submission');
+      expect(sent.length, 2);
+      expect(sent[0].body, sent[1].body);
+      expect(
+        sent[0].headers['Idempotency-Key'],
+        sent[1].headers['Idempotency-Key'],
+      );
+      expect(jsonDecode(sent[1].body), {
+        'body': 'Provider response during maintenance',
+      });
+      expect(s.hasPending('/api/v1/disputes/case/evidence'), isFalse);
       expect(find.text('Waiting for admin review'), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Add evidence'), findsNothing);
       await tester.pumpWidget(const SizedBox());

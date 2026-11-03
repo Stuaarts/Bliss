@@ -121,10 +121,25 @@ final class NativeMarketplaceTests: NativeDemoTest {
 
     private func switchAccount(_ username: String, _ displayName: String) {
         restart()
-        if !element("Sign in").waitForExistence(timeout: 3) {
-            reveal("Sign out")
-            signOut()
-        }
+        let deadline = Date().addingTimeInterval(30)
+        var settled = false
+        repeat {
+            // Restore briefly renders a disabled sign-in action. Wait for the
+            // actual session outcome before deciding whether logout is needed.
+            if element("Sign out").exists {
+                reveal("Sign out")
+                signOut()
+                settled = true
+                break
+            }
+            let entry = element("Sign in")
+            if entry.exists && entry.isEnabled && entry.isHittable {
+                settled = true
+                break
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+        } while Date() < deadline
+        XCTAssertTrue(settled, "Account restoration did not settle before switching")
         signIn(username, displayName: displayName)
     }
 
@@ -146,6 +161,18 @@ final class NativeMarketplaceTests: NativeDemoTest {
     }
 
     private func button(_ label: String) {
+        if ["Bookings", "Messages", "Disputes", "My requests", "Open opportunities", "My quotes"].contains(label) {
+            let refresh = app.buttons["Refresh activity"].firstMatch
+            if refresh.exists {
+                // A ChoiceChip can retain its prior AX enabled state briefly
+                // while Flutter disables selection for the initial page load.
+                let deadline = Date().addingTimeInterval(90)
+                while !refresh.isEnabled && Date() < deadline {
+                    RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+                }
+                XCTAssertTrue(refresh.isEnabled, "Activity loading did not finish before filter selection")
+            }
+        }
         let control = app.buttons.matching(NSPredicate(format: "label == %@", label)).firstMatch
         XCTAssertTrue(control.waitForExistence(timeout: 30), "Missing button: \(label)")
         for _ in 0..<8 {
@@ -195,6 +222,12 @@ final class NativeMarketplaceTests: NativeDemoTest {
         XCTAssertTrue(control.exists && control.isHittable, "Missing field: \(label)")
         control.tap()
         control.typeText(value)
+        // Flutter may publish the final accessibility value after typeText
+        // returns. Wait for the complete original value without retyping it.
+        let entered = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "value == %@", value), object: control)
+        XCTAssertEqual(XCTWaiter.wait(for: [entered], timeout: 10), .completed,
+                       "Field value did not settle: \(label)")
         XCTAssertEqual(control.value as? String, value, "Field value mismatch: \(label)")
     }
 }

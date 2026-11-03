@@ -368,3 +368,191 @@ packaged), zero failures/errors/skips, Spotless clean, in 14:08. The new mainten
 case and both ordinary admission cases pass; all prior workflow, backup/restart,
 role/rotation, migration, metrics and ownership checks remain green. Test/admin
 artifacts stay out of the jar and existing project data is preserved.
+
+
+Branch `15-client-maintenance-recovery` builds on draft PR #56 at `ca2bc52`.
+The Flutter session attempts the normal bootstrap first, then reads the owned
+profile only after HTTP 503. Existing accounts retain read access during the
+optional write pause; unavailable/new accounts can retry bootstrap without a new
+interactive sign-in or sign out. HTTP 401 clears retry/session state. A fixed
+503 message never includes the server body. A widget scenario verifies paused
+evidence keeps its original body/key until an explicit retry after reopening,
+with no automatic POST retry. Pending entries remain in memory only.
+See [client maintenance recovery](../operations/CLIENT_MAINTENANCE.md).
+Flutter 3.47.5 analysis and formatting pass; all 57 unit/widget tests pass without
+failures or skips, including 11 added cases. Release web build and debug Android
+APK compilation pass. Backend runtime/dependencies are unchanged; the parent
+95-scenario backend result is retained, not rerun. Docker is stopped and is not
+needed for these client checks. Real backend/native maintenance acceptance,
+required exact-head CI, remaining iOS scenarios and production adoption stay open.
+
+A later automatic push run exposes an existing empty-backlog scrape race: counts
+can update before ages within one scrape. The metrics fixture now waits for
+both before its unchanged assertions. Six focused Java scenarios pass locally
+(five ordinary + one packaged), zero failures/errors/skips and Spotless clean,
+in 1:31 after guarded Docker startup. Owned test containers close and the
+unrelated database remains running. Final current-head CI/native results remain
+the exit evidence in the draft PR and issue updates.
+
+Native runner reproducibility now uses a shared installed-runtime selector matched
+to the selected SDK release, with explicit missing-runtime refusal and compatible
+new iPhone creation. Nine Python contract/CLI tests pass locally; Bash syntax and
+CLI/import checks pass. Mobile CI runs those tests and helper changes trigger all
+native workflows. This configuration policy does not prove the cause of prior
+startup/restore stalls or waive final native acceptance.
+
+
+### Native transport and session timing follow-up (2026-11-03)
+
+Continuing draft PR #57 on `15-client-maintenance-recovery` from `791b915`.
+At that recorded head, both full CI runs pass API/mobile/Android (95 backend,
+57 Flutter and nine Python cases per run) and real browser auth passes all eight
+identity checkpoints/screenshots. Session and marketplace remain failed.
+The signed-out Dart phase actually reports all tests passed just before its
+combined build/test command expires; it lacks the required final XCTest result.
+Session now separates each phase's bounded 600-second compilation from the
+unchanged 300-second test execution/result deadline, preserving the three
+processes, same simulator data/Keychain, exact test and zero-failure assertions.
+The marketplace Safari error precedes credentials/business writes. A native
+simulator-side ephemeral URLSession now checks canonical localhost discovery
+and readiness, plus diagnostic IPv4/IPv6 probes with fixed ten-second resource
+limits. It records only fixed URLs and HTTP/error codes, and requires the issuer
+and readiness UP. No browser cookies or credentials are injected or cleared.
+IPv6 failure alone is diagnostic; the loopback-family hypothesis is unproven.
+Local Python selector/CLI tests pass all nine, runner help/import and Bash syntax
+pass, and diff checks pass. Mac-only compilation/execution awaits current-head
+Actions; no failed run is counted as acceptance. Job/step limits are unchanged.
+Refs #7, #12 and #15. All draft-stack, native/maintenance and release gates remain.
+
+
+At follow-up head `8edd30dd4fdcd82c3d66000df564b39625783e4b`, both full
+CI runs (41677075280 PR, 41677065061 push) pass: independently parsed logs verify
+95 backend (69+26), 57 Flutter and nine Python tests per run, with clean analysis,
+web/Android app and native-driver builds. Session run 41677065304 passes all three
+separate Seed/Restore/SignedOut XTests, build and final markers on SDK/runtime
+18.5; downloaded evidence confirms the exact commit. Splitting compilation from
+execution resolves the previously observed combined-deadline failure.
+Browser runs 41677065259 and 41677065018 both pass native transport preflight:
+localhost and explicit IPv4 return 200 for discovery/readiness; IPv6 is refused
+(-1004). Auth then shows Safari's server-response error before a credential form.
+Marketplace actually signs in and reaches request creation; its immediate title
+assertion reads a prefix, while the later UI counter reports the expected full
+length (137/160 remaining). These two runs fail and are not acceptance.
+The fixture now pins issuer/hostname, API OIDC validation, Flutter build defines,
+JDBC and probes to the existing IPv4 listeners, removing hostname ambiguity.
+Disposable JVM services now start after cold Xcode compilation and establish
+fresh readiness before UI execution, avoiding competition during compilation.
+This does not establish IPv6 as the sole Safari failure cause. Marketplace field
+input waits up to ten seconds for the original exact full value, retains equality,
+and never retypes or shortens the input. Application defaults, credentials,
+consent, browser/business assertions and overall job deadlines are unchanged.
+Nine Python tests, import/help, Bash syntax and documentation hygiene pass again
+(285 local links/336 tracked files). These Mac-only adjustments require new-head
+execution; first follow-up 7/9 does not imply all native gates are green.
+
+
+At `7667a62f5b812e73f2d1c5bfb6432eb89515d261`, both full CI runs pass again
+(41680757713 PR / 41680745120 push): 95 backend, 57 Flutter, nine Python tests
+per run, clean analysis, web and Android app/native-driver builds. Session run
+41680745156 again passes all three exact phases on SDK/runtime 18.5, independently
+verified from downloaded artifacts. Seven of nine jobs pass; both browser jobs
+fail despite successful transport probes and actual authenticated progress.
+Auth run 41680745310 verifies login, refresh/process recovery and background/resume
+(3/8 checkpoints), then fails its 30-second logout wait while Safari is loading.
+Keycloak cookie handling occurs about 53 seconds after the logout tap; a delayed
+OIDC response is an inference, not proof of callback completion. The bounded
+logout wait now allows 90 seconds while still requiring enabled sign-in, real
+consent/callback and subsequent fresh-account login. Overall deadlines remain.
+Marketplace run 41680745305 verifies request, quote, acceptance/customer chat,
+two-way chat and provider completion (5/9 checkpoints). The field synchronization
+gets past the previous title failure. A later customer login hits the existing
+optional-prompt race: XCTest re-resolves Not Now during its dismissal animation,
+tries to scroll an AX frame at y=1371.6, then fails because it disappears.
+The helper now uses main-window viewport bounds instead of the application's
+transitioning union frame, rechecks the expected profile, and taps the observed
+visible prompt coordinate without re-resolving/scrolling the alert element.
+All profile, identity, role and business assertions remain. Disposable Keycloak
+logs method/path/status only to identify completed responses without protocol
+query strings, headers/cookies or bodies. Release checklist now records that
+Actions execute again without asserting an owner billing change or main pass.
+Nine Python tests, runner help/import, diff and documentation hygiene pass
+(286 local links/336 tracked files). New-head Mac execution remains required;
+no partial browser scenario is counted as acceptance. Refs #7/#12/#15, draft #57.
+
+
+At `feaba9179211bb01407e53b7cb31c77a2ea97a64`, both full CI runs pass again
+(41684290466 PR / 41684280120 push), with 95 backend (69+26), 57 Flutter and nine
+Python cases per run, clean analysis/web/Android builds. Session run 41684280144
+passes again. Both browser jobs fail: auth 41684280096 checks Sign In once after
+password entry and misses it, while the later UI tree shows the real named form
+button and correctly entered customer username. It now requires the complete
+realm form up front and resolves the named submit control again across live
+browser surfaces for up to 30 seconds after typing.
+Marketplace 41684280027 successfully declines the optional password prompt by
+window coordinate, without the previous stale-element failure. Its profile wait
+expires at 30 seconds; access logs then show token 200 and profile bootstrap 200
+after that window. Profile/capability recovery now allows a bounded 90 seconds,
+retaining the same expected identity, roles and UI outcome. No new native pass is
+claimed and all overall deadlines remain unchanged.
+Observed access-log `%U` output includes protocol queries despite its documented
+path description. The formatter now uses relative path `%R`, and independent
+scrubbing removes access-log queries before artifacts are retained. Scrubbing
+also removes XCTest secure-field keystroke prefixes, which full-password matching
+alone cannot catch. Three regression tests verify full-password/JWT masking,
+ASCII/Unicode truncated secure entries, protocol-query removal and retained
+nonsecret username/path/status/checkpoint diagnostics. Normal mobile CI now runs
+all twelve Python tests. All twelve pass locally, as do CLI/import, Bash syntax,
+diff and documentation hygiene checks. New-head native execution remains required;
+all partial/failed attempts and #7/#12/#15 release gates remain open.
+
+
+At `778a4541537ccd9ac75f5dadf2c4837c1866f9e4`, eight of nine jobs pass.
+Both complete CI runs (41687532245 PR / 41687522422 push) independently verify
+95 backend (69+26), 57 Flutter and twelve Python cases, with clean analysis,
+web and Android app/native-driver builds. Real browser auth 41687521905 passes
+one XCTest, all eight checkpoints and eight PNGs on SDK/runtime18.5. Exact-head
+artifacts verify fresh customer/provider PKCE login, recovery, background/resume,
+logout and account switching. The provider screenshot is visually reviewed.
+All57 retained Keycloak access lines exclude queries, and all three secure input
+lines are redacted. Session41687521990 passes all three independent native phases.
+Marketplace41687522324 fails before the first credential form: Safari shows a
+server-response error while the canonical preflight succeeds. Keycloak's completed
+authorization-page200 is logged only after the browser has already failed, so a
+longer UI wait cannot recover that particular request. No business writes occur.
+The disposable runner now prepares that cold authorization/theme route with one
+bounded120-second host-only GET before native UI. It uses fresh PKCE/state/nonce,
+submits no credentials, refuses redirects and shares no cookies/browser sessions.
+The200 HTML must contain the Bliss realm and username/password/submit controls;
+only fixed readiness metadata is saved. Every native flow must still independently
+render and submit its fresh real form and satisfy all original assertions.
+Three readiness regression tests cover GET parameters/no credentials/cookies,
+wrong/incomplete realm refusal, and redirect/error refusal without query disclosure.
+All fifteen Python tests pass locally, with import/help, Bash syntax, diff and
+hygiene checks. Current-head Mac acceptance remains required, including an explicit
+session workflow dispatch because that unchanged runner is outside push path
+filters for this Python-only change. All draft/release gates remain intact.
+
+
+At `58a642477b3aabefd6dd3d96d22d32f7a0ac1d28`, both complete CI runs pass
+(41691553175 PR / 41691543030 push):95 backend,57 Flutter,15 Python tests each,
+clean analysis/web/Android app and driver builds. All three native jobs fail.
+The host-only real Keycloak form preparation passes in both browser artifacts.
+Auth41691543053 then fails the new one-shot simulator discovery/readiness probes:
+both ten-second IPv4 GETs time out (-1001), while later service responses appear.
+Canonical probes now poll only unauthenticated GETs within one shared90-second
+window, with per-attempt limits capped to the remaining time. The exact issuer
+and readinessUP remain required; no sign-in or business write is retried.
+Marketplace41691542997 verifies actual customer request creation, then provider
+login. Open opportunities is tapped while initial activity loading finishes;
+the later tree still shows Bookings selected and no opportunities GET occurs.
+Filter navigation now waits for the page's Refresh activity control to become
+enabled before its single chip tap. All row/identity/business assertions remain.
+Session41691542562 (explicit dispatch) compiles Seed but exceeds the unchanged
+300-second execution deadline before any native/Dart test starts. This remains
+an intermittent platform launch/attach gate, not a passing current-head session.
+Earlier exact-head full session passes are retained as historical evidence.
+A new Mac run must still establish all three phases; no deadline or assertion is
+relaxed to turn that failed attempt into acceptance. Further launch diagnostics
+must include CoreSimulator/XCTest/FrontBoard services if the stall recurs.
+Fifteen Python tests, import/help, Bash syntax, diff and documentation hygiene pass
+locally. New-head Mac execution remains required. Refs #7/#12/#15, draft #57.
