@@ -277,6 +277,8 @@ class Runner:
             raise RuntimeError("Expected native XCTest did not pass")
         if "Executed 1 test, with 0 failures" not in log:
             raise RuntimeError("Expected exactly one successful browser XCTest")
+        if "Verified iOS transport: canonical discovery and API readiness" not in log:
+            raise RuntimeError("Simulator transport preflight did not pass")
         for checkpoint in checkpoints:
             if f"Verified iOS: {checkpoint}" not in log:
                 raise RuntimeError(f"Missing acceptance checkpoint: {checkpoint}")

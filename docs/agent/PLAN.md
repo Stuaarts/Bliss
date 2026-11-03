@@ -400,3 +400,26 @@ new iPhone creation. Nine Python contract/CLI tests pass locally; Bash syntax an
 CLI/import checks pass. Mobile CI runs those tests and helper changes trigger all
 native workflows. This configuration policy does not prove the cause of prior
 startup/restore stalls or waive final native acceptance.
+
+
+### Native transport and session timing follow-up (2026-11-03)
+
+Continuing draft PR #57 on `15-client-maintenance-recovery` from `791b915`.
+At that recorded head, both full CI runs pass API/mobile/Android (95 backend,
+57 Flutter and nine Python cases per run) and real browser auth passes all eight
+identity checkpoints/screenshots. Session and marketplace remain failed.
+The signed-out Dart phase actually reports all tests passed just before its
+combined build/test command expires; it lacks the required final XCTest result.
+Session now separates each phase's bounded 600-second compilation from the
+unchanged 300-second test execution/result deadline, preserving the three
+processes, same simulator data/Keychain, exact test and zero-failure assertions.
+The marketplace Safari error precedes credentials/business writes. A native
+simulator-side ephemeral URLSession now checks canonical localhost discovery
+and readiness, plus diagnostic IPv4/IPv6 probes with fixed ten-second resource
+limits. It records only fixed URLs and HTTP/error codes, and requires the issuer
+and readiness UP. No browser cookies or credentials are injected or cleared.
+IPv6 failure alone is diagnostic; the loopback-family hypothesis is unproven.
+Local Python selector/CLI tests pass all nine, runner help/import and Bash syntax
+pass, and diff checks pass. Mac-only compilation/execution awaits current-head
+Actions; no failed run is counted as acceptance. Job/step limits are unchanged.
+Refs #7, #12 and #15. All draft-stack, native/maintenance and release gates remain.

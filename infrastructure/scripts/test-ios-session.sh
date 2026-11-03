@@ -91,10 +91,14 @@ for phase in seed restore signed-out; do
   run_bounded 180 xcrun simctl bootstatus "$device" -b
   # The same app data and Keychain must survive all three independent processes.
   # XCTest reads integration_test results natively, without VM-service discovery.
-  if ! run_bounded 300 xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner \
+  build=(xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner \
     -configuration Debug -destination "platform=iOS Simulator,id=$device" \
-    -destination-timeout 60 -parallel-testing-enabled NO -only-testing:RunnerTests \
-    -resultBundlePath "$evidence/$phase.xcresult" test 2>&1 | tee "$evidence/$phase.log"; then
+    -destination-timeout 60 -parallel-testing-enabled NO -only-testing:RunnerTests)
+  # Each phase has a different compiled Dart entry point. Build it before
+  # starting the unchanged 300-second execution/final-result deadline.
+  run_bounded 600 "${build[@]}" build-for-testing 2>&1 | tee "$evidence/$phase-build.log"
+  if ! run_bounded 300 "${build[@]}" \
+    -resultBundlePath "$evidence/$phase.xcresult" test-without-building 2>&1 | tee "$evidence/$phase.log"; then
     run_bounded 30 xcrun simctl spawn "$device" log show --last 2m \
       --predicate 'process == "Runner"' > "$evidence/$phase-simulator.log" 2>&1 || true
     exit 1

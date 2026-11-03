@@ -1,5 +1,6 @@
 import XCTest
 import CoreGraphics
+import Foundation
 
 /// Drives the unmodified Flutter app and Apple's authentication browser from a
 /// separate process. Credentials belong only to the runner's disposable realm.
@@ -15,6 +16,7 @@ class NativeDemoTest: XCTestCase {
         XCTAssertEqual(ProcessInfo.processInfo.environment["BLISS_IOS_AUTH_OPT_IN"], "isolated-local")
         XCTAssertFalse(password("CUSTOMER").isEmpty)
         XCTAssertFalse(password("PROVIDER").isEmpty)
+        try verifyLocalTransport()
     }
 
     override func tearDownWithError() throws {
@@ -26,6 +28,49 @@ class NativeDemoTest: XCTestCase {
 
     func password(_ role: String) -> String {
         ProcessInfo.processInfo.environment["BLISS_\(role)_PASSWORD"] ?? ""
+    }
+
+    private func probe(_ url: String) -> [String: Any]? {
+        // Run inside the simulator, independently of the host's readiness GET.
+        // No shared cookies/credentials or authentication requests are used.
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.timeoutIntervalForRequest = 10
+        configuration.timeoutIntervalForResource = 10
+        let session = URLSession(configuration: configuration)
+        defer { session.invalidateAndCancel() }
+        let finished = expectation(description: "Local transport: \(url)")
+        var document: [String: Any]?
+        session.dataTask(with: URL(string: url)!) { data, response, error in
+            defer { finished.fulfill() }
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            let failure = error as NSError?
+            // Fixed unauthenticated URLs and status/error codes only; no bodies,
+            // tokens, response headers or generated passwords enter diagnostics.
+            print("Bliss simulator transport: \(url) status=\(status) error=\(failure?.domain ?? "none")/\(failure?.code ?? 0)")
+            if error == nil, status == 200, let data = data {
+                document = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+            }
+        }.resume()
+        wait(for: [finished], timeout: 15)
+        return document
+    }
+
+    private func verifyLocalTransport() throws {
+        let discoveryPath = "/realms/bliss/.well-known/openid-configuration"
+        let discovery = probe("http://localhost:8180" + discoveryPath)
+        let readiness = probe("http://localhost:8088/q/health/ready")
+        // The stack intentionally listens on IPv4 loopback. Record both address
+        // families without treating absent IPv6 service as a failed requirement.
+        for host in ["127.0.0.1", "[::1]"] {
+            _ = probe("http://\(host):8180" + discoveryPath)
+            _ = probe("http://\(host):8088/q/health/ready")
+        }
+        let issuer = try XCTUnwrap(discovery?["issuer"] as? String,
+                                  "Simulator cannot read canonical OIDC discovery")
+        XCTAssertEqual(issuer, "http://localhost:8180/realms/bliss")
+        XCTAssertEqual(readiness?["status"] as? String, "UP",
+                       "Simulator cannot reach the ready API")
+        print("Verified iOS transport: canonical discovery and API readiness")
     }
 
     func element(_ label: String) -> XCUIElement {

@@ -32,8 +32,10 @@ scheme/destination. See [Apple's command-line test actions](https://developer.ap
 The marketplace observer starts after compilation and before UI execution, so
 its polling does not compete with the build. All workflow corroboration remains.
 Boot readiness remains bounded to 180 seconds. The independent session workflow
-retains its 300-second per-phase XCTest command deadline and all three separate
-processes; app data and Keychain survive the owned simulator reboots. Existing
+builds each phase with a bounded 600-second `build-for-testing` action, then
+retains its 300-second per-phase `test-without-building` deadline and all three
+separate processes. Each Dart phase is compiled again; app data and Keychain
+survive the owned simulator reboots. Existing
 workflow/job deadlines remain in force. Expiry fails the gate and does not
 silently retry a scenario.
 
@@ -45,6 +47,17 @@ Keycloak form, realm identity, credentials, profile/capabilities, refresh, logou
 and account switching. Account switching waits for either an enabled sign-in action or a restored
 account to sign out; a transient disabled sign-in button cannot skip logout.
 No cookie clearing, token injection or silent-login bypass is added. Only the simulator created by the invocation is shut down/deleted.
+
+Before browser scenarios, a simulator-side ephemeral `URLSession` reads the
+canonical localhost OIDC discovery and API readiness URLs. It requires the
+expected issuer and readiness UP. It also records IPv4 and IPv6 loopback probe
+status/error codes for both services; absent IPv6 listeners are diagnostic only.
+Each request has a ten-second resource deadline, with a fifteen-second XCTest
+completion bound. Bodies, headers, credentials and tokens are not logged, and
+the probe does not share or clear browser cookies. Host readiness alone cannot
+establish simulator reachability. A passing probe still requires all original
+fresh-form, identity, UI, screenshot and database checks; it cannot establish
+that Safari's separate transport will succeed.
 
 ## Verification
 
